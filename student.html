@@ -1,0 +1,53 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>My XR project</title>
+<!--
+  STUDENT PAGE. The engine (controllers, teleport, text, placement helpers, audit) is loaded from the class site.
+  Paste the CONTENT block Claude gives you between the CONTENT markers below, save, and open the file in Chrome
+  (or put it on the class GitHub Pages site and open that address in the Quest browser). Add ?debug to the address
+  for the mannequin and the audit panel; "Copy report for Claude" gives you the numbers to paste back if something is off.
+-->
+<script type="importmap">
+{ "imports": {
+  "three": "https://cdn.jsdelivr.net/npm/three@0.185.1/build/three.module.js",
+  "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.185.1/examples/jsm/"
+} }
+</script>
+<script type="module" src="https://izgebayyurt.github.io/xr-class/xr-engine.js"></script>
+</head>
+<body>
+
+<!-- ===================== CONTENT (paste Claude's block below) ===================== -->
+<script type="module">
+const { THREE, scene, shape, place, fit, label, interactive, tone, spin, bob, H, C } = XR;
+
+function build(){
+  // --- Example scene: delete everything in build() and write your own ---
+  const ball = shape.ball(0.12, 'orange');
+  place(ball, { dist:'reach', dir:'ahead', height:'chest' });
+  interactive(ball, { grab:true, select: () => tone(660, 0.12) });
+  label('Grab me', { above: ball, size:'comfortable' });
+
+  const pedestal = shape.cylinder(0.25, 0.9, 'grey');
+  place(pedestal, { dist:'near', dir:'ahead-right', height:'floor' });
+  const cube = shape.box(0.25, 0.25, 0.25, 'blue');
+  place(cube, { dist:'near', dir:'ahead-right', height: 0.9 + 0.125 });
+  spin(cube, 40);
+  interactive(cube, { select: (obj) => { obj.material.color.setHex(Math.random()*0xffffff); tone(440, 0.1, 'triangle'); } });
+  label('Point and pull the trigger', { above: cube, size:'comfortable', width: 0.6 });
+
+  const sign = label('Welcome.\nWalk around with the thumbstick;\npoint and pull the trigger to interact.', { dist:'room', dir:'ahead', height:'eye', size:'large', width: 1.6 });
+}
+
+function frame(dt, t){
+  // runs every frame (dt = seconds since last frame, t = seconds since start)
+}
+
+XR.run({ build, frame });
+</script>
+<!-- ===================== end CONTENT ===================== -->
+</body>
+</html>
