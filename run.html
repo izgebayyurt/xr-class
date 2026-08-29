@@ -1,0 +1,47 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>XR scene</title>
+<!-- Runs a scene straight from the link: the CONTENT block travels compressed in the #c= fragment. -->
+<script type="importmap">
+{ "imports": {
+  "three": "https://cdn.jsdelivr.net/npm/three@0.185.1/build/three.module.js",
+  "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.185.1/examples/jsm/"
+} }
+</script>
+<script type="module" src="https://izgebayyurt.github.io/xr-class/xr-engine.js"></script>
+<style>
+  #remix{position:fixed;right:10px;bottom:10px;z-index:9;font:12px system-ui,sans-serif;color:#dfe5ee;background:rgba(14,16,22,.8);
+         padding:5px 10px;border-radius:14px;text-decoration:none;border:1px solid rgba(255,255,255,.2)}
+  #boot{position:fixed;inset:0;display:flex;align-items:center;justify-content:center;color:#cfd6e0;background:#101318;
+        font:15px system-ui,sans-serif;z-index:5;text-align:center;padding:20px}
+</style>
+</head>
+<body>
+<div id="boot">Loading scene…</div>
+<a id="remix" href="#" hidden>view code ↗</a>
+<script>
+(async () => {
+  const boot = document.getElementById('boot');
+  const fail = (msg) => { boot.innerHTML = msg; };
+  try {
+    const m = location.hash.match(/c=([A-Za-z0-9\-_]+)/);
+    if (!m){ fail('No scene in this link.<br><br>Make one at <a style="color:#8fd3ff" href="make.html">make.html</a> — paste the code block Claude gave you and it becomes a link like this one.'); return; }
+    const b64 = m[1].replace(/-/g, '+').replace(/_/g, '/');
+    const bytes = Uint8Array.from(atob(b64), c => c.charCodeAt(0));
+    const stream = new Blob([bytes]).stream().pipeThrough(new DecompressionStream('deflate-raw'));
+    const code = await new Response(stream).text();
+    if (!code.includes('XR.run')){ fail('This link does not contain a valid scene block.'); return; }
+    for (let i = 0; i < 400 && !window.XR; i++) await new Promise(r => setTimeout(r, 25));   // engine loads from the class site
+    if (!window.XR){ fail('The engine did not load. Check that the class site is reachable, then reload.'); return; }
+    const s = document.createElement('script'); s.type = 'module'; s.textContent = code; document.body.appendChild(s);
+    boot.remove();
+    const remix = document.getElementById('remix');
+    if (!new URLSearchParams(location.search).has('harness')){ remix.hidden = false; remix.href = 'make.html' + location.hash; }
+  } catch (e) { fail('Could not read this link: ' + (e.message || e)); }
+})();
+</script>
+</body>
+</html>
