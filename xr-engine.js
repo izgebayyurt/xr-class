@@ -49,7 +49,7 @@ const SZ = { fingertip:0.02, marble:0.015, egg:0.06, apple:0.08, hand:0.10, head
 const DIR = { ahead:0, 'ahead-left':-35, 'ahead-right':35, left:-90, right:90, behind:180,
               'behind-left':-135, 'behind-right':135 };                   // degrees, + = right
 const ARCMIN = Math.PI/10800;       // radians per arcminute
-const TEXT_ARCMIN = { small:30, comfortable:45, large:70, huge:110, MIN:25 };
+const TEXT_ARCMIN = { small:38, comfortable:45, large:70, huge:110, MIN:30 };
 function setStature(s){ for (const k in RATIO) H[k] = +(RATIO[k]*s).toFixed(3); H.stature = s;
                         H.reach = +(0.32*s).toFixed(3); H.touch = +(0.21*s).toFixed(3); D.reach = H.reach; D.touch = H.touch; }
 setStature(STATURE);
@@ -83,6 +83,16 @@ const col = c => (typeof c === 'string' && C[c] !== undefined) ? C[c] : (c ?? C.
   g.setAttribute('color', new THREE.Float32BufferAttribute(colors, 3));
   const sky = new THREE.Mesh(g, new THREE.MeshBasicMaterial({ vertexColors:true, side:THREE.BackSide, fog:false }));
   sky.name = 'sky'; scene.add(sky);
+}
+/** sky({ top, bottom }) — retint the sky gradient and horizon fog (e.g. sky({ top:'black', bottom:'dark' }) for a planetarium). */
+function sky(o = {}){
+  const s = scene.getObjectByName('sky'); if (!s) return;
+  const top = new THREE.Color(col(o.top ?? 0x1c2a4a)), bottom = new THREE.Color(col(o.bottom ?? o.top ?? 0x8fb3d9));
+  const p = s.geometry.attributes.position, cAttr = s.geometry.attributes.color, tmp = new THREE.Color();
+  for (let i = 0; i < p.count; i++){ const t = THREE.MathUtils.clamp(p.getY(i)/150, 0, 1); tmp.copy(bottom).lerp(top, Math.pow(t, 0.6)); cAttr.setXYZ(i, tmp.r, tmp.g, tmp.b); }
+  cAttr.needsUpdate = true;
+  scene.fog.color.copy(bottom);
+  const mask = scene.getObjectByName('grid-mask'); if (mask) mask.material.color.copy(new THREE.Color(groundMat.color));
 }
 scene.add(new THREE.HemisphereLight(0xdfe8ff, 0x5a5040, 1.2));
 const sun = new THREE.DirectionalLight(0xffffff, 1.6); sun.position.set(3, 6, 2); scene.add(sun);
@@ -164,11 +174,24 @@ function spread(objs, opts = {}){
   objs.forEach((o, i) => place(o, { ...opts, dir: n === 1 ? centre : centre - span/2 + span*i/(n-1) }));
   return objs;
 }
-/** remove(obj) — take an object out of the scene (and out of the audit / interaction lists). */
-function remove(obj){ obj.removeFromParent(); tracked.delete(obj); interactables.delete(obj); billboards.delete(obj); for (const p of pointers){ if (p.hovered === obj) p.hovered = null; if (p.held === obj) p.held = null; } }
+/** remove(obj) — take an object (and everything inside it) out of the scene, the audit/interaction lists, and GPU memory. */
+function remove(obj){
+  obj.removeFromParent();
+  obj.traverse(o => {
+    tracked.delete(o); interactables.delete(o); billboards.delete(o);
+    for (const p of pointers){ if (p.hovered === o) p.hovered = null; if (p.held === o) p.held = null; }
+    o.geometry?.dispose?.();
+    for (const m of (Array.isArray(o.material) ? o.material : o.material ? [o.material] : [])){ m.map?.dispose?.(); m.dispose?.(); }
+  });
+}
 
 // ---------- shapes ----------
-const mat = (c, o = {}) => new THREE.MeshStandardMaterial({ color: col(c), roughness: 0.6, metalness: 0.05, ...o });
+const mat = (c, o = {}) => {
+  if (c && c.isMaterial) return c;                                     // shape.box(w,h,d, someMaterial) works
+  const m = new THREE.MeshStandardMaterial({ color: col(c), roughness: 0.6, metalness: 0.05, ...o });
+  if (m.transparent && m.opacity <= 0.05) m.depthWrite = false;        // near-invisible surfaces must not occlude the scene
+  return m;
+};
 const shape = {
   box:      (w=0.2, h=0.2, d=0.2, c='blue')  => new THREE.Mesh(new THREE.BoxGeometry(w,h,d), mat(c)),
   ball:     (r=0.1, c='orange')              => new THREE.Mesh(new THREE.SphereGeometry(r, 32, 16), mat(c)),
@@ -178,10 +201,13 @@ const shape = {
   panel:    (w=1, h=0.6, c='dark')           => new THREE.Mesh(new THREE.PlaneGeometry(w,h), mat(c, { side:THREE.DoubleSide })),
   group:    ()                               => new THREE.Group(),
   line:     (points, c='white')              => new THREE.Line(new THREE.BufferGeometry().setFromPoints(points.map(p => p.isVector3 ? p : new THREE.Vector3(...p))), new THREE.LineBasicMaterial({ color: col(c) })),
+  // invisible pointing targets: raycastable, never occlude or glow
+  hit:      (w=0.2, h=w, d=w)                => new THREE.Mesh(new THREE.BoxGeometry(w,h,d), new THREE.MeshBasicMaterial({ transparent:true, opacity:0, depthWrite:false })),
+  hitball:  (r=0.1)                          => new THREE.Mesh(new THREE.SphereGeometry(r, 16, 12), new THREE.MeshBasicMaterial({ transparent:true, opacity:0, depthWrite:false })),
 };
 
 // ---------- text labels (sized by visual angle, not font size) ----------
-const billboards = new Set();
+const billboards = new Set(); const _bbv = new THREE.Vector3();
 /**
  * label(text, { size, width, color, bg, face, above, ...placement })
  *   size   'small' | 'comfortable' | 'large' | 'huge' | arcminutes  (cap height; floor 25')
@@ -204,53 +230,68 @@ function label(text, opts = {}){
   if (opts.above){ const b = localBox(opts.above); const c = b.getCenter(new THREE.Vector3()); pos = new THREE.Vector3(c.x, b.max.y + (opts.gap ?? 0.06), c.z); }
   else pos = resolvePosition({ height:'eye', ...opts });
   const distance = Math.max(0.05, pos.distanceTo(eyePos()));
-  let arcmin = typeof size === 'number' ? size : TEXT_ARCMIN[size];
-  if (arcmin === undefined) throw new Error(`Unknown text size "${size}"`);
-  arcmin = Math.max(arcmin, TEXT_ARCMIN.MIN);
-  const capH = opts.capHeight ?? arcmin * ARCMIN * distance;          // metres (cap height of body text)
-  const theme = THEMES[opts.theme ?? 'dark'] ?? THEMES.dark;
-  const noBg = opts.bg === false;
-  const fontPx = 96, capPx = 0.705*fontPx, lineH = 1.3*fontPx, titleScale = opts.title ? 1.35 : 1;
-  const padX = noBg ? 0 : 0.55*fontPx, padY = noBg ? 0 : 0.42*fontPx, margin = noBg ? 0.12*fontPx : 0.3*fontPx;   // margin leaves room for the shadow / outline
-  const accentW = opts.accent && !noBg ? 0.14*fontPx : 0;
-  const mPerPx = capH / capPx;
-  const cv = document.createElement('canvas'); const ctx = cv.getContext('2d');
-  const bodyFont = `600 ${fontPx}px ${LABEL_FONT}`, titleFont = `800 ${Math.round(fontPx*titleScale)}px ${LABEL_FONT}`;
-  const maxPx = opts.width ? opts.width/mPerPx - 2*padX - accentW - 2*margin : Infinity;
-  const lines = [];   // { text, title }
-  String(text).split('\n').forEach((para, pi) => {
-    const title = !!opts.title && pi === 0; ctx.font = title ? titleFont : bodyFont;
-    let line = '';
-    for (const w of para.split(' ')){ const t = line ? line + ' ' + w : w; if (ctx.measureText(t).width > maxPx && line){ lines.push({ text: line, title }); line = w; } else line = t; }
-    lines.push({ text: line, title });
-  });
-  const widthOf = l => { ctx.font = l.title ? titleFont : bodyFont; return ctx.measureText(l.text).width; };
-  const heightOf = l => l.title ? lineH*titleScale : lineH;
-  const textW = Math.max(...lines.map(widthOf)), textH = lines.reduce((a, l) => a + heightOf(l), 0) - (lineH - fontPx)*0.55;
-  const wPx = Math.ceil(textW + 2*padX + accentW + 2*margin), hPx = Math.ceil(textH + 2*padY + 2*margin);
-  cv.width = wPx; cv.height = hPx;
-  const r = 0.34*fontPx;
-  if (!noBg){
-    ctx.save(); ctx.shadowColor = 'rgba(0,0,0,0.28)'; ctx.shadowBlur = 0.22*fontPx; ctx.shadowOffsetY = 0.06*fontPx;
-    ctx.fillStyle = typeof opts.bg === 'string' ? opts.bg : theme.bg; ctx.beginPath(); ctx.roundRect(margin, margin, wPx - 2*margin, hPx - 2*margin, r); ctx.fill(); ctx.restore();
-    ctx.strokeStyle = theme.border; ctx.lineWidth = 3; ctx.beginPath(); ctx.roundRect(margin + 1.5, margin + 1.5, wPx - 2*margin - 3, hPx - 2*margin - 3, r - 1.5); ctx.stroke();
-    if (accentW){ ctx.fillStyle = opts.accent; ctx.beginPath(); ctx.roundRect(margin + padX*0.45, margin + padY, accentW*0.55, hPx - 2*margin - 2*padY, accentW*0.3); ctx.fill(); }
-  }
-  const color = opts.color ?? theme.color;
-  ctx.textBaseline = 'alphabetic'; ctx.textAlign = opts.align ?? 'center';
-  const left = margin + accentW + padX, right = wPx - margin - padX;
-  const x = ctx.textAlign === 'left' ? left : ctx.textAlign === 'right' ? right : (left + right)/2;
-  const outline = opts.outline ?? (noBg && isLight(color));
-  let y = margin + padY;
-  for (const l of lines){
-    ctx.font = l.title ? titleFont : bodyFont; const cap = capPx * (l.title ? titleScale : 1); y += cap;
-    if (outline){ ctx.lineJoin = 'round'; ctx.lineWidth = 0.09*fontPx; ctx.strokeStyle = 'rgba(0,0,0,0.6)'; ctx.strokeText(l.text, x, y); }
-    ctx.fillStyle = (l.title || !opts.title) ? color : (opts.color ?? theme.muted); ctx.fillText(l.text, x, y);
-    y += heightOf(l) - cap;
-  }
-  const tex = new THREE.CanvasTexture(cv); tex.colorSpace = THREE.SRGBColorSpace; tex.anisotropy = 8; tex.minFilter = THREE.LinearMipmapLinearFilter;
-  const mesh = new THREE.Mesh(new THREE.PlaneGeometry(wPx*mPerPx, hPx*mPerPx),
-    new THREE.MeshBasicMaterial({ map: tex, transparent: true, side: THREE.DoubleSide, depthWrite: false }));
+  const paint = (text) => {
+    let arcmin = typeof size === 'number' ? size : TEXT_ARCMIN[size];
+    if (arcmin === undefined) throw new Error(`Unknown text size "${size}"`);
+    arcmin = Math.max(arcmin, TEXT_ARCMIN.MIN);
+    const capH = opts.capHeight ?? arcmin * ARCMIN * distance;          // metres (cap height of body text)
+    const theme = THEMES[opts.theme ?? 'dark'] ?? THEMES.dark;
+    const noBg = opts.bg === false;
+    const fontPx = 96, capPx = 0.705*fontPx, lineH = 1.3*fontPx, titleScale = opts.title ? 1.35 : 1;
+    const padX = noBg ? 0 : 0.55*fontPx, padY = noBg ? 0 : 0.42*fontPx, margin = noBg ? 0.12*fontPx : 0.3*fontPx;   // margin leaves room for the shadow / outline
+    const accentW = opts.accent && !noBg ? 0.14*fontPx : 0;
+    const mPerPx = capH / capPx;
+    const cv = document.createElement('canvas'); const ctx = cv.getContext('2d');
+    const bodyFont = `600 ${fontPx}px ${LABEL_FONT}`, titleFont = `800 ${Math.round(fontPx*titleScale)}px ${LABEL_FONT}`;
+    const maxPx = opts.width ? opts.width/mPerPx - 2*padX - accentW - 2*margin : Infinity;
+    const lines = [];   // { text, title }
+    String(text).split('\n').forEach((para, pi) => {
+      const title = !!opts.title && pi === 0; ctx.font = title ? titleFont : bodyFont;
+      let line = '';
+      for (const w of para.split(' ')){ const t = line ? line + ' ' + w : w; if (ctx.measureText(t).width > maxPx && line){ lines.push({ text: line, title }); line = w; } else line = t; }
+      lines.push({ text: line, title });
+    });
+    const widthOf = l => { ctx.font = l.title ? titleFont : bodyFont; return ctx.measureText(l.text).width; };
+    const heightOf = l => l.title ? lineH*titleScale : lineH;
+    const textW = Math.max(...lines.map(widthOf)), textH = lines.reduce((a, l) => a + heightOf(l), 0) - (lineH - fontPx)*0.55;
+    const wPx = Math.ceil(textW + 2*padX + accentW + 2*margin), hPx = Math.ceil(textH + 2*padY + 2*margin);
+    cv.width = wPx; cv.height = hPx;
+    const r = 0.34*fontPx;
+    if (!noBg){
+      ctx.save(); ctx.shadowColor = 'rgba(0,0,0,0.28)'; ctx.shadowBlur = 0.22*fontPx; ctx.shadowOffsetY = 0.06*fontPx;
+      ctx.fillStyle = typeof opts.bg === 'string' ? opts.bg : theme.bg; ctx.beginPath(); ctx.roundRect(margin, margin, wPx - 2*margin, hPx - 2*margin, r); ctx.fill(); ctx.restore();
+      ctx.strokeStyle = theme.border; ctx.lineWidth = 3; ctx.beginPath(); ctx.roundRect(margin + 1.5, margin + 1.5, wPx - 2*margin - 3, hPx - 2*margin - 3, r - 1.5); ctx.stroke();
+      if (accentW){ ctx.fillStyle = opts.accent; ctx.beginPath(); ctx.roundRect(margin + padX*0.45, margin + padY, accentW*0.55, hPx - 2*margin - 2*padY, accentW*0.3); ctx.fill(); }
+    }
+    const color = opts.color ?? theme.color;
+    ctx.textBaseline = 'alphabetic'; ctx.textAlign = opts.align ?? 'center';
+    const left = margin + accentW + padX, right = wPx - margin - padX;
+    const x = ctx.textAlign === 'left' ? left : ctx.textAlign === 'right' ? right : (left + right)/2;
+    const outline = opts.outline ?? (noBg && isLight(color));
+    let y = margin + padY;
+    for (const l of lines){
+      ctx.font = l.title ? titleFont : bodyFont; const cap = capPx * (l.title ? titleScale : 1); y += cap;
+      if (outline){ ctx.lineJoin = 'round'; ctx.lineWidth = 0.09*fontPx; ctx.strokeStyle = 'rgba(0,0,0,0.6)'; ctx.strokeText(l.text, x, y); }
+      ctx.fillStyle = (l.title || !opts.title) ? color : (opts.color ?? theme.muted); ctx.fillText(l.text, x, y);
+      y += heightOf(l) - cap;
+    }
+    const tex = new THREE.CanvasTexture(cv); tex.colorSpace = THREE.SRGBColorSpace; tex.anisotropy = 8; tex.minFilter = THREE.LinearMipmapLinearFilter;
+    return { tex, w: wPx*mPerPx, h: hPx*mPerPx, arcmin, capH };
+  };
+  const p0 = paint(text);
+  const arcmin = p0.arcmin, capH = p0.capH;
+  const mesh = new THREE.Mesh(new THREE.PlaneGeometry(p0.w, p0.h),
+    new THREE.MeshBasicMaterial({ map: p0.tex, transparent: true, side: THREE.DoubleSide, depthWrite: false }));
+  mesh.setText = (t) => {                                             // update in place — no rebuild, no leak
+    const np = paint(t);
+    const oldH = mesh.geometry.parameters?.height ?? np.h;
+    mesh.material.map?.dispose(); mesh.material.map = np.tex;
+    mesh.geometry.dispose(); mesh.geometry = new THREE.PlaneGeometry(np.w, np.h);
+    if (opts.anchor === 'top') mesh.position.y -= (np.h - oldH)/2;    // panel grows downward from a fixed top edge
+    else if (opts.anchor === 'bottom') mesh.position.y += (np.h - oldH)/2;
+    mesh.userData.label.text = String(t);
+    return mesh;
+  };
   mesh.renderOrder = 10;
   mesh.position.copy(pos);
   if (opts.above) { /* keep pos */ } else if (!opts.at) { /* pos is the panel centre */ }
@@ -318,10 +359,11 @@ function pointerSelectStart(p){
   const h = interactables.get(root);
   pointerRay(p); const hit = raycaster.intersectObject(root, true)[0];
   h.select?.(root, { point: hit?.point, pointer:p });
-  if (h.grab){ p.held = root; root.userData._parent = root.parent; p.object.attach(root); p.holdDist = hit?.distance ?? 1; }
+  if (h.grab === 'hold'){ p.held = root; p.holdOnly = true; p.holdDist = hit?.distance ?? 1; }   // a handle you hold: release fires, but it never moves
+  else if (h.grab){ p.held = root; root.userData._parent = root.parent; p.object.attach(root); p.holdDist = hit?.distance ?? 1; }
 }
 function pointerSelectEnd(p){
-  if (p.held){ const root = p.held; (root.userData._parent ?? scene).attach(root); p.held = null; interactables.get(root)?.release?.(root, { pointer:p }); }
+  if (p.held){ const root = p.held; if (!p.holdOnly) (root.userData._parent ?? scene).attach(root); p.held = null; p.holdOnly = false; interactables.get(root)?.release?.(root, { pointer:p }); }
 }
 
 // ---------- XR controllers ----------
@@ -439,7 +481,7 @@ function desktopUpdate(dt){
   if (keys.has('KeyS') || keys.has('ArrowDown')) rig.position.addScaledVector(f, -speed);
   if (keys.has('KeyA') || keys.has('ArrowLeft')) rig.position.addScaledVector(r, -speed);
   if (keys.has('KeyD') || keys.has('ArrowRight')) rig.position.addScaledVector(r, speed);
-  if (desk.held){   // carried object follows the mouse at the distance it was picked up
+  if (desk.held && !desk.holdOnly){   // carried object follows the mouse at the distance it was picked up
     raycaster.setFromCamera(mouse, camera);
     const w = raycaster.ray.at(desk.holdDist, new THREE.Vector3()); desk.held.position.copy(camera.worldToLocal(w));
   }
@@ -546,12 +588,25 @@ function showAuditPanel(r){
 function audit(){
   const eye = eyePos(); const rows = []; const warnings = [], errors = [], notes = [];
   const boxes = [];
+  // stations sanity: malformed entries warn; only stations away from the origin count for warning suppression
+  const badStations = stations.filter(s => !Array.isArray(s) || s.length < 2 || s.length > 3 || s.some(v => typeof v !== 'number'));
+  for (const s of badStations) warnings.push(`stations entry ${JSON.stringify(s)} is malformed — use [x, z] or [x, z, facingDeg]`);
+  const awayStations = stations.filter(s => !badStations.includes(s) && Math.hypot(s[0], s[1]) > 0.5);
   for (const [obj, meta] of tracked){
     if (!obj.parent || obj.parent === debugGroup) continue;
+    let root = obj; while (root.parent) root = root.parent;
+    if (root !== scene && root !== rig){ warnings.push(`${obj.name} is not attached to the scene — it will never render (a shape.group() must be scene.add()ed or place()d before things go inside it)`); continue; }
     obj.updateWorldMatrix(true, true);
     const b = new THREE.Box3().setFromObject(obj, true); if (b.isEmpty()) continue;
     const c = b.getCenter(new THREE.Vector3()), s = b.getSize(new THREE.Vector3());
     const { az, el, dist } = bearingOf(c);
+    let visNow = true; for (let o = obj; o; o = o.parent) if (o.visible === false){ visNow = false; break; }
+    if (!visNow){                                    // hidden at audit time: only its text size still matters (it may be shown later)
+      const L = obj.userData.label;
+      if (L){ const actualArcmin = L.capHeight / (dist*ARCMIN);
+        if (actualArcmin < TEXT_ARCMIN.MIN - 1) errors.push(`label "${L.text}" (hidden at start) reads at ${actualArcmin.toFixed(0)}' from here — below the ${TEXT_ARCMIN.MIN}' floor`); }
+      continue;
+    }
     const maxDim = Math.max(s.x, s.y, s.z);
     const angular = THREE.MathUtils.radToDeg(2*Math.atan((maxDim/2)/Math.max(dist, 1e-3)));
     const inView = Math.abs(az) <= 45 && el >= -35 && el <= 30;
@@ -560,14 +615,16 @@ function audit(){
                 dist_m: +dist.toFixed(2), azimuth_deg: +az.toFixed(0), elevation_deg: +el.toFixed(0), angular_deg: +angular.toFixed(1), inStartView: inView, flags };
     if (b.min.y < -0.02){ flags.push('below-floor'); errors.push(`${obj.name} extends ${(-b.min.y).toFixed(2)} m below the floor`); }
     if (Math.hypot(c.x, c.z) > floorRadius){ flags.push('beyond-floor'); warnings.push(`${obj.name} is ${Math.hypot(c.x, c.z).toFixed(1)} m out — past the edge of the ${floorRadius} m floor`); }
-    if (Math.abs(az) > 100 && !stations.length){ flags.push('behind-user'); warnings.push(`${obj.name} starts behind the user (azimuth ${az.toFixed(0)}°)`); }
+    if (Math.abs(az) > 100 && !awayStations.length){ flags.push('behind-user'); warnings.push(`${obj.name} starts behind the user (azimuth ${az.toFixed(0)}°)`); }
+    if ((meta.kind === 'interactive' || meta.kind === 'label') && Math.abs(az) > 60 && Math.abs(az) <= 100 && !awayStations.length){
+      flags.push('far-off-view'); warnings.push(`${obj.name} sits at azimuth ${az.toFixed(0)}° — well outside the starting view, so the visitor may never find it; prefer 'ahead-left'/'ahead-right' (±35°) or add a station facing it`); }
     if (dist < 0.25){ flags.push('inside-head'); errors.push(`${obj.name} is ${dist.toFixed(2)} m from the eyes — inside the user's head`); }
     if (angular > 120){ flags.push('fills-view'); warnings.push(`${obj.name} spans ${angular.toFixed(0)}° — it fills the whole view`); }
     if (angular < 0.5){ flags.push('tiny'); warnings.push(`${obj.name} is only ${angular.toFixed(2)}° across — barely visible`); }
     if (meta.kind === 'interactive'){
       const h = interactables.get(obj);
       if (angular < 1.5){ flags.push('hard-to-point-at'); warnings.push(`${obj.name} is interactive but only ${angular.toFixed(1)}° across — hard to point at`); }
-      if (h?.grab && dist > H.reach*1.7){ flags.push('grab-out-of-reach'); warnings.push(`${obj.name} is grabbable but ${dist.toFixed(2)} m away — beyond arm's reach, so it will hang at the end of the pointer ray instead of sitting in the hand; put it at 'reach' if it should feel hand-held`); }
+      if (h?.grab && h.grab !== 'hold' && dist > H.reach*1.7){ flags.push('grab-out-of-reach'); warnings.push(`${obj.name} is grabbable but ${dist.toFixed(2)} m away — beyond arm's reach, so it will hang at the end of the pointer ray instead of sitting in the hand; put it at 'reach' if it should feel hand-held`); }
     }
     if (obj.userData.label){
       const L = obj.userData.label; r.text = { text: L.text, capHeight_cm: +(L.capHeight*100).toFixed(1), arcmin: L.arcmin, sizedForDistance_m: +L.distance.toFixed(2) };
@@ -591,7 +648,7 @@ function audit(){
     else if (deep && A.kind === 'interactive' && B.kind === 'interactive') warnings.push(`${A.obj.name} and ${B.obj.name} are overlapping interactive targets — pointing will hit the wrong one. Increase the angle between them or move the row further out`);
     else if (!aL && !bL) notes.push(`${A.obj.name} and ${B.obj.name} overlap (fine if intended)`);
   }
-  if (rows.length && !rows.some(r => r.inStartView) && !stations.length) warnings.push('Nothing is inside the comfortable starting view (±45° horizontal, -35°..+30° vertical)');
+  if (rows.length && !rows.some(r => r.inStartView) && !awayStations.length) warnings.push('Nothing is inside the comfortable starting view (±45° horizontal, -35°..+30° vertical)');
   const report = { stature_m: H.stature, eye_m: H.eye, reach_m: H.reach, stations: stations.length, objects: rows, errors, warnings, notes };
   if (!HARNESS){ showAuditPanel(report); console.group('%cXR audit', 'font-weight:bold'); console.table(rows.map(({flags, text, ...r}) => ({ ...r, flags: flags.join(' '), text: text?.text ?? '' }))); errors.forEach(e => console.error(e)); warnings.forEach(w => console.warn(w)); notes.forEach(n => console.info(n)); console.groupEnd(); }
   return report;
@@ -614,9 +671,15 @@ function loop(){
   const now = performance.now()/1000, dt = Math.min(now - lastT, 0.1); lastT = now; elapsed += dt; const t = elapsed;
   desktopUpdate(dt);
   if (renderer.xr.isPresenting) handleThumbsticks();
-  for (const p of pointers){ if (p.isXR){ p.line.visible = renderer.xr.isPresenting; } if (p.isXR && !renderer.xr.isPresenting) continue; if (!p.isXR && renderer.xr.isPresenting){ p.hovered && (setGlow(p.hovered,false), p.hovered=null); continue; } updatePointer(p); }
+  for (const p of pointers){
+    if (p.isXR){ p.line.visible = renderer.xr.isPresenting; } if (p.isXR && !renderer.xr.isPresenting) continue; if (!p.isXR && renderer.xr.isPresenting){ p.hovered && (setGlow(p.hovered,false), p.hovered=null); continue; } updatePointer(p);
+    if (p.held && p.holdOnly){                       // grab:'hold' handles get a per-frame drag with the pointer's current point
+      const h = interactables.get(p.held);
+      if (h?.drag){ pointerRay(p); h.drag(p.held, { point: raycaster.ray.at(p.holdDist, new THREE.Vector3()), pointer: p }); }
+    }
+  }
   const camPos = (debugCamera ?? camera).getWorldPosition(new THREE.Vector3());
-  for (const b of billboards) b.lookAt(camPos);
+  for (const b of billboards){ _bbv.setFromMatrixPosition(b.matrixWorld); b.lookAt(camPos.x, _bbv.y, camPos.z); }   // yaw-only: labels never roll
   if (DEBUG){ const mq = debugGroup.getObjectByName('mannequin'); if (mq) mq.visible = Math.hypot(camPos.x, camPos.z) > 0.6 || !!debugCamera; }   // don't stand inside the mannequin's head on desktop
   for (const a of anims) a(dt, t);
   try { content.frame?.(dt, t); } catch (e) { showError('frame(): ' + e.message); content.frame = null; }
@@ -651,6 +714,6 @@ const XR = { THREE, scene, rig, camera, renderer, floor, grid, H, D, SZ, DIR, C,
              track, recalibrate, audit, view, run, eyePos, get pointers(){ return pointers; }, ready: false,
              get frame(){ return content.frame; }, set frame(fn){ content.frame = fn; },   // `XR.frame = fn` is a common guess — make it work
              get build(){ return content.build; }, set build(fn){ content.build = fn; },
-             input, onButton, onController, button, teleportTo, ground, hand, stations, auditReportText,
+             input, onButton, onController, button, teleportTo, ground, sky, hand, stations, auditReportText,
              _test: { updatePointer, selectStart: pointerSelectStart, selectEnd: pointerSelectEnd, snapTurn, interactables, tracked, handleGamepads: handleThumbsticks, teleMarker } };
 window.XR = XR;

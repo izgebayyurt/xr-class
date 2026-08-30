@@ -1,0 +1,50 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>XR class · gallery</title>
+<style>
+  :root{color-scheme:dark}
+  body{margin:0;background:#101318;color:#e6eaf1;font:15px/1.5 system-ui,-apple-system,'Segoe UI',sans-serif}
+  main{max-width:880px;margin:0 auto;padding:28px 20px 60px}
+  h1{font-size:22px;margin:0 0 4px} .sub{color:#9fb3c8;margin:0 0 22px} .sub a{color:#8fd3ff}
+  .card{border:1px solid #2d3340;border-radius:10px;padding:14px 16px;margin:10px 0;background:#14171e}
+  .card h2{font-size:16px;margin:0 0 2px} .card h2 a{color:#8fd3ff;text-decoration:none} .card h2 a:hover{text-decoration:underline}
+  .tag{font-size:11px;font-weight:700;border-radius:10px;padding:2px 8px;margin-left:8px;vertical-align:middle}
+  .easy{background:#173626;color:#7bd6a0} .medium{background:#332a14;color:#ffd54f} .hard{background:#381c20;color:#ff8a80}
+  p{margin:4px 0 0;color:#b9c2cf;font-size:14px}
+  .dbg{font-size:12px;color:#66707e} .dbg a{color:#66707e}
+</style>
+</head>
+<body>
+<main>
+  <h1>Twelve rooms</h1>
+  <p class="sub">Teaching environments built with the class pipeline — each one grew from a <a href="brief.html">questionnaire brief</a>.
+     Open a room on this screen (drag to look, WASD to walk, click to interact) or in the headset (open the link in the Quest browser, then ENTER VR).</p>
+  <div id="list"></div>
+</main>
+<script>
+const rooms = [
+  ['env01-million-line', 'The Million Line', 'easy', 'A 6-metre line runs from 1 to a billion. Walk to where a million belongs and plant your marker — then see why everyone stands 600× too far along.'],
+  ['env02-body-units', 'Where Units Came From', 'easy', 'Hand, foot, cubit, yard, fathom — hold your own limbs against the rods those units came from, next to the one rod that belongs to no body: the metre.'],
+  ['env03-heads-tall', 'Seven and a Half Heads', 'easy', 'A short figure, a tall figure, and you — all exactly 7.5 of your own heads tall. A ratio has no size.'],
+  ['env04-ten-seconds', 'Ten Seconds Long', 'easy', 'Hold the trigger for what feels like ten seconds. Your guess becomes a bar on the floor beside the real thing, and your error becomes a number.'],
+  ['env05-draw-with-your-feet', 'Draw With Your Feet', 'medium', 'The floor lights green when you obey a distance rule. Walk, and your footsteps paint a circle, a straight line, a parabola — a curve is a rule, not a shape.'],
+  ['env06-leaning-stack', 'The Leaning Stack', 'medium', 'A straight stack and a shoved-over stack of the same 20 discs. Slide the ruler through both: same slices at every height, same volume. Cavalieri, by hand.'],
+  ['env07-three-right-angles', 'Three Right Angles', 'medium', 'A triangle on a ball with three 90° corners — walk around to visit them all, then shrink it and watch 270° fall back toward the 180° of flat paper.'],
+  ['env08-gap-at-your-feet', 'The Gap at Your Feet', 'medium', 'Fan pentagons around a point on the floor and a 36° wedge of floor goes missing: 108° doesn’t divide into 360°. Only three shapes tile a plane.'],
+  ['env09-pendulum-wave', 'Pendulum Wave', 'hard', 'Eight pendulums, lengths set by T = 2π√(L/g). Release them together, watch the row braid into waves — and realign at exactly 24 seconds.'],
+  ['env10-slope-scrub', 'Scrubbing the Slope', 'hard', 'Drag a puck along f(x) = x³/3 − x while a tangent bar tips to the true slope and its trail quietly draws y = x² − 1. The derivative, left behind by your own hand.'],
+  ['env11-tower-race', 'Tower Race', 'hard', 'Five races, one bet each: steady +25 cm per second, or doubling from 1 mm? Watch the crossing moment move — steady wins early, doubling wins late.'],
+  ['env12-crank-slider', 'The Crank and the Slider', 'hard', 'Turn a real crank-rod-piston linkage with your hand and graph the piston against a pure cosine. They disagree by 25 mm, and the room shows you why.'],
+];
+document.getElementById('list').innerHTML = rooms.map(([slug, title, level, blurb]) => `
+  <div class="card">
+    <h2><a href="run.html?s=${slug}">${title}</a><span class="tag ${level}">${level}</span></h2>
+    <p>${blurb}</p>
+    <p class="dbg"><a href="run.html?s=${slug}&debug">open with audit panel</a> · <a href="make.html">remix your own</a></p>
+  </div>`).join('');
+</script>
+</body>
+</html>

@@ -24,8 +24,11 @@ CONTENT  (edit this block only)
 
      SHAPES   shape.box(w,h,d,color) · shape.ball(r,color) · shape.cylinder(r,h,color) · shape.cone(r,h,color) · shape.torus(r,tube,color)
               shape.panel(w,h,color) (flat, faces +Z) · shape.group() · shape.line([[x,y,z],...], color)
+              shape.hit(w,h,d) · shape.hitball(r) — invisible pointing targets (for tiny, wireframe or moving things)
               colors: 'red' 'orange' 'yellow' 'green' 'teal' 'blue' 'purple' 'pink' 'white' 'grey' 'dark' 'black' or a hex number
               mat(color, {opacity, transparent, emissive, ...}) for a custom material
+              recolour at runtime with the palette: mesh.material.color.setHex(C.teal) — bare CSS names ('green') miss the palette
+              a shape.group() renders ONLY once it is scene.add()ed or place()d — a group you never attach is silently invisible
 
      PLACE    place(obj, { dist, dir, height, anchor:'bottom'|'center', face:true })   ← use words, not coordinates
               fit(obj, 'head' | metres)   scale so its largest dimension matches (bounding box — pointy shapes look smaller than boxes)
@@ -39,22 +42,40 @@ CONTENT  (edit this block only)
               label('text', { parent: mesh, at:[x,y,z], capHeight: 0.04 })   glued to the parent: rotates WITH it, never turns to the user.
               Text that belongs on a surface (button, panel, sign board) must be a parented label with bg:false, lifted off the
               surface (offset ≥ 0.03 along its normal) so it doesn't z-fight. Only free-floating text should turn to face the user.
+              CHANGING text: lbl.setText('new text') updates a label in place. NEVER remove-and-recreate a label per frame or per
+              event — that leaks GPU memory. Make each label once in build(), then setText / .visible from then on.
+              A panel grows about its centre when setText adds lines — pass anchor:'top' so it grows downward from a fixed top edge.
               style: theme:'dark'|'light'|'glass' · title:true (first line bigger, rest muted) · accent:'#f28b82' (colour bar) · bg:false (text only, auto-outlined)
 
-     INTERACT interactive(obj, { hover(obj), unhover(obj), select(obj, {point}), release(obj), grab:true })
+     INTERACT interactive(obj, { hover(obj), unhover(obj), select(obj, {point}), release(obj), grab:true|'hold' })
               select = trigger press (VR) / click (desktop) while pointing at it. Objects glow on hover by default.
+              grab:true carries the object in the hand. grab:'hold' is for handles that must NOT move on their own (slider knobs,
+              cranks, press-and-hold pads): select fires on grab, release on let-go, the engine never repositions the object, and
+              drag(obj, {point, pointer}) fires EVERY FRAME while held with where the pointer ray now points — clamp/map that point
+              onto your rail or dial yourself. Use drag; do not guess the hand via onController (wrong hand, dead on desktop).
+              Register interactive() on the handle users see (a group is fine) — never grab:true on an invisible child proxy.
               tone(freqHz, seconds, 'sine'|'square'|'triangle')   spin(obj, degPerSec, 'x'|'y'|'z')   bob(obj, amplitude, period)
 
      BUTTONS  onButton((name, pressed, pointer) => ...)  name: 'A' 'B' (right) 'X' 'Y' (left) 'trigger' 'squeeze' 'thumbstick' · button('A') = held now?
               input.teleport = 'thumbstick' | 'A' | 'both' | 'none' · input.teleportGuard = () => false to suppress teleport (e.g. while aiming)
               onController((p, connected) => { if (p.hand === 'right') p.object.add(thing) })   put something "in the hand" (do it here, not in build) · teleportTo(point)
      WORLD    ground({ color:'green', grid:false, arrow:false, radius: 25 })   radius = how far you can teleport (default 8 m)
+              sky({ top:'black', bottom:'dark' })   retint the sky + horizon to match the mood (default is daylight blue)
               stations.push([x, z, facingDeg])  places the user will stand; the audit judges each object from the nearest one
+              After place()ing a group, zero any child offset you parked "for the bounding box" — place() anchors on the whole
+              group's box, and a forgotten mid-height child silently lifts or misplaces everything (use numeric height instead).
      LOOP     frame(dt, t) runs every frame.   XR.camera.getWorldPosition(v) = where the user's head is now.
 
      RULES    • Everything you build goes inside build(). Keep frame() cheap.  • Put the first thing to look at 'ahead' at 'near'..'room'.
               • Grabbable things go at 'reach'. Things to read go at 'near'..'room', 'eye' or 'chest' height.  • Stay within 'far'.
               • Never place anything at 'touch' height 'eye' (it's in the user's face).  • No external files, models, images or fonts.
+              • Interactive things and text live in the front arc (±60° max; ±35° is comfortable) unless a station faces them.
+              • End with the payoff: after the key interaction, one line of text must state the lesson itself — the comparison or
+                number the room exists to teach. It appears AT the moment and place the result appears (gated on that interaction,
+                where the visitor is already looking) — never as a standing caption shown before the experience.
+              • Never distort a meaning-carrying object to silence an audit warning — if its size, orientation or position IS the
+                content, move its neighbours instead. Any lift-off nudge stays small relative to the quantity being measured.
+              • THREE.InstancedMesh: set .frustumCulled = false (its auto bounds don't follow your instances).
 ```
 
 The CONTENT block always has this shape:
