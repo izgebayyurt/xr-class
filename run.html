@@ -27,19 +27,33 @@
   const boot = document.getElementById('boot');
   const fail = (msg) => { boot.innerHTML = msg; };
   try {
-    const m = location.hash.match(/c=([A-Za-z0-9\-_]+)/);
-    if (!m){ fail('No scene in this link.<br><br>Make one at <a style="color:#8fd3ff" href="make.html">make.html</a> — paste the code block Claude gave you and it becomes a link like this one.'); return; }
-    const b64 = m[1].replace(/-/g, '+').replace(/_/g, '/');
-    const bytes = Uint8Array.from(atob(b64), c => c.charCodeAt(0));
-    const stream = new Blob([bytes]).stream().pipeThrough(new DecompressionStream('deflate-raw'));
-    const code = await new Response(stream).text();
+    let code = null, hash = location.hash;
+    const named = new URLSearchParams(location.search).get('s');
+    if (named){                                     // short link: the scene lives on the class site as scenes/<name>.js
+      if (!/^[a-z0-9_-]{1,60}$/i.test(named)){ fail('That is not a valid scene name.'); return; }
+      const r = await fetch('scenes/' + named + '.js').catch(() => null);
+      if (!r || !r.ok){ fail('No scene called “' + named + '” on the class site.'); return; }
+      code = await r.text();
+      // build the equivalent #c= hash so "view code" still works
+      const st = new Blob([new TextEncoder().encode(code)]).stream().pipeThrough(new CompressionStream('deflate-raw'));
+      const buf = new Uint8Array(await new Response(st).arrayBuffer());
+      let b = ''; for (let i = 0; i < buf.length; i += 0x8000) b += String.fromCharCode(...buf.subarray(i, i + 0x8000));
+      hash = '#c=' + btoa(b).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
+    } else {
+      const m = location.hash.match(/c=([A-Za-z0-9\-_]+)/);
+      if (!m){ fail('No scene in this link.<br><br>Make one at <a style="color:#8fd3ff" href="make.html">make.html</a> — paste the code block Claude gave you and it becomes a link like this one.'); return; }
+      const b64 = m[1].replace(/-/g, '+').replace(/_/g, '/');
+      const bytes = Uint8Array.from(atob(b64), c => c.charCodeAt(0));
+      const stream = new Blob([bytes]).stream().pipeThrough(new DecompressionStream('deflate-raw'));
+      code = await new Response(stream).text();
+    }
     if (!code.includes('XR.run')){ fail('This link does not contain a valid scene block.'); return; }
     for (let i = 0; i < 400 && !window.XR; i++) await new Promise(r => setTimeout(r, 25));   // engine loads from the class site
     if (!window.XR){ fail('The engine did not load. Check that the class site is reachable, then reload.'); return; }
     const s = document.createElement('script'); s.type = 'module'; s.textContent = code; document.body.appendChild(s);
     boot.remove();
     const remix = document.getElementById('remix');
-    if (!new URLSearchParams(location.search).has('harness')){ remix.hidden = false; remix.href = 'make.html' + location.hash; }
+    if (!new URLSearchParams(location.search).has('harness')){ remix.hidden = false; remix.href = 'make.html' + hash; }
   } catch (e) { fail('Could not read this link: ' + (e.message || e)); }
 })();
 </script>

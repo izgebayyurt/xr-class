@@ -1,0 +1,209 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>XR class · project brief</title>
+<style>
+  :root{color-scheme:dark}
+  body{margin:0;background:#101318;color:#e6eaf1;font:15px/1.5 system-ui,-apple-system,'Segoe UI',sans-serif}
+  main{max-width:820px;margin:0 auto;padding:28px 20px 80px}
+  h1{font-size:22px;margin:0 0 4px} .sub{color:#9fb3c8;margin:0 0 8px}
+  .sub a, .steps a{color:#8fd3ff}
+  h2{font-size:16px;margin:30px 0 4px;color:#8fd3ff} .hint{color:#9fb3c8;font-size:13px;margin:0 0 10px}
+  label.q{display:block;margin:14px 0 4px;font-weight:600;font-size:14px}
+  input[type=text],textarea,select{width:100%;box-sizing:border-box;background:#171a21;color:#dfe5ee;border:1px solid #2d3340;border-radius:8px;padding:9px 11px;font:14px/1.45 inherit}
+  textarea{resize:vertical;min-height:56px}
+  input:focus,textarea:focus,select:focus{outline:2px solid #4a86c8}
+  .radio-row{display:flex;flex-direction:column;gap:8px;margin-top:6px}
+  .radio-row label{display:flex;gap:9px;align-items:flex-start;background:#171a21;border:1px solid #2d3340;border-radius:8px;padding:9px 11px;cursor:pointer;font-size:14px}
+  .radio-row label:has(input:checked){border-color:#4a86c8;background:#1a2230}
+  .radio-row input{margin-top:3px}
+  .radio-row b{margin-right:4px}
+  .inter{border:1px solid #2d3340;border-radius:10px;padding:12px 14px;margin:12px 0;background:#14171e}
+  .inter h3{margin:0 0 6px;font-size:14px;color:#cfd6e0}
+  .slots{display:grid;grid-template-columns:110px 1fr;gap:8px 10px;align-items:center;font-size:13px;color:#9fb3c8}
+  button{font:600 14px system-ui,sans-serif;padding:11px 20px;border-radius:8px;border:0;background:#3e7bfa;color:#fff;cursor:pointer;margin:14px 10px 0 0}
+  button.ghost{background:#242a35;color:#dfe5ee}
+  #msg{margin-top:10px;font-size:13px} .warn{color:#ffd54f} .err{color:#ff8a80} .ok{color:#9ad5a0}
+  #preview{display:none;margin-top:14px;width:100%;box-sizing:border-box;height:280px;font:12px/1.4 ui-monospace,'SF Mono',Consolas,monospace}
+  details{margin:22px 0;border:1px solid #2d3340;border-radius:10px;padding:12px 16px;color:#c3ccd8;font-size:14px}
+  summary{cursor:pointer;font-weight:600;color:#dfe5ee}
+  .steps{background:#14202b;border:1px solid #23405a;border-radius:10px;padding:12px 16px;margin-top:26px;font-size:14px}
+  .steps b{color:#8fd3ff}
+  #secD[hidden]{display:none}
+</style>
+</head>
+<body>
+<main>
+  <h1>Your XR project brief</h1>
+  <p class="sub">Fill this in with body words, not metres: <i>arm's reach · a step away · across the room</i> and <i>floor · knee · waist · chest · eye</i>.
+     Sizes: <i>fingertip · egg · apple · hand · head · torso · person · door</i>. Leave a line blank if you truly don't care — Claude will choose.
+     One button at the bottom turns your answers into the complete first message for Claude.</p>
+
+  <details><summary>What you get without asking (don't spend words on these)</summary>
+    <p>A metric world with the floor at floor level and you at the centre facing forward. Controllers with a pointing ray, trigger to select,
+    thumbstick to teleport and turn. Hover glow on anything interactive. Ground, sky, lighting, a 1&nbsp;m grid. Text sized to be readable at its
+    distance. Everything at "eye" or "chest" height adjusts to the real wearer. Desktop preview with mouse and keyboard. Errors appear as red text
+    on screen. Shapes are primitives (boxes, balls, cylinders, cones, rings, panels, lines) — no downloaded models, images, fonts or sounds.
+    Sounds are simple tones. No physics engine. One person, no multiplayer.</p>
+  </details>
+
+  <h2>A. The idea</h2>
+  <label class="q" for="idea">1. One sentence: "You put on the headset and …"</label>
+  <input type="text" id="idea" placeholder="e.g. …you're standing next to a cubic metre.">
+  <label class="q" for="feel">2. After two minutes, a visitor should understand or feel:</label>
+  <input type="text" id="feel">
+  <label class="q">3. Tier</label>
+  <div class="radio-row" id="tier">
+    <label><input type="radio" name="tier" value="1"><span><b>1 · Explore</b> — look at and walk around something. No interaction beyond moving.</span></label>
+    <label><input type="radio" name="tier" value="2" checked><span><b>2 · Touch</b> — point-and-select or grab things; each does one thing (glow, grow, speak, play a tone, show text).</span></label>
+    <label><input type="radio" name="tier" value="3"><span><b>3 · Rules</b> — score, turns, order, timing, win/lose. <i>Only if your interactions below are simple.</i> Usually needs a second round.</span></label>
+  </div>
+
+  <h2>B. The space</h2>
+  <label class="q" for="posture">4. Posture</label>
+  <select id="posture">
+    <option>standing in place</option>
+    <option>standing, with teleport</option>
+    <option>seated</option>
+  </select>
+  <label class="q" for="first">5. The first thing you see when you arrive (1–3 things — for each: what, how big, how far, which direction, how high)</label>
+  <textarea id="first" placeholder='e.g. "a head-sized glowing sphere, a step away, straight ahead, at chest height"'></textarea>
+  <label class="q" for="rest">6. Everything else in the space, same format (group repeated things)</label>
+  <textarea id="rest"></textarea>
+  <label class="q" for="around">7. Anything deliberately above, below, or behind you? (otherwise everything goes in front)</label>
+  <input type="text" id="around">
+
+  <h2>C. Interactions <span style="font-weight:400;color:#9fb3c8">(max 3 — Tier 1 leaves these blank)</span></h2>
+  <div id="inters"></div>
+
+  <div id="secD" hidden>
+    <h2>D. Rules and state <span style="font-weight:400;color:#9fb3c8">(Tier 3 only)</span></h2>
+    <label class="q" for="track">8. What is counted or tracked, and where it's shown</label>
+    <input type="text" id="track" placeholder='e.g. "strokes, on a sign across the room at eye level"'>
+    <label class="q" for="ends">9. What ends it, and what the visitor sees when it ends</label>
+    <input type="text" id="ends">
+    <label class="q" for="restart">10. How to start over</label>
+    <input type="text" id="restart">
+  </div>
+
+  <h2>E. Look, feel, words</h2>
+  <label class="q" for="mood">11. Three words for the mood</label>
+  <input type="text" id="mood">
+  <label class="q" for="colours">Colours (up to three from red orange yellow green teal blue purple pink white grey dark — or "you choose")</label>
+  <input type="text" id="colours">
+  <label class="q" for="exact">12. Any text that must appear exactly as written (title, labels, instructions)</label>
+  <textarea id="exact"></textarea>
+
+  <h2>F. Scope guard</h2>
+  <label class="q" for="oos">13. Out of scope — things you're explicitly not asking for</label>
+  <input type="text" id="oos" placeholder='e.g. "no realistic physics, no scoring, no sound"'>
+  <label class="q" for="cut">14. If something has to be cut to make it work today, cut this first:</label>
+  <input type="text" id="cut">
+  <label class="q" for="keep">15. Don't change:</label>
+  <input type="text" id="keep" placeholder='e.g. "keep the grid floor"'>
+
+  <div>
+    <button id="copy">Copy my message for Claude</button>
+    <button id="show" class="ghost">Show the message</button>
+    <button id="clear" class="ghost">Clear the form</button>
+  </div>
+  <div id="msg"></div>
+  <textarea id="preview" readonly></textarea>
+
+  <div class="steps">
+    <b>Then:</b> paste it as your first message to Claude (claude.ai) and send. Claude replies with one code block —
+    copy the whole block and turn it into a headset link at <a href="make.html">make.html</a>.
+    If something's off in the scene, open your link with <code>?debug</code>, press "Copy report for Claude", and paste that back into the chat.
+  </div>
+</main>
+<script>
+const KIT = "# Prompt kit (paste this whole file as your first message, then your brief)\n\nYou are writing the CONTENT block of a small WebXR page for a Quest 3. The page's engine is already written and loaded; you only write JavaScript that uses its API. Reply with ONE code block containing the complete CONTENT block and nothing else (no HTML, no imports, no explanations before it). The block must start with `const { ... } = XR;` and end with `XR.run({ build, frame });`.\n\nRules\n- Use only the API below and plain Three.js (available as `THREE` from the XR object). No external files, models, images, fonts or sounds. No libraries.\n- Place things with body words (dist/dir/height), never raw coordinates, unless the API gives no other way.\n- Put the first thing to look at 'ahead' at 'near'..'room'. Grabbable things go at 'reach'. Text at 'near'..'room', 'eye' or 'chest' height. Stay within 'far'.\n- Anything selectable must be easy to hit with a laser from where the user stands. If the visible thing is smaller than an 'apple', drawn as lines/wireframe, or fast-moving, give it an invisible solid stand-in (a box or sphere with opacity ~0) as the actual interactive target.\n- Keep frame() cheap. Prefer fewer, larger objects. Under 250 lines.\n- If part of the brief is impossible with this API, do the closest thing you can and say so in one line AFTER the code block.\n\nAPI cheat sheet\n```\nCONTENT  (edit this block only)\n     API CHEAT SHEET  (everything is on the XR object; units are metres)\n\n     FRAME OF REFERENCE   origin = floor under the user's head at start · user faces -Z · +X = user's right\n       H.eye 1.58 · H.shoulder 1.39 · H.chest 1.25 · H.elbow 1.07 · H.waist 1.02 · H.hip 0.90 · H.knee 0.48 (for a 1.70 m person;\n       these rescale to the real wearer ~1.5 s into a VR session, and every placed object moves with them)\n       distances: 'touch' 0.35 · 'reach' 0.55 (comfortable arm's length) · 'near' 1.0 · 'room' 2.5 · 'far' 6.0 · floor edge 8.0\n       directions: 'ahead' · 'ahead-left' · 'ahead-right' (±35°, still inside the comfortable view) · 'left' · 'right' · 'behind' · or degrees (+ = right)\n       sizes (largest dimension): 'fingertip' .02 · 'egg' .06 · 'apple' .08 · 'hand' .10 · 'head' .22 · 'torso' .5 · 'person' 1.7 · 'door' 2 · 'car' 4\n\n     SHAPES   shape.box(w,h,d,color) · shape.ball(r,color) · shape.cylinder(r,h,color) · shape.cone(r,h,color) · shape.torus(r,tube,color)\n              shape.panel(w,h,color) (flat, faces +Z) · shape.group() · shape.line([[x,y,z],...], color)\n              colors: 'red' 'orange' 'yellow' 'green' 'teal' 'blue' 'purple' 'pink' 'white' 'grey' 'dark' 'black' or a hex number\n              mat(color, {opacity, transparent, emissive, ...}) for a custom material\n\n     PLACE    place(obj, { dist, dir, height, anchor:'bottom'|'center', face:true })   ← use words, not coordinates\n              fit(obj, 'head' | metres)   scale so its largest dimension matches (bounding box — pointy shapes look smaller than boxes)\n              spread([a,b,c], { dist, height, dir, span })   evenly on an arc around the user\n              A row of side-by-side things must fit its arc: room per item ≈ dist × angle between items (radians).\n              Four 0.3 m pads need ~20° apart at 'near' (1 m); at 'reach' they collide — move the row out, don't shrink the text.\n              remove(obj)\n\n     TEXT     label('text', { size:'small'|'comfortable'|'large'|'huge', width: metres, dist, dir, height })   sized by visual angle\n              label('text', { above: obj })   floats just above the object.  Free and 'above' labels always turn to face the user.\n              label('text', { parent: mesh, at:[x,y,z], capHeight: 0.04 })   glued to the parent: rotates WITH it, never turns to the user.\n              Text that belongs on a surface (button, panel, sign board) must be a parented label with bg:false, lifted off the\n              surface (offset ≥ 0.03 along its normal) so it doesn't z-fight. Only free-floating text should turn to face the user.\n              style: theme:'dark'|'light'|'glass' · title:true (first line bigger, rest muted) · accent:'#f28b82' (colour bar) · bg:false (text only, auto-outlined)\n\n     INTERACT interactive(obj, { hover(obj), unhover(obj), select(obj, {point}), release(obj), grab:true })\n              select = trigger press (VR) / click (desktop) while pointing at it. Objects glow on hover by default.\n              tone(freqHz, seconds, 'sine'|'square'|'triangle')   spin(obj, degPerSec, 'x'|'y'|'z')   bob(obj, amplitude, period)\n\n     BUTTONS  onButton((name, pressed, pointer) => ...)  name: 'A' 'B' (right) 'X' 'Y' (left) 'trigger' 'squeeze' 'thumbstick' · button('A') = held now?\n              input.teleport = 'thumbstick' | 'A' | 'both' | 'none' · input.teleportGuard = () => false to suppress teleport (e.g. while aiming)\n              onController((p, connected) => { if (p.hand === 'right') p.object.add(thing) })   put something \"in the hand\" (do it here, not in build) · teleportTo(point)\n     WORLD    ground({ color:'green', grid:false, arrow:false, radius: 25 })   radius = how far you can teleport (default 8 m)\n              stations.push([x, z, facingDeg])  places the user will stand; the audit judges each object from the nearest one\n     LOOP     frame(dt, t) runs every frame.   XR.camera.getWorldPosition(v) = where the user's head is now.\n\n     RULES    • Everything you build goes inside build(). Keep frame() cheap.  • Put the first thing to look at 'ahead' at 'near'..'room'.\n              • Grabbable things go at 'reach'. Things to read go at 'near'..'room', 'eye' or 'chest' height.  • Stay within 'far'.\n              • Never place anything at 'touch' height 'eye' (it's in the user's face).  • No external files, models, images or fonts.\n```\n\nThe CONTENT block always has this shape:\n```js\nconst { THREE, scene, shape, place, fit, label, interactive, tone, spin, bob, H, C } = XR;\n\nfunction build(){\n  // --- Example scene: delete everything in build() and write your own ---\n  const ball = shape.ball(0.12, 'orange');\n  place(ball, { dist:'reach', dir:'ahead', height:'chest' });\n  interactive(ball, { grab:true, select: () => tone(660, 0.12) });\n  label('Grab me', { above: ball, size:'comfortable' });\n\n  const pedestal = shape.cylinder(0.25, 0.9, 'grey');\n  place(pedestal, { dist:'near', dir:'ahead-right', height:'floor' });\n  const cube = shape.box(0.25, 0.25, 0.25, 'blue');\n  place(cube, { dist:'near', dir:'ahead-right', height: 0.9 + 0.125 });\n  spin(cube, 40);\n  interactive(cube, { select: (obj) => { obj.material.color.setHex(Math.random()*0xffffff); tone(440, 0.1, 'triangle'); } });\n  label('Point and pull the trigger', { above: cube, size:'comfortable', width: 0.6 });\n\n  const sign = label('Welcome.\\nWalk around with the thumbstick;\\npoint and pull the trigger to interact.', { dist:'room', dir:'ahead', height:'eye', size:'large', width: 1.6 });\n}\n\nfunction frame(dt, t){\n  // runs every frame (dt = seconds since last frame, t = seconds since start)\n}\n\nXR.run({ build, frame });\n```\n\n---- My brief (from the questionnaire) ----\n";
+const $ = id => document.getElementById(id);
+const DOES = ['', 'point + trigger', 'grab and move', 'walk up to', 'look at for a moment'];
+const THENS = ['', 'it stays', 'resets when you let go', 'resets after a few seconds', 'happens once only'];
+// three interaction blocks
+$('inters').innerHTML = [1,2,3].map(i => `
+  <div class="inter"><h3>Interaction ${i}</h3><div class="slots">
+    <span>You do</span><select id="do${i}">${DOES.map(o => `<option>${o}</option>`).join('')}</select>
+    <span>to</span><input type="text" id="to${i}" placeholder="which thing">
+    <span>and it</span><input type="text" id="it${i}" placeholder="what changes — visible change, sound, text that appears (write the text)">
+    <span>then</span><select id="then${i}">${THENS.map(o => `<option>${o}</option>`).join('')}</select>
+  </div></div>`).join('');
+
+const FIELDS = ['idea','feel','posture','first','rest','around','track','ends','restart','mood','colours','exact','oos','cut','keep',
+                'do1','to1','it1','then1','do2','to2','it2','then2','do3','to3','it3','then3'];
+const tierVal = () => document.querySelector('input[name=tier]:checked').value;
+const TIERS = { 1: '1 (Explore)', 2: '2 (Touch)', 3: '3 (Rules)' };
+
+function buildBrief(){
+  const v = id => $(id).value.trim();
+  const L = [];
+  L.push('A. The idea');
+  L.push('1. You put on the headset and ' + (v('idea').replace(/^(you put on the headset and\s*)/i, '') || '(you choose a small scene that fits the rest of this brief)'));
+  if (v('feel')) L.push('2. After two minutes a visitor should understand or feel: ' + v('feel'));
+  L.push('3. Tier: ' + TIERS[tierVal()]);
+  L.push('');
+  L.push('B. The space');
+  L.push('4. Posture: ' + v('posture') + '.');
+  L.push('5. First thing you see: ' + (v('first') || '(you choose — follow the placement rules)'));
+  if (v('rest')) L.push('6. Everything else: ' + v('rest'));
+  L.push('7. ' + (v('around') ? 'Above/below/behind me: ' + v('around') : 'Nothing behind me.'));
+  L.push('');
+  const ints = [1,2,3].map(i => ({ d: v('do'+i), to: v('to'+i), it: v('it'+i), then: v('then'+i) })).filter(x => x.d || x.to || x.it);
+  L.push('C. Interactions (max 3)');
+  if (tierVal() === '1' || !ints.length) L.push('(none — Tier 1, just looking and moving)');
+  ints.forEach((x, i) => L.push(`${i+1}. You do: ${x.d || 'point + trigger'} — to: ${x.to || '(you choose)'} — and it: ${x.it || '(you choose one simple response)'} — then: ${x.then || 'repeatable'}`));
+  L.push('');
+  if (tierVal() === '3'){
+    L.push('D. Rules and state');
+    L.push('8. Tracked: ' + (v('track') || '(you choose, keep it simple)'));
+    L.push('9. Ends: ' + (v('ends') || '(you choose)'));
+    L.push('10. Start over: ' + (v('restart') || '(you choose)'));
+    L.push('');
+  }
+  L.push('E. Look, feel, words');
+  L.push('11. Mood: ' + (v('mood') || 'you choose') + '. Colours: ' + (v('colours') || 'you choose') + '.');
+  if (v('exact')) L.push('12. Text that must appear exactly as written: ' + v('exact'));
+  L.push('');
+  L.push('F. Scope guard');
+  L.push('13. Out of scope: ' + (v('oos') || 'anything not described above'));
+  if (v('cut')) L.push('14. If something has to be cut, cut this first: ' + v('cut'));
+  if (v('keep')) L.push("15. Don't change: " + v('keep'));
+  return KIT + L.join('\n') + '\n';
+}
+function validate(){
+  const missing = [];
+  if (!$('idea').value.trim()) missing.push('the one-sentence idea (A1)');
+  if (!$('first').value.trim()) missing.push('the first thing you see (B5)');
+  return missing;
+}
+async function copyMessage(){
+  const msg = $('msg'); msg.className = ''; msg.textContent = '';
+  const missing = validate();
+  if (missing.length){ msg.className = 'err'; msg.textContent = 'Fill in ' + missing.join(' and ') + ' first — everything else can stay blank.'; return; }
+  const text = buildBrief();
+  $('preview').value = text;
+  try { await navigator.clipboard.writeText(text); }
+  catch { $('preview').style.display = 'block'; $('preview').select(); document.execCommand('copy'); }
+  msg.className = 'ok';
+  msg.textContent = `Copied ✓ — ${text.length.toLocaleString()} characters. Paste it as your first message to Claude.`;
+}
+$('copy').onclick = copyMessage;
+$('show').onclick = () => { $('preview').value = buildBrief(); const p = $('preview'); p.style.display = p.style.display === 'block' ? 'none' : 'block'; };
+$('clear').onclick = () => { if (!confirm('Clear all your answers?')) return; FIELDS.forEach(f => $(f).value = ''); $('posture').selectedIndex = 0; document.querySelector('input[name=tier][value="2"]').checked = true; syncTier(); saveDraft(); $('msg').textContent = ''; $('preview').style.display = 'none'; };
+function syncTier(){ $('secD').hidden = tierVal() !== '3'; }
+document.querySelectorAll('input[name=tier]').forEach(r => r.onchange = () => { syncTier(); saveDraft(); });
+// draft persistence (best-effort: private windows or blocked storage just skip it)
+function saveDraft(){ try { localStorage.setItem('xr-brief', JSON.stringify({ tier: tierVal(), f: Object.fromEntries(FIELDS.map(f => [f, $(f).value])) })); } catch {} }
+function loadDraft(){ try {
+  const d = JSON.parse(localStorage.getItem('xr-brief')); if (!d) return;
+  FIELDS.forEach(f => { if (d.f?.[f] != null) $(f).value = d.f[f]; });
+  const t = document.querySelector(`input[name=tier][value="${d.tier}"]`); if (t) t.checked = true;
+} catch {} }
+FIELDS.forEach(f => $(f).addEventListener('input', saveDraft));
+loadDraft(); syncTier();
+</script>
+</body>
+</html>
