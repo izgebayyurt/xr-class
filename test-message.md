@@ -83,14 +83,16 @@ XR.run({ build, frame });
 
 ---- My brief (from the questionnaire) ----
 Tier: 2 (Touch).
-Idea: you put on the headset and stand in a tiny orchestra. After two minutes a visitor should understand that pitch rises with height.
+Idea: you put on the headset and stand next to a cubic metre. After two minutes a visitor should FEEL how much bigger a cubic metre is than a cubic centimetre — the factor of a million that classrooms only say in words.
 Posture: standing in place, no teleport needed.
-First view: three floating spheres in a row ahead of me, a step away, at waist, chest and eye height, each about apple-sized. A sign across the room at eye level that says exactly: "Tap a sphere to hear it. Higher = higher pitch."
-Everything else: nothing behind or above me.
+First view: a wireframe (edges-only) cube exactly 1 m on each side, sitting on the floor a step away, straight ahead — big enough to imagine climbing inside. On a waist-high pedestal at arm's reach to the right, a solid cube exactly 10 cm on a side (one litre). Floating at arm's reach to the left at chest height, a tiny solid cube exactly 1 cm on a side.
+Everything else: a sign across the room at eye level that says exactly: "Every cube here is 10x wider than the last. How many small cubes fill the big one?"
 Interactions (max 3):
-1. You do: point + trigger — to: any sphere — and it: pulses bigger for half a second and plays a tone; the higher the sphere, the higher the pitch — then: it can be tapped again right away.
-2. You do: point + trigger — to: the sign — and it: plays all three tones in order, low to high — then: repeatable.
-Look/feel: calm, minimal, night-ish. Colours: teal, purple, white.
-Out of scope: no scoring, no movement, no physics.
-If something must be cut: cut the sign's chord interaction first.
-Don't change: keep the grid floor visible.
+1. You do: point + trigger — to: the 1 cm cube — and it: pulses bigger for a moment, a label above it says "1 cm3 — a sugar cube. 1000 of me fill the litre cube.", and a short high tone plays — then: repeatable.
+2. You do: point + trigger — to: the 10 cm cube — and it: pulses, a label above it says "1000 cm3 = 1 litre. 1000 of me fill the metre cube.", and a middle tone plays — then: repeatable.
+3. You do: point + trigger — to: the metre cube — and it: briefly shows a 10x10x10 grid hint on its faces (lines only, no solid cubes), a label above says "1 m3 = 1,000,000 cm3. You could stand inside me.", and a low tone plays — then: the grid disappears after a few seconds, repeatable.
+Pointing hint: a wireframe cube and a 1 cm cube are very hard to hit with the laser — give each an invisible (or nearly invisible) solid box or sphere as the actual pointing target.
+Look/feel: clean, classroom-bright. Colours: teal, yellow, white.
+Out of scope: no scoring, no movement mechanics, no physics, no filling animations beyond the grid hint.
+If something must be cut: cut the grid hint first (keep the label).
+Don't change: keep the grid floor visible — its squares are exactly 1 metre, let it help.
