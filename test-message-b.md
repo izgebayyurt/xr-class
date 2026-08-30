@@ -30,6 +30,8 @@ CONTENT  (edit this block only)
      PLACE    place(obj, { dist, dir, height, anchor:'bottom'|'center', face:true })   ← use words, not coordinates
               fit(obj, 'head' | metres)   scale so its largest dimension matches (bounding box — pointy shapes look smaller than boxes)
               spread([a,b,c], { dist, height, dir, span })   evenly on an arc around the user
+              A row of side-by-side things must fit its arc: room per item ≈ dist × angle between items (radians).
+              Four 0.3 m pads need ~20° apart at 'near' (1 m); at 'reach' they collide — move the row out, don't shrink the text.
               remove(obj)
 
      TEXT     label('text', { size:'small'|'comfortable'|'large'|'huge', width: metres, dist, dir, height })   sized by visual angle

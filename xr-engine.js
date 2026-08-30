@@ -579,9 +579,17 @@ function audit(){
     }
     boxes.push({ obj, b, kind: meta.kind }); rows.push(r);
   }
+  const _related = (a, b) => { for (let o = a; o; o = o.parent) if (o === b) return true; for (let o = b; o; o = o.parent) if (o === a) return true; return false; };
+  const _is = new THREE.Box3(), _iv = new THREE.Vector3();
   for (let i = 0; i < boxes.length; i++) for (let j = i+1; j < boxes.length; j++){
-    if (boxes[i].kind === 'label' || boxes[j].kind === 'label') continue;
-    if (boxes[i].b.intersectsBox(boxes[j].b)) notes.push(`${boxes[i].obj.name} and ${boxes[j].obj.name} overlap (fine if intended)`);
+    const A = boxes[i], B = boxes[j];
+    if (!A.b.intersectsBox(B.b) || _related(A.obj, B.obj)) continue;
+    _is.copy(A.b).intersect(B.b); _is.getSize(_iv);
+    const deep = [_iv.x, _iv.y, _iv.z].filter(v => v > 0.03).length >= 2;   // substantial overlap, not just touching edges
+    const aL = A.kind === 'label', bL = B.kind === 'label';
+    if (deep && aL && bL) warnings.push(`labels ${A.obj.name} and ${B.obj.name} overlap — their text collides. Space per item ≈ dist × angle between items: spread the row wider or move it to 'near'`);
+    else if (deep && A.kind === 'interactive' && B.kind === 'interactive') warnings.push(`${A.obj.name} and ${B.obj.name} are overlapping interactive targets — pointing will hit the wrong one. Increase the angle between them or move the row further out`);
+    else if (!aL && !bL) notes.push(`${A.obj.name} and ${B.obj.name} overlap (fine if intended)`);
   }
   if (rows.length && !rows.some(r => r.inStartView) && !stations.length) warnings.push('Nothing is inside the comfortable starting view (±45° horizontal, -35°..+30° vertical)');
   const report = { stature_m: H.stature, eye_m: H.eye, reach_m: H.reach, stations: stations.length, objects: rows, errors, warnings, notes };
