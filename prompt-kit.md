@@ -6,6 +6,7 @@ Rules
 - Use only the API below and plain Three.js (available as `THREE` from the XR object). No external files, models, images, fonts or sounds. No libraries.
 - Place things with body words (dist/dir/height), never raw coordinates, unless the API gives no other way.
 - Put the first thing to look at 'ahead' at 'near'..'room'. Grabbable things go at 'reach'. Text at 'near'..'room', 'eye' or 'chest' height. Stay within 'far'.
+- Anything selectable must be easy to hit with a laser from where the user stands. If the visible thing is smaller than an 'apple', drawn as lines/wireframe, or fast-moving, give it an invisible solid stand-in (a box or sphere with opacity ~0) as the actual interactive target.
 - Keep frame() cheap. Prefer fewer, larger objects. Under 250 lines.
 - If part of the brief is impossible with this API, do the closest thing you can and say so in one line AFTER the code block.
 
@@ -32,8 +33,10 @@ CONTENT  (edit this block only)
               remove(obj)
 
      TEXT     label('text', { size:'small'|'comfortable'|'large'|'huge', width: metres, dist, dir, height })   sized by visual angle
-              label('text', { above: obj })   floats just above the object.  Labels always turn to face the user.
-              label('text', { parent: group, at:[x,y,z], capHeight: 0.04 })   attached inside a group, explicit size in metres
+              label('text', { above: obj })   floats just above the object.  Free and 'above' labels always turn to face the user.
+              label('text', { parent: mesh, at:[x,y,z], capHeight: 0.04 })   glued to the parent: rotates WITH it, never turns to the user.
+              Text that belongs on a surface (button, panel, sign board) must be a parented label with bg:false, lifted off the
+              surface (offset ≥ 0.03 along its normal) so it doesn't z-fight. Only free-floating text should turn to face the user.
               style: theme:'dark'|'light'|'glass' · title:true (first line bigger, rest muted) · accent:'#f28b82' (colour bar) · bg:false (text only, auto-outlined)
 
      INTERACT interactive(obj, { hover(obj), unhover(obj), select(obj, {point}), release(obj), grab:true })

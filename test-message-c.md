@@ -33,8 +33,10 @@ CONTENT  (edit this block only)
               remove(obj)
 
      TEXT     label('text', { size:'small'|'comfortable'|'large'|'huge', width: metres, dist, dir, height })   sized by visual angle
-              label('text', { above: obj })   floats just above the object.  Labels always turn to face the user.
-              label('text', { parent: group, at:[x,y,z], capHeight: 0.04 })   attached inside a group, explicit size in metres
+              label('text', { above: obj })   floats just above the object.  Free and 'above' labels always turn to face the user.
+              label('text', { parent: mesh, at:[x,y,z], capHeight: 0.04 })   glued to the parent: rotates WITH it, never turns to the user.
+              Text that belongs on a surface (button, panel, sign board) must be a parented label with bg:false, lifted off the
+              surface (offset ≥ 0.03 along its normal) so it doesn't z-fight. Only free-floating text should turn to face the user.
               style: theme:'dark'|'light'|'glass' · title:true (first line bigger, rest muted) · accent:'#f28b82' (colour bar) · bg:false (text only, auto-outlined)
 
      INTERACT interactive(obj, { hover(obj), unhover(obj), select(obj, {point}), release(obj), grab:true })

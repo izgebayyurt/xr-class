@@ -256,7 +256,7 @@ function label(text, opts = {}){
   if (opts.above) { /* keep pos */ } else if (!opts.at) { /* pos is the panel centre */ }
   mesh.userData.label = { text: String(text), arcmin, capHeight: capH, distance, size };
   mesh.userData.placement = opts;
-  const face = opts.face ?? 'always';
+  const face = opts.face ?? (opts.parent ? false : 'always');   // parented labels stick to their parent's surface; free labels billboard
   if (face === 'always') billboards.add(mesh); else if (face) mesh.lookAt(eyePos());
   if (opts.parent){ opts.parent.add(mesh); if (opts.at) mesh.position.set(...(opts.at.isVector3 ? opts.at.toArray() : opts.at)); }   // local coordinates inside the parent
   else scene.add(mesh);
@@ -641,6 +641,8 @@ function hand(which){ return pointers.find(p => p.isXR && p.hand === which) ?? p
 
 const XR = { THREE, scene, rig, camera, renderer, floor, grid, H, D, SZ, DIR, C, col, mat, shape, place, fit, spread, remove, label, interactive, tone, spin, bob,
              track, recalibrate, audit, view, run, eyePos, get pointers(){ return pointers; }, ready: false,
+             get frame(){ return content.frame; }, set frame(fn){ content.frame = fn; },   // `XR.frame = fn` is a common guess — make it work
+             get build(){ return content.build; }, set build(fn){ content.build = fn; },
              input, onButton, onController, button, teleportTo, ground, hand, stations, auditReportText,
              _test: { updatePointer, selectStart: pointerSelectStart, selectEnd: pointerSelectEnd, snapTurn, interactables, tracked, handleGamepads: handleThumbsticks, teleMarker } };
 window.XR = XR;
