@@ -1,0 +1,75 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>XR class · Tier X head-to-head</title>
+<style>
+  :root{color-scheme:dark}
+  body{margin:0;background:#101318;color:#e6eaf1;font:15px/1.5 system-ui,-apple-system,'Segoe UI',sans-serif}
+  main{max-width:960px;margin:0 auto;padding:28px 20px 60px}
+  h1{font-size:22px;margin:0 0 4px} .sub{color:#9fb3c8;margin:0 0 22px} a{color:#8fd3ff}
+  .pair{border:1px solid #2d3340;border-radius:12px;margin:16px 0;background:#14171e;overflow:hidden}
+  .pair>h2{font-size:17px;margin:0;padding:14px 18px 4px} .pair>.blurb{color:#9fb3c8;font-size:13px;margin:0;padding:0 18px 12px}
+  .cols{display:grid;grid-template-columns:1fr 1fr;gap:0;border-top:1px solid #2d3340}
+  .col{padding:12px 18px} .col+.col{border-left:1px solid #2d3340}
+  .col h3{margin:0 0 6px;font-size:14px} .winner h3::after{content:" · winner";color:#7bd6a0;font-weight:600}
+  .scores{font:600 13px ui-monospace,monospace;color:#dfe5ee;margin:0 0 8px}
+  .scores b{font-size:15px}
+  .col p{margin:0 0 10px;font-size:13px;color:#b9c2cf}
+  .col .links{font-size:13px}
+  .verdict{border-top:1px solid #2d3340;padding:10px 18px;font-size:13px;color:#cfd6e0;background:#171b23}
+  .verdict b{color:#ffd54f}
+  .foot{color:#66707e;font-size:13px;margin-top:26px}
+</style>
+</head>
+<body>
+<main>
+  <h1>Tier X — the head-to-head</h1>
+  <p class="sub">Four hard briefs, each built twice — once by a Sonnet-class model, once by an Opus-class model — under relaxed constraints (1,200 lines, 15-minute experiences, real subsystems),
+     then scored blind by judges who wrote their own adversarial test probes. Scores are functionality / visual / epistemic value, each out of 10.
+     Full experiment write-up: <a href="tierx-report.md">the report</a>. Back to <a href="scenes.html">the gallery</a>.</p>
+  <div id="list"></div>
+  <p class="foot">Every "review" link is the blind judge's verbatim scoring file; "brief" is the spec both builders received, including the machine-checkable verification contract.
+     The winners also appear in the main gallery under their short names.</p>
+</main>
+<script>
+const pairs = [
+  { title: 'x1 · Compass & Straightedge', blurb: 'Euclid I.1 with a real dependency-graph kernel: constructions must survive dragging the given points, exactly.',
+    brief: 'tierx-reviews/x1-compass.md',
+    s: { slug:'tierx-compass-sonnet', f:7,v:3,e:6, note:'Kernel exact to 2e-16 and honest — but the tabletop is dark-on-dark and the payoff text clips off both screen edges. The math survived; the room failed it.', review:'tierx-reviews/x1a.md' },
+    o: { slug:'tierx-compass-opus', f:8,v:8,e:9, note:'Same exactness (86-assertion self-probe), plus a legible drafting table and the lesson stated where you look. Post-judging polish: NaN guards, incremental recompute at 0.075 ms/frame.', review:'tierx-reviews/x1b.md' },
+    verdict: 'Opus decisively — the kernels tied; delivery decided it.', vlink: 'tierx-reviews/x1-verdict.md', winner:'o' },
+  { title: 'x2 · Orbital Sandbox', blurb: 'Throw moons at real gravity: symplectic integration, energy conserved to 0.1% over 60 s, honest conic classification.',
+    brief: 'tierx-reviews/x2-orbital.md',
+    s: { slug:'tierx-orbital-sonnet', f:6,v:3,e:5, note:'Integrator honestly symplectic (drift 1e-11) — but step() stayed coupled to the render loop (contract violation) and trail oversampling meant the closed ellipse never visibly drew.', review:'tierx-reviews/x2b.md' },
+    o: { slug:'tierx-orbital-opus', f:9,v:8,e:9, note:'36/36 contract assertions; period matches theory to 15 digits; found and fixed two of its own defects by probing. The ellipse overdraws itself, which is the whole lesson.', review:'tierx-reviews/x2a.md' },
+    verdict: 'Opus decisively — both did the physics; one showed it.', vlink: 'tierx-reviews/x2-verdict.md', winner:'o' },
+  { title: 'x3 · The Proof Room (Euclid I.47)', blurb: 'Perform the shear proof of Pythagoras: every manipulation one degree of freedom, area preserved by construction, verified exactly.',
+    brief: 'tierx-reviews/x3-proof-room.md',
+    s: { slug:'tierx-proof-sonnet', f:7,v:5,e:3, note:'Declared the crux manipulation impossible and swapped shapes at the moment of truth — a 1.86 m vertex teleport dressed as a "capture". The judge proved the honest route was reachable from this build’s own buffers.', review:'tierx-reviews/x3a.md' },
+    o: { slug:'tierx-proof-opus', f:9,v:9,e:9, note:'Found the classical two-shear route: 0.000000 m vertex motion at every commit, areas bit-exact through all six stages, 228/228 judge assertions.', review:'tierx-reviews/x3b.md' },
+    verdict: 'Opus decisively — and the mathematical adjudication is the story: the "impossible" step was a solved classical problem.', vlink: 'tierx-reviews/x3-verdict.md', winner:'o' },
+  { title: 'x4 · The Estimation Tutor', blurb: 'An adaptive tutor with a real learner model: seeded determinism, bias recovery, next-task selection aimed at your weakest sense.',
+    brief: 'tierx-reviews/x4-tutor.md',
+    s: { slug:'tierx-tutor-sonnet', f:6,v:4,e:5, note:'Model converged correctly — but determinism was theater (panel and human sessions diverged on the same seed; RESTART silently never reseeded) and trend feedback fabricated streaks that never happened.', review:'tierx-reviews/x4b.md' },
+    o: { slug:'tierx-tutor-opus', f:9,v:8,e:9, note:'47 assertions across two probes including a full embodied-path playthrough; recovered a synthetic learner’s −20% bias at −0.200; feedback degrades honestly.', review:'tierx-reviews/x4a.md' },
+    verdict: 'Opus on all three axes — soundness of the model was shared; integrity of the claims was not.', vlink: 'tierx-reviews/x4-verdict.md', winner:'o' },
+];
+const col = (b, who, isWin) => `
+  <div class="col${isWin ? ' winner' : ''}">
+    <h3>${who}</h3>
+    <div class="scores">F <b>${b.f}</b> · V <b>${b.v}</b> · E <b>${b.e}</b> &nbsp;=&nbsp; <b>${b.f+b.v+b.e}</b>/30</div>
+    <p>${b.note}</p>
+    <div class="links"><a href="run.html?s=${b.slug}">open</a> · <a href="run.html?s=${b.slug}&debug">with audit panel</a> · <a href="${b.review}">judge's review</a></div>
+  </div>`;
+document.getElementById('list').innerHTML = pairs.map(p => `
+  <div class="pair">
+    <h2>${p.title}</h2>
+    <p class="blurb">${p.blurb} · <a href="${p.brief}">the brief</a></p>
+    <div class="cols">${col(p.s, 'Sonnet build', p.winner==='s')}${col(p.o, 'Opus build', p.winner==='o')}</div>
+    <div class="verdict"><b>Verdict:</b> ${p.verdict} <a href="${p.vlink}">full verdict</a></div>
+  </div>`).join('');
+</script>
+</body>
+</html>

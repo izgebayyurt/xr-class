@@ -47,7 +47,7 @@ const rooms = [
   ['tierx-tutor', 'The Estimation Tutor', 'tierx', 'Sixteen embodied trials — distances, heights, angles — while a model of YOU learns how your eyes lie, aims at your weakest sense, and hands you a measured portrait of your own bias.'],
 ];
 document.getElementById('list').innerHTML = rooms.map(row => row === null
-  ? `<h2 class="sect">Tier X — the constraints, relaxed</h2>`
+  ? `<h2 class="sect">Tier X — the constraints, relaxed &nbsp;<a style="font-size:13px" href="tierx.html">see the Sonnet-vs-Opus head-to-head →</a></h2>`
   : (([slug, title, level, blurb]) => `
   <div class="card">
     <h2><a href="run.html?s=${slug}">${title}</a><span class="tag ${level}">${level}</span></h2>
