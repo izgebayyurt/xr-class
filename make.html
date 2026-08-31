@@ -46,9 +46,15 @@
       <div id="qrbox"></div>
       <div id="qrnote">Scan with the Quest: look at the code in passthrough, or use the Camera app, and it opens in the headset browser. Then press ENTER VR.</div>
     </div>
+    <div id="longwrap" style="display:none;margin-top:10px;font-size:12px;color:#9fb3c8">
+      Backup: a permanent self-contained link that works even without the link service —
+      <button id="copylong" class="ghost" style="font-size:12px;padding:4px 10px;margin:0">Copy it</button>
+      <input id="longlink" readonly style="display:none">
+    </div>
     <iframe id="preview" hidden allow="xr-spatial-tracking; fullscreen"></iframe>
   </div>
 </main>
+<script src="shortlink-config.js"></script>
 <script>//---------------------------------------------------------------------
 //
 // QR Code Generator for JavaScript
@@ -2364,9 +2370,20 @@ async function makeLink(){
   const buf = new Uint8Array(await new Response(stream).arrayBuffer());
   let b64 = ''; for (let i = 0; i < buf.length; i += 0x8000) b64 += String.fromCharCode(...buf.subarray(i, i + 0x8000));
   b64 = btoa(b64).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
-  const link = new URL('run.html', location.href).href + '#c=' + b64;
+  const longLink = new URL('run.html', location.href).href + '#c=' + b64;
+  let link = longLink, gotShort = false;
+  if (window.SHORTLINK_URL){                      // short-link service configured: trade the payload for a 6-char id
+    try {
+      const r = await fetch(window.SHORTLINK_URL, { method: 'POST', body: b64 });
+      if (r.ok){ const { id } = await r.json(); if (id){ link = new URL('run.html', location.href).href + '?p=' + id; gotShort = true; } }
+    } catch {}
+  }
   $('link').value = link; $('out').style.display = 'block';
-  const okNote = `Link ready — ${code.length.toLocaleString()} characters of code, ${link.length.toLocaleString()} in the link.`;
+  $('longwrap').style.display = gotShort ? 'block' : 'none';
+  $('longlink').value = longLink;
+  const okNote = gotShort
+    ? `Short link ready — ${code.length.toLocaleString()} characters of code behind a ${link.length}-character link.`
+    : `Link ready — ${code.length.toLocaleString()} characters of code, ${link.length.toLocaleString()} in the link.`;
   msg.className = 'ok'; if (!msg.textContent) msg.textContent = okNote;
   // QR (a QR code holds ~2.9 KB of URL at most; bigger scenes get the link instead)
   const qrbox = $('qrbox'); qrbox.innerHTML = '';
@@ -2385,6 +2402,7 @@ async function makeLink(){
 $('go').onclick = () => { makeLink(); $('preview').hidden = true; };
 $('test').onclick = async () => { const l = await makeLink(); if (l){ const p = $('preview'); p.hidden = false; p.src = l; } };
 $('copy').onclick = async () => { try { await navigator.clipboard.writeText($('link').value); $('copy').textContent = 'Copied ✓'; setTimeout(() => $('copy').textContent = 'Copy link', 1500); } catch { $('link').select(); document.execCommand('copy'); } };
+$('copylong').onclick = async () => { try { await navigator.clipboard.writeText($('longlink').value); $('copylong').textContent = 'Copied ✓'; setTimeout(() => $('copylong').textContent = 'Copy it', 1500); } catch { const l = $('longlink'); l.style.display = 'inline'; l.select(); document.execCommand('copy'); } };
 $('open').onclick = () => window.open($('link').value, '_blank');
 $('dbg').onclick = () => { const u = new URL($('link').value); u.search = '?debug'; window.open(u.href, '_blank'); };
 // remix: arriving from a run link pre-fills the code

@@ -11,6 +11,7 @@
   "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.185.1/examples/jsm/"
 } }
 </script>
+<script src="shortlink-config.js"></script>
 <script type="module" src="https://izgebayyurt.github.io/xr-class/xr-engine.js"></script>
 <style>
   #remix{position:fixed;right:10px;bottom:10px;z-index:9;font:12px system-ui,sans-serif;color:#dfe5ee;background:rgba(14,16,22,.8);
@@ -28,8 +29,20 @@
   const fail = (msg) => { boot.innerHTML = msg; };
   try {
     let code = null, hash = location.hash;
+    const params = new URLSearchParams(location.search);
+    const pid = params.get('p');
+    if (pid){                                       // short link: the payload lives in the class's link service
+      if (!/^[a-z2-9]{6,12}$/.test(pid)){ fail('That is not a valid short link.'); return; }
+      if (!window.SHORTLINK_URL){ fail('Short links are not enabled on this class site.'); return; }
+      const r = await fetch(window.SHORTLINK_URL + '/' + pid).catch(() => null);
+      if (!r || !r.ok){ fail('This short link doesn’t point to a scene any more. Ask for the link again — or for the permanent long version.'); return; }
+      const b64 = (await r.text()).trim();
+      const bytes = Uint8Array.from(atob(b64.replace(/-/g, '+').replace(/_/g, '/')), c => c.charCodeAt(0));
+      code = await new Response(new Blob([bytes]).stream().pipeThrough(new DecompressionStream('deflate-raw'))).text();
+      hash = '#c=' + b64;
+    }
     const named = new URLSearchParams(location.search).get('s');
-    if (named){                                     // short link: the scene lives on the class site as scenes/<name>.js
+    if (!code && named){                            // named scene: lives on the class site as scenes/<name>.js
       if (!/^[a-z0-9_-]{1,60}$/i.test(named)){ fail('That is not a valid scene name.'); return; }
       const r = await fetch('scenes/' + named + '.js').catch(() => null);
       if (!r || !r.ok){ fail('No scene called “' + named + '” on the class site.'); return; }
@@ -39,7 +52,7 @@
       const buf = new Uint8Array(await new Response(st).arrayBuffer());
       let b = ''; for (let i = 0; i < buf.length; i += 0x8000) b += String.fromCharCode(...buf.subarray(i, i + 0x8000));
       hash = '#c=' + btoa(b).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
-    } else {
+    } else if (!code) {
       const m = location.hash.match(/c=([A-Za-z0-9\-_]+)/);
       if (!m){ fail('No scene in this link.<br><br>Make one at <a style="color:#8fd3ff" href="make.html">make.html</a> — paste the code block Claude gave you and it becomes a link like this one.'); return; }
       const b64 = m[1].replace(/-/g, '+').replace(/_/g, '/');
