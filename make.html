@@ -2368,15 +2368,17 @@ async function makeLink(){
   $('link').value = link; $('out').style.display = 'block';
   const okNote = `Link ready — ${code.length.toLocaleString()} characters of code, ${link.length.toLocaleString()} in the link.`;
   msg.className = 'ok'; if (!msg.textContent) msg.textContent = okNote;
-  // QR (fits up to ~2.9 KB of URL; beyond that, copy the link instead)
+  // QR (a QR code holds ~2.9 KB of URL at most; bigger scenes get the link instead)
   const qrbox = $('qrbox'); qrbox.innerHTML = '';
   try {
     const qr = qrcode(0, 'L'); qr.addData(link); qr.make();
     qrbox.innerHTML = qr.createImgTag(3, 8);
-    $('qrnote').style.display = 'block';
+    qrbox.style.display = ''; $('qrnote').style.display = 'block';
+    $('qrnote').textContent = "Scan with the Quest: look at the code in passthrough, or use the Camera app, and it opens in the headset browser. Then press ENTER VR.";
   } catch (e) {
-    qrbox.innerHTML = '';
-    $('qrnote').textContent = 'This scene is too big for a QR code — use Copy link and send it to yourself instead.';
+    qrbox.style.display = 'none';
+    $('qrnote').style.display = 'block';
+    $('qrnote').textContent = `This scene is bigger than a QR code can hold (${link.length.toLocaleString()} characters; QR max ≈ 2,900). Use Copy link and send it to your headset (email/chat), or ask your instructor to add it to the class site's scenes/ folder for a short link that fits a QR.`;
   }
   return link;
 }

@@ -66,7 +66,9 @@ CONTENT  (edit this block only)
               group's box, and a forgotten mid-height child silently lifts or misplaces everything (use numeric height instead).
      LOOP     frame(dt, t) runs every frame.   XR.camera.getWorldPosition(v) = where the user's head is now.
 
-     RULES    • Everything you build goes inside build(). Keep frame() cheap.  • Put the first thing to look at 'ahead' at 'near'..'room'.
+     RULES    • Every name you call must appear in your `const { ... } = XR;` line — sky, mat, remove, spread included. A name you
+                forgot to destructure is the #1 crash ("sky is not defined"); when in doubt call it as XR.sky(...).
+              • Everything you build goes inside build(). Keep frame() cheap.  • Put the first thing to look at 'ahead' at 'near'..'room'.
               • Grabbable things go at 'reach'. Things to read go at 'near'..'room', 'eye' or 'chest' height.  • Stay within 'far'.
               • Never place anything at 'touch' height 'eye' (it's in the user's face).  • No external files, models, images or fonts.
               • Interactive things and text live in the front arc (±60° max; ±35° is comfortable) unless a station faces them.
@@ -80,7 +82,7 @@ CONTENT  (edit this block only)
 
 The CONTENT block always has this shape:
 ```js
-const { THREE, scene, shape, place, fit, label, interactive, tone, spin, bob, H, C } = XR;
+const { THREE, scene, shape, place, fit, spread, remove, label, interactive, tone, spin, bob, mat, sky, ground, H, C, input, onButton, onController, stations } = XR;
 
 function build(){
   // --- Example scene: delete everything in build() and write your own ---
