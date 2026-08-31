@@ -13,6 +13,8 @@
   .card h2{font-size:16px;margin:0 0 2px} .card h2 a{color:#8fd3ff;text-decoration:none} .card h2 a:hover{text-decoration:underline}
   .tag{font-size:11px;font-weight:700;border-radius:10px;padding:2px 8px;margin-left:8px;vertical-align:middle}
   .easy{background:#173626;color:#7bd6a0} .medium{background:#332a14;color:#ffd54f} .hard{background:#381c20;color:#ff8a80}
+  .tierx{background:#241b3a;color:#c9a5ff}
+  h2.sect{font-size:15px;color:#9fb3c8;margin:28px 0 2px;border-top:1px solid #2d3340;padding-top:18px}
   p{margin:4px 0 0;color:#b9c2cf;font-size:14px}
   .dbg{font-size:12px;color:#66707e} .dbg a{color:#66707e}
 </style>
@@ -38,13 +40,20 @@ const rooms = [
   ['env10-slope-scrub', 'Scrubbing the Slope', 'hard', 'Drag a puck along f(x) = x³/3 − x while a tangent bar tips to the true slope and its trail quietly draws y = x² − 1. The derivative, left behind by your own hand.'],
   ['env11-tower-race', 'Tower Race', 'hard', 'Five races, one bet each: steady +25 cm per second, or doubling from 1 mm? Watch the crossing moment move — steady wins early, doubling wins late.'],
   ['env12-crank-slider', 'The Crank and the Slider', 'hard', 'Turn a real crank-rod-piston linkage with your hand and graph the piston against a pure cosine. They disagree by 25 mm, and the room shows you why.'],
+  null,
+  ['tierx-compass', 'Compass & Straightedge', 'tierx', 'Euclid with your hands: draw circles and lines, promote intersections into points, construct the equilateral triangle. The room verifies it by its dependency graph — then dares you to drag point A and break it. You can’t.'],
+  ['tierx-orbital', 'Orbital Sandbox', 'tierx', 'Grab a moon and throw it at real gravity. Ellipses close on themselves, hyperbolas leave forever, and the energy readout holds to a part in a trillion. An orbit is falling, and missing.'],
+  ['tierx-proof', 'The Proof Room', 'tierx', 'Perform the shear proof of Pythagoras on a 3-4-5 triangle: shear both squares, drop the altitude, slide the pieces home. Areas never wobble, because nothing is ever stretched. 0.81 + 1.44 = 2.25, forever.'],
+  ['tierx-tutor', 'The Estimation Tutor', 'tierx', 'Sixteen embodied trials — distances, heights, angles — while a model of YOU learns how your eyes lie, aims at your weakest sense, and hands you a measured portrait of your own bias.'],
 ];
-document.getElementById('list').innerHTML = rooms.map(([slug, title, level, blurb]) => `
+document.getElementById('list').innerHTML = rooms.map(row => row === null
+  ? `<h2 class="sect">Tier X — the constraints, relaxed</h2>`
+  : (([slug, title, level, blurb]) => `
   <div class="card">
     <h2><a href="run.html?s=${slug}">${title}</a><span class="tag ${level}">${level}</span></h2>
     <p>${blurb}</p>
     <p class="dbg"><a href="run.html?s=${slug}&debug">open with audit panel</a> · <a href="make.html">remix your own</a></p>
-  </div>`).join('');
+  </div>`)(row)).join('');
 </script>
 </body>
 </html>
