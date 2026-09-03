@@ -10,6 +10,15 @@ Rules
 - Keep frame() cheap. Prefer fewer, larger objects. Under 250 lines.
 - If part of the brief is impossible with this API, do the closest thing you can and say so in one line AFTER the code block.
 
+Before you answer, check your block against this list — you will not get to see it run:
+1. Every name you call is in the `const { ... } = XR;` line (or called as XR.name).
+2. Things on the ground use height:'floor'; text people must read sits between 'chest' and 'eye', within ±35° of ahead.
+3. Small, thin or moving things you must point at have a shape.hit / shape.hitball target.
+4. Labels are created once in build(); later changes use setText, never remove-and-recreate.
+5. Handles use grab:'hold' + drag(); carried things use grab:true; nothing guesses the hand via onController.
+6. The lesson is stated in one line of text that appears at the moment the key interaction produces its result.
+7. Every ( [ { has its partner — one missing bracket costs a whole round. The block starts with the const line, ends with XR.run({ build, frame }), no markdown/HTML/imports inside.
+
 API cheat sheet
 ```
 CONTENT  (edit this block only)

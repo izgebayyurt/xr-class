@@ -27,8 +27,21 @@ import { XRControllerModelFactory } from 'three/addons/webxr/XRControllerModelFa
 
 // ---------- error surfacing (also visible inside the headset browser) ----------
 const errBox = document.getElementById('err');
-function showError(msg){ errBox.style.display='block'; errBox.textContent += (errBox.textContent?'\n':'') + msg; console.error(msg); }
-window.addEventListener('error', e => showError('Error: ' + (e.message||e)));
+// turn the common crash messages into the fix (the model that wrote the scene never sees the screen — the student pastes this back)
+function explainError(msg){
+  const names = () => Object.keys(window.XR ?? {}).filter(k => !k.startsWith('_'));
+  const nearest = (w) => { let best = null, bd = 3; for (const n of names()){ const d = lev(w.toLowerCase(), n.toLowerCase()); if (d < bd){ bd = d; best = n; } } return best; };
+  let m;
+  if ((m = /(\w+) is not defined/.exec(msg))){ const n = nearest(m[1]); return n === m[1] ? `→ FIX: add ${n} to the const { ... } = XR; line at the top, or call XR.${n}(...)` : n ? `→ FIX: "${m[1]}" is not in the API — did you mean ${n}?` : `→ FIX: "${m[1]}" is not in the API cheat sheet; use only the names listed there`; }
+  if ((m = /(?:XR\.)?(\w+) is not a function/.exec(msg))){ const n = nearest(m[1]); return n && n !== m[1] ? `→ FIX: there is no ${m[1]}() in the API — did you mean ${n}()?` : `→ FIX: ${m[1]}() is not in the API cheat sheet; build it from the listed functions instead`; }
+  if ((m = /shape\.(\w+) is not a function/.exec(msg))) return `→ FIX: shape.${m[1]} does not exist — shapes are box, ball, cylinder, cone, torus, panel, group, line, hit, hitball`;
+  if (/Unknown (dir|dist|height|text size)/.test(msg)) return '→ FIX: use only the body words from the cheat sheet (or a number)';
+  if (/Cannot read propert.* of (undefined|null)/.test(msg)) return '→ FIX: something is used before it is created — build everything inside build(), and create objects before place()/label() refer to them';
+  return '';
+}
+function lev(a, b){ const m = a.length, n = b.length, d = Array.from({ length: m + 1 }, (_, i) => [i, ...Array(n).fill(0)]); for (let j = 1; j <= n; j++) d[0][j] = j; for (let i = 1; i <= m; i++) for (let j = 1; j <= n; j++) d[i][j] = Math.min(d[i-1][j] + 1, d[i][j-1] + 1, d[i-1][j-1] + (a[i-1] === b[j-1] ? 0 : 1)); return d[m][n]; }
+function showError(msg){ const hint = explainError(String(msg)); const line = hint ? msg + '\n' + hint : msg; errBox.style.display='block'; errBox.textContent += (errBox.textContent?'\n':'') + line; console.error(line); }
+window.addEventListener('error', e => showError('Error: ' + (e.message||e) + (e.lineno ? ` (line ${e.lineno}${e.colno ? ':' + e.colno : ''} of the script)` : '')));
 window.addEventListener('unhandledrejection', e => showError('Error: ' + (e.reason?.message||e.reason)));
 
 const params = new URLSearchParams(location.search);
@@ -115,6 +128,8 @@ const grid = new THREE.GridHelper(16, 16, 0x8a93a6, 0x596174); grid.position.y =
 
 // ---------- placement API ----------
 const tracked = new Map();          // obj -> { kind }
+const autoNotes = [];               // corrections the engine made that indicate a real mistake (reported as audit warnings)
+const quietNotes = [];              // harmless idioms the engine absorbed (reported as audit notes)
 let autoId = 0;
 function track(obj, kind){ if (!obj.name) obj.name = kind + '-' + (++autoId); tracked.set(obj, { kind }); return obj; }
 function eyePos(){ return new THREE.Vector3(0, H.eye, 0); }   // start-of-session eye position
@@ -147,10 +162,19 @@ function place(obj, opts = {}){
   const pos = resolvePosition(opts);
   const anchor = opts.anchor ?? ((opts.height ?? 'floor') === 'floor' ? 'bottom' : 'center');
   obj.position.set(0,0,0); obj.updateMatrixWorld(true);
-  const b = localBox(obj); const c = b.getCenter(new THREE.Vector3());
-  // shift so the box's anchor point lands on pos
-  const off = anchor === 'bottom' ? new THREE.Vector3(c.x, b.min.y, c.z) : c;
-  obj.position.copy(pos).sub(off);
+  const b = localBox(obj);
+  if (b.isEmpty()){                                   // nothing inside yet (a group placed before its children): treat the origin as the anchor
+    obj.position.copy(pos); quietNotes.push(`${obj.name || 'a group'} was place()d while empty — anchored at its origin (fine; children added later are positioned relative to it)`);
+  } else {
+    const c = b.getCenter(new THREE.Vector3());
+    const off = anchor === 'bottom' ? new THREE.Vector3(c.x, b.min.y, c.z) : c;   // shift so the box's anchor point lands on pos
+    obj.position.copy(pos).sub(off);
+    const dip = pos.y - off.y + b.min.y;               // world bottom after placement
+    if (dip < -0.005 && !opts.allowBelowFloor){         // don't let anything sink through the floor
+      obj.position.y -= dip - 0.005; obj.userData.autoLifted = -dip + 0.005;
+      autoNotes.push(`${obj.name || 'object'} would have sunk ${(-dip).toFixed(2)} m below the floor — auto-lifted; use anchor:'bottom' or a higher height for things that sit on the ground`);
+    }
+  }
   if (opts.face) obj.lookAt(0, obj.position.y, 0);
   track(obj, tracked.get(obj)?.kind ?? 'object');
   return obj;
@@ -294,6 +318,10 @@ function label(text, opts = {}){
   };
   mesh.renderOrder = 10;
   mesh.position.copy(pos);
+  if (!opts.parent && !opts.above && !opts.at){         // a free label sinking into the floor is unreadable — lift it to knee height
+    const bottom = pos.y - p0.h/2;
+    if (bottom < 0.05){ mesh.position.y += 0.05 - bottom; autoNotes.push(`label "${String(text).slice(0, 30)}" was placed ${bottom < 0 ? 'below' : 'at'} the floor — auto-lifted; text needs height 'knee' or above`); }
+  }
   if (opts.above) { /* keep pos */ } else if (!opts.at) { /* pos is the panel centre */ }
   mesh.userData.label = { text: String(text), arcmin, capHeight: capH, distance, size };
   mesh.userData.placement = opts;
@@ -585,9 +613,11 @@ function showAuditPanel(r){
   el.querySelector('#audit-copy').onclick = async () => { const t = auditReportText(r); try { await navigator.clipboard.writeText(t); el.querySelector('#audit-copy').textContent = 'Copied ✓'; } catch { prompt('Copy this report:', t); } };
 }
 /** audit(): numeric spatial report of everything placed/labelled/interactive, from the start position. */
-function audit(){
+function audit(quiet = false){
   const eye = eyePos(); const rows = []; const warnings = [], errors = [], notes = [];
   const boxes = [];
+  for (const n of autoNotes) warnings.push('auto-corrected: ' + n);
+  for (const n of quietNotes) notes.push(n);
   // stations sanity: malformed entries warn; only stations away from the origin count for warning suppression
   const badStations = stations.filter(s => !Array.isArray(s) || s.length < 2 || s.length > 3 || s.some(v => typeof v !== 'number'));
   for (const s of badStations) warnings.push(`stations entry ${JSON.stringify(s)} is malformed — use [x, z] or [x, z, facingDeg]`);
@@ -632,7 +662,7 @@ function audit(){
       const actualArcmin = L.capHeight / (dist*ARCMIN);
       if (actualArcmin < TEXT_ARCMIN.MIN - 1){ flags.push('illegible'); errors.push(`label "${L.text}" reads at ${actualArcmin.toFixed(0)}' from the start — below the ${TEXT_ARCMIN.MIN}' floor`); }
       if (dist < 0.5){ flags.push('too-close-to-focus'); warnings.push(`label "${L.text}" is ${dist.toFixed(2)} m away — closer than 0.5 m is hard to focus on`); }
-      if (Math.abs(el) > 35){ flags.push('neck-strain'); warnings.push(`label "${L.text}" is ${el.toFixed(0)}° ${el>0?'above':'below'} eye level — needs a sustained head tilt`); }
+      if (Math.abs(el) > 45){ flags.push('neck-strain'); warnings.push(`label "${L.text}" is ${el.toFixed(0)}° ${el>0?'above':'below'} eye level — needs a sustained head tilt; raise the object it belongs to, or float the text with above:`); }
     }
     boxes.push({ obj, b, kind: meta.kind }); rows.push(r);
   }
@@ -650,7 +680,7 @@ function audit(){
   }
   if (rows.length && !rows.some(r => r.inStartView) && !awayStations.length) warnings.push('Nothing is inside the comfortable starting view (±45° horizontal, -35°..+30° vertical)');
   const report = { stature_m: H.stature, eye_m: H.eye, reach_m: H.reach, stations: stations.length, objects: rows, errors, warnings, notes };
-  if (!HARNESS){ showAuditPanel(report); console.group('%cXR audit', 'font-weight:bold'); console.table(rows.map(({flags, text, ...r}) => ({ ...r, flags: flags.join(' '), text: text?.text ?? '' }))); errors.forEach(e => console.error(e)); warnings.forEach(w => console.warn(w)); notes.forEach(n => console.info(n)); console.groupEnd(); }
+  if (!HARNESS && !quiet){ showAuditPanel(report); console.group('%cXR audit', 'font-weight:bold'); console.table(rows.map(({flags, text, ...r}) => ({ ...r, flags: flags.join(' '), text: text?.text ?? '' }))); errors.forEach(e => console.error(e)); warnings.forEach(w => console.warn(w)); notes.forEach(n => console.info(n)); console.groupEnd(); }
   return report;
 }
 
@@ -691,11 +721,32 @@ function run(c = {}){
   const fontReady = Promise.race([Promise.all([document.fonts.load('600 32px Nunito'), document.fonts.load('800 32px Nunito')]), new Promise(r => setTimeout(r, 1500))]);
   fontReady.then(() => runNow(c));
 }
+function liftSunkObjects(){        // after build: anything tracked that ended up below the floor (e.g. children added after place()) gets its top-level ancestor lifted
+  const lifted = new Set(); const box = new THREE.Box3();
+  for (const [obj] of tracked){
+    if (obj.userData.placement?.allowBelowFloor) continue;
+    let top = obj; while (top.parent && top.parent !== scene) top = top.parent;
+    if (top.parent !== scene || top === debugGroup || lifted.has(top)) continue;
+    obj.updateWorldMatrix(true, true); box.setFromObject(obj, true);
+    if (box.isEmpty() || box.min.y >= -0.005) continue;
+    const dip = -box.min.y + 0.005; top.position.y += dip; lifted.add(top);
+    autoNotes.push(`${obj.name || 'object'} ended up ${(-box.min.y).toFixed(2)} m below the floor — its group was auto-lifted; give things that sit on the ground height:'floor' (or add children before place())`);
+  }
+}
 function runNow(c){
   try { c.build?.(XR); } catch (e) { showError('build(): ' + e.message + '\n' + (e.stack||'').split('\n').slice(1,3).join('\n')); }
+  try { liftSunkObjects(); } catch {}
   if (DEBUG && !HARNESS) setTimeout(audit, 50);
+  else if (!HARNESS) setTimeout(() => { const r = audit(true); if (r.errors.length || r.warnings.length) auditChip(r); }, 300);   // first-run check without ?debug
   renderer.setAnimationLoop(loop);
   XR.ready = true;
+}
+function auditChip(r){
+  const chip = document.createElement('button'); chip.id = 'audit-chip';
+  chip.textContent = `Scene check: ${r.errors.length} error${r.errors.length === 1 ? '' : 's'} · ${r.warnings.length} warning${r.warnings.length === 1 ? '' : 's'} — show report`;
+  chip.style.cssText = 'position:fixed;left:10px;bottom:10px;z-index:9;font:12px system-ui,sans-serif;color:#fff;background:' + (r.errors.length ? 'rgba(180,40,40,.9)' : 'rgba(120,90,10,.9)') + ';border:0;border-radius:14px;padding:6px 12px;cursor:pointer';
+  chip.onclick = () => { showAuditPanel(r); chip.remove(); };
+  document.body.appendChild(chip);
 }
 setTimeout(() => { if (!started) showError('CONTENT block never called XR.run(...) — check for a syntax error in the CONTENT script.'); }, 2000);
 
@@ -717,3 +768,9 @@ const XR = { THREE, scene, rig, camera, renderer, floor, grid, H, D, SZ, DIR, C,
              input, onButton, onController, button, teleportTo, ground, sky, hand, stations, auditReportText,
              _test: { updatePointer, selectStart: pointerSelectStart, selectEnd: pointerSelectEnd, snapTurn, interactables, tracked, handleGamepads: handleThumbsticks, teleMarker } };
 window.XR = XR;
+// forgiveness: every API name is also a global, so a name missing from `const { ... } = XR` still works (module-scope consts shadow these safely)
+for (const k of Object.keys(XR)){
+  const d = Object.getOwnPropertyDescriptor(XR, k);
+  if (!d || d.get || k.startsWith('_') || ['ready', 'run'].includes(k) || k in window) continue;
+  try { Object.defineProperty(window, k, { value: XR[k], writable: true, configurable: true }); } catch {}
+}
