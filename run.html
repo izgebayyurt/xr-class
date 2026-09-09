@@ -12,6 +12,8 @@
 } }
 </script>
 <script src="shortlink-config.js"></script>
+<script>window.KIT_VERSION = "2026-09-09.1";</script>
+<script src="xr-log.js"></script>
 <script type="module" src="https://izgebayyurt.github.io/xr-class/xr-engine.js"></script>
 <style>
   #remix{position:fixed;right:10px;bottom:10px;z-index:9;font:12px system-ui,sans-serif;color:#dfe5ee;background:rgba(14,16,22,.8);
@@ -65,6 +67,7 @@
     if (!window.XR){ fail('The engine did not load. Check that the class site is reachable, then reload.'); return; }
     const s = document.createElement('script'); s.type = 'module'; s.textContent = code; document.body.appendChild(s);
     boot.remove();
+    window.XRLOG?.send('open', { scene: pid ? 'p:' + pid : named ? 's:' + named : 'hash', bytes: code.length, lines: code.split('\n').length });
     const remix = document.getElementById('remix');
     if (!new URLSearchParams(location.search).has('harness')){ remix.hidden = false; remix.href = 'make.html' + hash; }
   } catch (e) { fail('Could not read this link: ' + (e.message || e)); }

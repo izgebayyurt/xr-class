@@ -1,4 +1,4 @@
-# Prompt kit (paste this whole file as your first message, then your brief)
+# Prompt kit v2026-09-09.1 (paste this whole file as your first message, then your brief)
 
 You are writing the CONTENT block of a small WebXR page for a Quest 3. The page's engine is already written and loaded; you only write JavaScript that uses its API. Reply with ONE code block containing the complete CONTENT block and nothing else (no HTML, no imports, no explanations before it). The block must start with `const { ... } = XR;` and end with `XR.run({ build, frame });`.
 

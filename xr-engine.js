@@ -617,7 +617,7 @@ function showAuditPanel(r){
     <button id="audit-copy">Copy report for Claude</button><button id="audit-hide">Hide</button>`;
   el.style.display = 'block';
   el.querySelector('#audit-hide').onclick = () => { el.style.display = 'none'; };
-  el.querySelector('#audit-copy').onclick = async () => { const t = auditReportText(r); try { await navigator.clipboard.writeText(t); el.querySelector('#audit-copy').textContent = 'Copied ✓'; } catch { prompt('Copy this report:', t); } };
+  el.querySelector('#audit-copy').onclick = async () => { const t = auditReportText(r); window.XRLOG?.send('report', { errors: r.errors.length, warnings: r.warnings.length, text: t.slice(0, 4000) }); try { await navigator.clipboard.writeText(t); el.querySelector('#audit-copy').textContent = 'Copied ✓'; } catch { prompt('Copy this report:', t); } };
 }
 /** audit(): numeric spatial report of everything placed/labelled/interactive, from the start position. */
 function audit(quiet = false){
@@ -755,7 +755,7 @@ function runNow(c){
   try { c.build?.(XR); } catch (e) { showError('build(): ' + e.message + '\n' + (e.stack||'').split('\n').slice(1,3).join('\n')); }
   try { liftSunkObjects(); refitLabels(); } catch {}
   if (DEBUG && !HARNESS) setTimeout(audit, 50);
-  else if (!HARNESS) setTimeout(() => { const r = audit(true); if (r.errors.length || r.warnings.length) auditChip(r); }, 300);   // first-run check without ?debug
+  else if (!HARNESS) setTimeout(() => { const r = audit(true); window.XRLOG?.send('scene-check', { errors: r.errors.length, warnings: r.warnings.length, objects: r.objects.length, flags: r.objects.flatMap(o => o.flags) }); if (r.errors.length || r.warnings.length) auditChip(r); }, 300);   // first-run check without ?debug
   renderer.setAnimationLoop(loop);
   XR.ready = true;
 }
@@ -763,7 +763,7 @@ function auditChip(r){
   const chip = document.createElement('button'); chip.id = 'audit-chip';
   chip.textContent = `Scene check: ${r.errors.length} error${r.errors.length === 1 ? '' : 's'} · ${r.warnings.length} warning${r.warnings.length === 1 ? '' : 's'} — show report`;
   chip.style.cssText = 'position:fixed;left:10px;bottom:10px;z-index:9;font:12px system-ui,sans-serif;color:#fff;background:' + (r.errors.length ? 'rgba(180,40,40,.9)' : 'rgba(120,90,10,.9)') + ';border:0;border-radius:14px;padding:6px 12px;cursor:pointer';
-  chip.onclick = () => { showAuditPanel(r); chip.remove(); };
+  chip.onclick = () => { showAuditPanel(r); chip.remove(); window.XRLOG?.send('chip-open', { errors: r.errors.length, warnings: r.warnings.length }); };
   document.body.appendChild(chip);
 }
 setTimeout(() => { if (!started) showError('CONTENT block never called XR.run(...) — check for a syntax error in the CONTENT script.'); }, 2000);
@@ -1006,8 +1006,9 @@ const geo = {
     g.add(shape.panel(W + 0.1, Hh + 0.1, o.bg ?? 'dark'));
     const [x0] = toLocal(THREE.MathUtils.clamp(0, xmin, xmax), 0), [, y0] = toLocal(0, THREE.MathUtils.clamp(0, ymin, ymax));
     g.add(shape.line([[-W/2, y0, 0.004], [W/2, y0, 0.004]], 'grey')); g.add(shape.line([[x0, -Hh/2, 0.004], [x0, Hh/2, 0.004]], 'grey'));
-    for (const [tx, ty, s] of [[xmin, ymin, _fmt(xmin, 1)], [xmax, ymin, _fmt(xmax, 1)]]) label(s, { parent: g, at: [toLocal(tx, 0)[0], -Hh/2 - 0.04, 0.01], capHeight: 0.028*k, bg: false });
-    for (const v of [ymin, ymax]) label(_fmt(v, 1), { parent: g, at: [-W/2 - 0.06, toLocal(0, v)[1], 0.01], capHeight: 0.028*k, bg: false });
+    // axis-limit labels hang outside the panel edge (x labels below, y labels to the left) so they never meet at the corner
+    for (const [tx, s] of [[xmin, _fmt(xmin, 1)], [xmax, _fmt(xmax, 1)]]){ const l = label(s, { parent: g, at: [toLocal(tx, 0)[0], -Hh/2, 0.01], capHeight: 0.028*k, bg: false }); l.position.y -= 0.03 + l.geometry.parameters.height/2; }
+    for (const v of [ymin, ymax]){ const l = label(_fmt(v, 1), { parent: g, at: [-W/2, toLocal(0, v)[1], 0.01], capHeight: 0.028*k, bg: false }); const { width: lw, height: lh } = l.geometry.parameters; l.position.x -= 0.03 + lw/2; l.position.y = THREE.MathUtils.clamp(l.position.y, -Hh/2 + lh/2 + 0.02, Hh/2 - lh/2 - 0.02); }
     const curve = (f, c) => { const pts = []; for (let i = 0; i <= N; i++){ const x = xmin + (xmax - xmin)*i/N; const y = f(x); const [lx, ly] = toLocal(x, Number.isFinite(y) ? THREE.MathUtils.clamp(y, ymin, ymax) : ymin); pts.push([lx, ly, 0.008]); } const l = shape.line(pts, c); g.add(l); return l; };
     let main = curve(fn, o.color ?? 'teal'); const dot = shape.ball(0.018, 'orange'); dot.visible = false; g.add(dot);
     g.toLocal = toLocal; g.fn = fn;
@@ -1499,6 +1500,7 @@ const XR = { THREE, scene, rig, camera, renderer, floor, grid, H, D, SZ, DIR, C,
              get build(){ return content.build; }, set build(fn){ content.build = fn; },
              input, onButton, onController, button, teleportTo, ground, sky, hand, stations, auditReportText,
              _test: { updatePointer, selectStart: pointerSelectStart, selectEnd: pointerSelectEnd, snapTurn, interactables, tracked, handleGamepads: handleThumbsticks, teleMarker } };
+XR.version = '2026-09-09.1';
 window.XR = XR;
 // forgiveness: every API name is also a global, so a name missing from `const { ... } = XR` still works (module-scope consts shadow these safely)
 for (const k of Object.keys(XR)){

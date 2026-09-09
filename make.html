@@ -55,6 +55,8 @@
   </div>
 </main>
 <script src="shortlink-config.js"></script>
+<script>window.KIT_VERSION = "2026-09-09.1";</script>
+<script src="xr-log.js"></script>
 <script>//---------------------------------------------------------------------
 //
 // QR Code Generator for JavaScript
@@ -2374,10 +2376,12 @@ async function makeLink(){
   let link = longLink, gotShort = false;
   if (window.SHORTLINK_URL){                      // short-link service configured: trade the payload for a 6-char id
     try {
-      const r = await fetch(window.SHORTLINK_URL, { method: 'POST', body: b64 });
+      const q = window.XRLOG?.pid ? `?pid=${encodeURIComponent(window.XRLOG.pid)}&kit=${encodeURIComponent(window.KIT_VERSION || '')}` : '';
+      const r = await fetch(window.SHORTLINK_URL + q, { method: 'POST', body: b64 });
       if (r.ok){ const { id } = await r.json(); if (id){ link = new URL('run.html', location.href).href + '?p=' + id; gotShort = true; } }
     } catch {}
   }
+  if (!gotShort) window.XRLOG?.send('link', { id: null, bytes: b64.length, lines: code.split('\n').length });
   $('link').value = link; $('out').style.display = 'block';
   $('longwrap').style.display = gotShort ? 'block' : 'none';
   $('longlink').value = longLink;
