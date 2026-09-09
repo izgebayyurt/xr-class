@@ -75,6 +75,24 @@ CONTENT  (edit this block only)
               group's box, and a forgotten mid-height child silently lifts or misplaces everything (use numeric height instead).
      LOOP     frame(dt, t) runs every frame.   XR.camera.getWorldPosition(v) = where the user's head is now.
 
+     WIDGETS  ready-made, pre-tuned pieces — USE THESE instead of building pads, signs, sliders, rulers from boxes. Each returns a group;
+              give dist/dir/height in the options and it places itself (or place() it yourself).
+              ui.sign(text, {title, width, dist, dir, height}) plaque, .setText() · ui.button(text, {onPress, color, dist, dir, height})
+              ui.choices(['1 m','2 m'], {onPick(i, text, row), dist, dir, height}) arc-fitted answer pads: .mark(i,'right'|'wrong'), .reset(), .setChoices([...]), .lock()
+              ui.slider({min, max, value, step, onChange(v), dist, dir, height}) .value · ui.dial({min, max, value, onChange}) · ui.readout('v = ', {units, decimals, above|dist,dir,height}) .set(v)
+              ui.pedestal({height, dist, dir}) .putOnTop(obj) · ui.tape([x,z], [x,z]) floor tape measure with metre ticks · ui.ruler({height, dist, dir}) vertical, body marks
+              ui.figure({stature, dist, dir}) a person at real height · ui.timer({dist, dir, height}) .start() .stop() .reset() .value
+     MATH     geo.axes({size, unit, dist, dir, height}) .put(obj, [x,y,z]) · geo.numberLine({from, to, step, length, vertical}) .at(v) .mark(v, {text})
+              geo.angle({deg, radius}) .set(deg) · geo.vector(from, to, {text}) .set(from, to) · geo.point([x,y,z], {text, parent})
+              geo.plot(fn, {xmin, xmax, ymin, ymax}) .mark(x) .addCurve(fn2, color) .setFn(fn) · geo.surface(fn(x,y), {range, size, zscale}) .setFn()
+              geo.polygon([[x,z],...], {color}) flat · geo.solid('cube'|'tetra'|'octa'|'icosa'|'dodeca'|'sphere'|'cylinder'|'cone'|'prism6'|'pyramid4'|'torus', size, {wire})
+              geo.unitCircle({deg, onChange(deg)}) draggable point with sin/cos · geo.tiling({shape:'square'|'triangle'|'hexagon', n, size}) floor tiles
+              geo.slicer(obj) draggable cross-section plane through any solid, .set(h) · geo.triangle({a, b, squares:true}) right triangle with the three squares
+              geo.bars(values, {labels, maxHeight}) .set(values) · geo.fraction(n, d, {style:'bar'|'pie'}) .set(n, d)
+     TEMPLATES whole scenes with the plumbing done — fill in the content only:
+              template.quiz({title, rounds, question(i) → {prompt, choices, answer, reveal(ok)}, onDone(score)}) rounds, score, reveal, restart
+              template.lineup([{name, size, color, fact}], {unit, dist}) things on an arc scaled by size, tap for the fact
+              template.walk([{at, text}], {length, dir}) a floor line with stations that reveal text when you reach them
      RULES    • Every name you call must appear in your `const { ... } = XR;` line — sky, mat, remove, spread included. A name you
                 forgot to destructure is the #1 crash ("sky is not defined"); when in doubt call it as XR.sky(...).
               • Everything you build goes inside build(). Keep frame() cheap.  • Put the first thing to look at 'ahead' at 'near'..'room'.
@@ -91,24 +109,21 @@ CONTENT  (edit this block only)
 
 The CONTENT block always has this shape:
 ```js
-const { THREE, scene, shape, place, fit, spread, remove, label, interactive, tone, spin, bob, mat, sky, ground, H, C, input, onButton, onController, stations } = XR;
+const { THREE, scene, shape, place, fit, spread, remove, label, interactive, tone, spin, bob, mat, sky, ground, ui, geo, template, H, C, input, onButton, onController, stations } = XR;
 
 function build(){
-  // --- Example scene: delete everything in build() and write your own ---
-  const ball = shape.ball(0.12, 'orange');
-  place(ball, { dist:'reach', dir:'ahead', height:'chest' });
+  // --- Example scene (delete everything in build() and write your own). It uses the ready-made widgets: ---
+  ui.sign('Slope explorer\nDrag the slider; the dot rides the curve and the tangent tilts.', { dist:'room', dir:'ahead', height:'eye' });
+  const plot = geo.plot(x => x*x, { xmin:-2, xmax:2, dist:'room', dir:'ahead-left', height:'chest' });
+  const slope = ui.readout('slope = ', { decimals:2, dist:'near', dir:'ahead', height:'shoulder' });
+  ui.slider({ min:-2, max:2, value:0.5, step:0.1, dist:'reach', dir:'ahead', height:'waist',
+    onChange: v => { plot.mark(v); slope.set(2*v); } });
+  ui.choices(['1', '2', '4'], { dist:'near', dir:'ahead-right', height:'chest',
+    onPick: (i, t, row) => { row.mark(i, t === '2' ? 'right' : 'wrong'); if (t === '2') slope.setText('slope at x = 1 is 2 — the derivative of x² is 2x'); } });
+  const ball = shape.ball(0.1, 'orange');
+  place(ball, { dist:'reach', dir:-25, height:'chest' });
   interactive(ball, { grab:true, select: () => tone(660, 0.12) });
   label('Grab me', { above: ball, size:'comfortable' });
-
-  const pedestal = shape.cylinder(0.25, 0.9, 'grey');
-  place(pedestal, { dist:'near', dir:'ahead-right', height:'floor' });
-  const cube = shape.box(0.25, 0.25, 0.25, 'blue');
-  place(cube, { dist:'near', dir:'ahead-right', height: 0.9 + 0.125 });
-  spin(cube, 40);
-  interactive(cube, { select: (obj) => { obj.material.color.setHex(Math.random()*0xffffff); tone(440, 0.1, 'triangle'); } });
-  label('Point and pull the trigger', { above: cube, size:'comfortable', width: 0.6 });
-
-  const sign = label('Welcome.\nWalk around with the thumbstick;\npoint and pull the trigger to interact.', { dist:'room', dir:'ahead', height:'eye', size:'large', width: 1.6 });
 }
 
 function frame(dt, t){

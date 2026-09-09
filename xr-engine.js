@@ -761,7 +761,721 @@ function ground(o = {}){
 /** hand('right'|'left') → that controller's pointer { object, hovered, held, ... } (object is the controller; add things to it to hold them). */
 function hand(which){ return pointers.find(p => p.isXR && p.hand === which) ?? pointers.find(p => p.isXR); }
 
-const XR = { THREE, scene, rig, camera, renderer, floor, grid, H, D, SZ, DIR, C, col, mat, shape, place, fit, spread, remove, label, interactive, tone, spin, bob,
+// ---------- widgets: composite pieces, spatially pre-tuned, so scenes don't reinvent them ----------
+// Every widget returns a group (or label) you can place() with body words; pass dist/dir/height in the options to auto-place.
+const _hasPlacement = o => o.dist !== undefined || o.dir !== undefined || o.height !== undefined || o.at !== undefined;
+function _autoPlace(g, o, def = {}){
+  if (!g.parent) scene.add(g);
+  if (_hasPlacement(o) || def.always){ const opts = { ...def, ...o }; delete opts.always;
+    if (opts.origin){ g.position.copy(resolvePosition(opts)); g.userData.placement = opts; if (opts.face) g.lookAt(0, g.position.y, 0); track(g, tracked.get(g)?.kind ?? 'object'); }
+    else place(g, opts); }
+  return g;
+}
+const _fmt = (v, d = 1) => typeof v === 'number' ? (Number.isInteger(v) && d === 0 ? String(v) : v.toFixed(d)) : String(v);
+const _k = (o, d) => Math.max(1, resolveDist(o.dist ?? d));   // text scale so widget labels keep their visual angle at the placement distance
+const _flat = (l) => { l.rotation.x = -Math.PI/2; return l; };   // lay a parented label flat on the floor/table (reads from the user's side)
+
+const ui = {
+  /** ui.sign(text, { title, width, theme, accent, dist, dir, height }) → plaque label at eye level ahead by default; .setText() */
+  sign(text, o = {}){
+    return label(text, { size: o.size ?? 'large', width: o.width ?? 1.6, title: o.title ?? true, theme: o.theme, accent: o.accent, anchor: 'top',
+                         dist: o.dist ?? 'room', dir: o.dir ?? 'ahead', height: o.height ?? 'eye' });
+  },
+  /** ui.button(text, { onPress(btn), color, width, dist, dir, height }) → pressable plate; .setText(), .setEnabled(bool) */
+  button(text, o = {}){
+    const k = _k(o, 'near');
+    const g = shape.group(); g.name = 'button:' + String(text).slice(0, 14);
+    const w = o.width ?? 0.28, h = o.tall ?? 0.11;
+    const plate = shape.box(w, h, 0.03, o.color ?? 'blue'); g.add(plate);
+    const lbl = label(String(text), { parent: plate, at: [0, 0, 0.035], capHeight: o.capHeight ?? 0.035*k, bg: false, width: w - 0.04 });
+    let enabled = true;
+    interactive(plate, { select: () => { if (!enabled) return; plate.material.emissive.setHex(0x444444); setTimeout(() => plate.material.emissive.setHex(0), 120); tone(o.tone ?? 720, 0.06); o.onPress?.(g); } });
+    g.setText = t => { lbl.setText(String(t)); return g; };
+    g.setEnabled = v => { enabled = !!v; plate.material.transparent = !v; plate.material.opacity = v ? 1 : 0.35; return g; };
+    g.plate = plate;
+    return _autoPlace(g, o, { dist: 'near', dir: 'ahead', height: 'chest', face: true });
+  },
+  /** ui.choices([texts], { onPick(i, text, row), dist, dir, height, width, color }) → arc-fitted pad row; .mark(i,'right'|'wrong'|null), .reset(), .setChoices([...]), .lock() */
+  choices(items, o = {}){
+    const k = _k(o, 'near');
+    const g = shape.group(); g.name = 'choices'; scene.add(g);
+    const dist = resolveDist(o.dist ?? 'near'), w = o.width ?? 0.26, h = 0.11, n = items.length;
+    const gapDeg = Math.max(o.gapDeg ?? 0, THREE.MathUtils.radToDeg((w + 0.07) / dist));
+    const centre = resolveDir(o.dir ?? 'ahead'), y = resolveHeight(o.height ?? 'chest');
+    const base = col(o.color ?? 'white'), pads = [], labels = [];
+    items = [...items];
+    items.forEach((t, i) => {
+      const az = THREE.MathUtils.degToRad(centre + (i - (n - 1)/2) * gapDeg);
+      const pad = shape.box(w, h, 0.03, base); pad.position.set(dist*Math.sin(az), y, -dist*Math.cos(az)); pad.lookAt(0, y, 0);
+      const l = label(String(t), { parent: pad, at: [0, 0, 0.035], capHeight: 0.035*k, bg: false, width: w - 0.04, color: '#1a1d26' });
+      interactive(pad, { select: () => { if (g.locked) return; o.onPick?.(i, items[i], g); } });
+      g.add(pad); pads.push(pad); labels.push(l);
+    });
+    g.pads = pads; g.locked = false;
+    g.mark = (i, how) => { pads[i]?.material.color.setHex(how === 'right' ? C.green : how === 'wrong' ? C.red : base); if (how === 'right') tone(880, .15); else if (how === 'wrong') tone(200, .2, 'square'); return g; };
+    g.reset = () => { pads.forEach(p => p.material.color.setHex(base)); g.locked = false; return g; };
+    g.lock = () => { g.locked = true; return g; };
+    g.setChoices = arr => { arr.forEach((t, i) => { if (labels[i]) labels[i].setText(String(t)); }); items = [...arr]; g.reset(); return g; };
+    return g;
+  },
+  /** ui.slider({ min, max, value, step, onChange(v), onRelease(v), length, format(v), dist, dir, height }) → rail + knob; .value get/set */
+  slider(o = {}){
+    const k = _k(o, 'reach');
+    const g = shape.group(); g.name = 'slider';
+    const len = o.length ?? 0.5, min = o.min ?? 0, max = o.max ?? 1, dec = o.decimals ?? 1;
+    const rail = shape.box(len, 0.015, 0.015, o.color ?? 'white'); g.add(rail);
+    const knob = shape.ball(0.035, o.knobColor ?? 'orange'); g.add(knob);
+    let value = THREE.MathUtils.clamp(o.value ?? min, min, max);
+    const text = v => o.format ? o.format(v) : _fmt(v, dec);
+    const readout = o.label === false ? null : label(text(value), { parent: rail, at: [0, 0.07, 0], capHeight: 0.03*k, bg: false });
+    const setKnob = () => { knob.position.x = ((value - min)/(max - min) - 0.5) * len; readout?.setText(text(value)); };
+    setKnob();
+    interactive(knob, { grab: 'hold',
+      drag: (k, { point }) => { const p = rail.worldToLocal(point.clone()); const t = THREE.MathUtils.clamp(p.x/len + 0.5, 0, 1);
+        let v = min + t*(max - min); if (o.step) v = Math.round(v/o.step)*o.step; if (v !== value){ value = v; setKnob(); o.onChange?.(value, g); } },
+      release: () => o.onRelease?.(value, g) });
+    Object.defineProperty(g, 'value', { get: () => value, set: v => { value = THREE.MathUtils.clamp(v, min, max); setKnob(); o.onChange?.(value, g); } });
+    g.knob = knob; g.rail = rail;
+    return _autoPlace(g, o, { dist: 'reach', dir: 'ahead-right', height: 'waist', face: true });
+  },
+  /** ui.dial({ min, max, value, onChange(v), radius, format, dist, dir, height }) → rotary knob (270° sweep); .value get/set */
+  dial(o = {}){
+    const k = _k(o, 'reach');
+    const g = shape.group(); g.name = 'dial';
+    const r = o.radius ?? 0.12, min = o.min ?? 0, max = o.max ?? 100, dec = o.decimals ?? 0;
+    const disc = new THREE.Mesh(new THREE.CircleGeometry(r, 48), mat(o.color ?? 'dark', { side: THREE.DoubleSide })); g.add(disc);
+    const hub = shape.group(); const ptr = shape.box(0.02, r*0.85, 0.02, o.pointerColor ?? 'orange'); ptr.position.set(0, r*0.45, 0.012); hub.add(ptr); g.add(hub);
+    let value = THREE.MathUtils.clamp(o.value ?? min, min, max);
+    const text = v => o.format ? o.format(v) : _fmt(v, dec);
+    const readout = o.label === false ? null : label(text(value), { parent: disc, at: [0, -r - 0.05, 0.01], capHeight: 0.03*k, bg: false });
+    const apply = () => { const t = (value - min)/(max - min); hub.rotation.z = -THREE.MathUtils.degToRad(-135 + 270*t); readout?.setText(text(value)); };
+    apply();
+    interactive(disc, { grab: 'hold',
+      drag: (d, { point }) => { const p = disc.worldToLocal(point.clone()); let deg = THREE.MathUtils.radToDeg(Math.atan2(p.x, p.y)); deg = THREE.MathUtils.clamp(deg, -135, 135);
+        let v = min + (deg + 135)/270*(max - min); if (o.step) v = Math.round(v/o.step)*o.step; if (v !== value){ value = v; apply(); o.onChange?.(value, g); } },
+      release: () => o.onRelease?.(value, g) });
+    Object.defineProperty(g, 'value', { get: () => value, set: v => { value = THREE.MathUtils.clamp(v, min, max); apply(); o.onChange?.(value, g); } });
+    return _autoPlace(g, o, { dist: 'reach', dir: 'ahead-right', height: 'chest', face: true });
+  },
+  /** ui.readout(prefix, { units, decimals, value, above, dist, dir, height }) → live number label; .set(v) */
+  readout(prefix, o = {}){
+    const fmt = v => `${prefix ?? ''}${_fmt(v, o.decimals ?? 1)}${o.units ? ' ' + o.units : ''}`;
+    const l = label(fmt(o.value ?? 0), { size: o.size ?? 'comfortable', width: o.width, theme: o.theme, accent: o.accent,
+      ...(o.above ? { above: o.above } : { dist: o.dist ?? 'near', dir: o.dir ?? 'ahead', height: o.height ?? 'chest' }) });
+    l.set = v => { l.setText(fmt(v)); return l; };
+    return l;
+  },
+  /** ui.pedestal({ height, radius, color, dist, dir }) → column; .putOnTop(obj) sets obj on it; .topY */
+  pedestal(o = {}){
+    const h = resolveHeight(o.height ?? 'waist'); const g = shape.group(); g.name = 'pedestal';
+    const c = shape.cylinder(o.radius ?? 0.18, h, o.color ?? 'grey'); c.position.y = h/2; g.add(c);
+    const cap = shape.cylinder((o.radius ?? 0.18) + 0.02, 0.02, o.capColor ?? 'white'); cap.position.y = h + 0.01; g.add(cap);
+    g.topY = h + 0.02;
+    place(g, { dist: o.dist ?? 'near', dir: o.dir ?? 'ahead-right', height: 'floor' });
+    g.putOnTop = obj => { g.add(obj); obj.position.set(0, 0, 0); obj.updateMatrixWorld(true); const b = new THREE.Box3().setFromObject(obj, true); g.updateMatrixWorld(true); const bottomLocal = b.min.y - g.getWorldPosition(new THREE.Vector3()).y; obj.position.y = g.topY - bottomLocal; return obj; };
+    return g;
+  },
+  /** ui.tape(from, to, { unit, color }) — floor tape measure with numbered ticks; from/to = [x, z] or objects; .set(from, to) */
+  tape(from, to, o = {}){
+    const g = shape.group(); g.name = 'tape'; scene.add(g);
+    const xz = p => p?.isObject3D ? (() => { const w = p.getWorldPosition(new THREE.Vector3()); return [w.x, w.z]; })() : p;
+    g.set = (a, b) => {
+      while (g.children.length) remove(g.children[0]);
+      const [ax, az] = xz(a), [bx, bz] = xz(b); const dx = bx - ax, dz = bz - az, L = Math.hypot(dx, dz); if (L < 1e-6) return g;
+      const ux = dx/L, uz = dz/L, sx = -uz, sz = ux, unit = o.unit ?? 1;
+      g.add(shape.line([[ax, 0.012, az], [bx, 0.012, bz]], o.color ?? 'orange'));
+      for (let m = unit; m <= L + 1e-6; m += unit){
+        const px = ax + ux*m, pz = az + uz*m;
+        g.add(shape.line([[px - sx*0.1, 0.012, pz - sz*0.1], [px + sx*0.1, 0.012, pz + sz*0.1]], 'white'));
+        const l = label(_fmt(m, unit % 1 ? 1 : 0), { parent: g, at: [px + sx*0.22, 0.015, pz + sz*0.22], capHeight: 0.08, bg: false }); _flat(l);
+      }
+      const end = label(_fmt(L, 2) + ' m', { parent: g, at: [bx + ux*0.25, 0.015, bz + uz*0.25], capHeight: 0.09, bg: false, color: '#ffc53d' }); _flat(end);
+      return g;
+    };
+    return g.set(from, to);
+  },
+  /** ui.ruler({ height, dist, dir, marks: true }) → vertical metre ruler with body-height marks (knee/waist/chest/eye) */
+  ruler(o = {}){
+    const k = _k(o, 'near');
+    const g = shape.group(); g.name = 'ruler'; const Hh = o.height ?? 2;
+    const post = shape.box(0.03, Hh, 0.03, o.color ?? 'white'); post.position.y = Hh/2; g.add(post);
+    for (let y = 0; y <= Hh + 1e-6; y += 0.1){ const big = Math.abs(y*2 - Math.round(y*2)) < 1e-6; const t = shape.box(big ? 0.12 : 0.06, 0.008, 0.02, 'orange'); t.position.set(big ? 0.075 : 0.045, y, 0); g.add(t);
+      if (big && y > 0) label(_fmt(y, 1), { parent: g, at: [0.22, y, 0], capHeight: 0.05*k, bg: false, color: '#ffc53d' }); }
+    if (o.marks !== false) for (const mk of ['knee', 'waist', 'chest', 'eye']) label(mk, { parent: g, at: [-0.2, H[mk], 0], capHeight: 0.045*k, bg: false, color: '#8fd3ff' });
+    return _autoPlace(g, o, { dist: 'near', dir: 'ahead-left', height: 'floor', face: true, always: true });
+  },
+  /** ui.figure({ stature, color, dist, dir }) → a simple person-shaped mannequin at real height, feet on the floor */
+  figure(o = {}){
+    const s = o.stature ?? H.stature, c = o.color ?? 'grey'; const g = shape.group(); g.name = 'figure';
+    const legs = shape.cylinder(0.09*s/1.7, 0.47*s, c); legs.position.y = 0.235*s; g.add(legs);
+    const torso = shape.cylinder(0.13*s/1.7, 0.33*s, c); torso.position.y = 0.47*s + 0.165*s; g.add(torso);
+    const head = shape.ball(0.065*s, c); head.position.y = s - 0.065*s; g.add(head);
+    g.stature = s;
+    return _autoPlace(g, o, { dist: 'near', dir: 'ahead-left', height: 'floor', always: true });
+  },
+  /** ui.timer({ dist, dir, height, decimals }) → seconds display; .start(), .stop(), .reset(), .value */
+  timer(o = {}){
+    const dec = o.decimals ?? 1; let t = 0, running = false, shown = '';
+    const l = label(_fmt(0, dec) + ' s', { size: o.size ?? 'large', dist: o.dist ?? 'near', dir: o.dir ?? 'ahead', height: o.height ?? 'eye', theme: o.theme });
+    anims.add(dt => { if (!running) return; t += dt; const s = _fmt(t, dec) + ' s'; if (s !== shown){ shown = s; l.setText(s); } });
+    l.start = () => { running = true; return l; }; l.stop = () => { running = false; return l; };
+    l.reset = () => { t = 0; running = false; shown = ''; l.setText(_fmt(0, dec) + ' s'); return l; };
+    Object.defineProperty(l, 'value', { get: () => t }); Object.defineProperty(l, 'running', { get: () => running });
+    return l;
+  },
+};
+
+const geo = {
+  /** geo.axes({ size, unit, labels, dist, dir, height }) → x (red) y (green) z (blue) axes; origin at the placement point; .pt([x,y,z]) → local vector */
+  axes(o = {}){
+    const k = _k(o, 'near');
+    const g = shape.group(); g.name = 'axes'; const L = o.size ?? 1, unit = o.unit ?? 1;
+    const axis = (v, colr, name) => { const a = shape.group(); const shaft = shape.cylinder(0.006, L, colr); shaft.position.y = L/2; const tip = shape.cone(0.025, 0.07, colr); tip.position.y = L + 0.035; a.add(shaft, tip);
+      if (o.labels !== false) label(name, { parent: a, at: [0.05, L + 0.09, 0], capHeight: 0.05*k, bg: false }); a.quaternion.setFromUnitVectors(new THREE.Vector3(0, 1, 0), v); g.add(a); };
+    axis(new THREE.Vector3(1, 0, 0), 'red', 'x'); axis(new THREE.Vector3(0, 1, 0), 'green', 'y'); axis(new THREE.Vector3(0, 0, -1), 'blue', 'z');
+    if (o.ticks !== false) for (let i = 1; i*unit < L; i++){ for (const [dx, dy, dz] of [[1, 0, 0], [0, 1, 0], [0, 0, -1]]){ const t = shape.box(0.03, 0.03, 0.03, 'white'); t.position.set(dx*i*unit, dy*i*unit, dz*i*unit); g.add(t); } }
+    g.pt = ([x, y, z]) => new THREE.Vector3(x*unit, y*unit, -z*unit);
+    g.put = (obj, [x, y, z]) => { g.add(obj); obj.position.copy(g.pt([x, y, z])); return obj; };
+    return _autoPlace(g, o, { dist: 'near', dir: 'ahead', height: 'waist', origin: true, always: true });
+  },
+  /** geo.numberLine({ from, to, step, length, vertical, dist, dir, height }) → ticks + numbers; .at(v) local x, .mark(v, { color, text }) */
+  numberLine(o = {}){
+    const k = _k(o, 'near');
+    const g = shape.group(); g.name = 'numberLine'; const from = o.from ?? 0, to = o.to ?? 10, step = o.step ?? 1, len = o.length ?? 2;
+    const at = v => ((v - from)/(to - from) - 0.5)*len;
+    g.add(shape.box(len + 0.04, 0.012, 0.012, o.color ?? 'white'));
+    for (let v = from; v <= to + 1e-9; v += step){ const t = shape.box(0.012, 0.06, 0.012, 'white'); t.position.x = at(v); g.add(t);
+      if (o.labels !== false) label(_fmt(v, step % 1 ? 1 : 0), { parent: g, at: [at(v), -0.08, 0], capHeight: o.capHeight ?? 0.04*k, bg: false }); }
+    g.at = at; g.marks = [];
+    g.mark = (v, mo = {}) => { const m = shape.ball(mo.radius ?? 0.03, mo.color ?? 'orange'); m.position.set(at(v), 0.06, 0); g.add(m); if (mo.text) label(mo.text, { parent: g, at: [at(v), 0.14, 0], capHeight: 0.035*k, bg: false }); g.marks.push(m); return m; };
+    if (o.vertical) g.rotation.z = Math.PI/2;
+    return _autoPlace(g, o, { dist: 'near', dir: 'ahead', height: 'chest', face: true, always: true });
+  },
+  /** geo.angle({ deg, radius, color, dist, dir, height }) → two rays + arc + degree readout; .set(deg) */
+  angle(o = {}){
+    const k = _k(o, 'near');
+    const g = shape.group(); g.name = 'angle'; const r = o.radius ?? 0.35;
+    const ray1 = shape.box(r, 0.012, 0.012, o.color ?? 'white'); ray1.position.x = r/2; g.add(ray1);
+    const ray2 = shape.box(r, 0.012, 0.012, o.color ?? 'white'); const piv = shape.group(); ray2.position.x = r/2; piv.add(ray2); g.add(piv);
+    const vertex = shape.ball(0.02, 'orange'); g.add(vertex);
+    let arc = null; const readout = label('', { parent: g, at: [r*0.55, r*0.32, 0.01], capHeight: 0.045*k, bg: false, color: '#ffc53d' });
+    g.set = deg => { g.deg = deg; piv.rotation.z = THREE.MathUtils.degToRad(deg); if (arc) remove(arc);
+      const pts = []; const n = Math.max(2, Math.round(Math.abs(deg)/4)); for (let i = 0; i <= n; i++){ const a = THREE.MathUtils.degToRad(deg*i/n); pts.push([r*0.35*Math.cos(a), r*0.35*Math.sin(a), 0]); }
+      arc = shape.line(pts, 'orange'); g.add(arc); readout.setText(_fmt(deg, 0) + '°'); readout.position.set(r*0.55*Math.cos(THREE.MathUtils.degToRad(deg/2)), r*0.55*Math.sin(THREE.MathUtils.degToRad(deg/2)), 0.01); return g; };
+    g.set(o.deg ?? 45);
+    return _autoPlace(g, o, { dist: 'near', dir: 'ahead', height: 'chest', face: true, always: true });
+  },
+  /** geo.vector(from, to, { color, text, parent }) → arrow; .set(from, to). Coordinates are in the parent's space (scene by default). */
+  vector(from, to, o = {}){
+    const g = shape.group(); g.name = 'vector'; (o.parent ?? scene).add(g);
+    const shaft = shape.cylinder(0.008, 1, o.color ?? 'yellow'), tip = shape.cone(0.03, 0.08, o.color ?? 'yellow'); g.add(shaft, tip);
+    const lbl = o.text ? label(o.text, { parent: g, at: [0, 0, 0], capHeight: 0.04, bg: false }) : null;
+    const up = new THREE.Vector3(0, 1, 0);
+    g.set = (a, b) => { const A = a.isVector3 ? a : new THREE.Vector3(...a), B = b.isVector3 ? b : new THREE.Vector3(...b); const d = B.clone().sub(A), L = d.length(); if (L < 1e-6) return g;
+      const dir = d.clone().normalize(); g.position.copy(A); const q = new THREE.Quaternion().setFromUnitVectors(up, dir);
+      shaft.scale.set(1, L - 0.08, 1); shaft.position.copy(dir.clone().multiplyScalar((L - 0.08)/2)); shaft.quaternion.copy(q);
+      tip.position.copy(dir.clone().multiplyScalar(L - 0.04)); tip.quaternion.copy(q);
+      if (lbl) lbl.position.copy(dir.clone().multiplyScalar(L/2)).add(new THREE.Vector3(0, 0.06, 0)); g.from = A; g.to = B; return g; };
+    return g.set(from, to);
+  },
+  /** geo.plot(fn, { xmin, xmax, ymin, ymax, width, tall, samples, color, dist, dir, height }) → panel with axes + curve; .mark(x), .add(fn2, color), .setFn(fn), .toLocal(x, y) */
+  plot(fn, o = {}){
+    const k = _k(o, 'near');
+    const g = shape.group(); g.name = 'plot'; const W = o.width ?? 1, Hh = o.tall ?? 0.7, N = o.samples ?? 120;
+    const xmin = o.xmin ?? -2, xmax = o.xmax ?? 2; let ymin = o.ymin, ymax = o.ymax;
+    if (ymin === undefined || ymax === undefined){ let lo = Infinity, hi = -Infinity; for (let i = 0; i <= N; i++){ const y = fn(xmin + (xmax - xmin)*i/N); if (Number.isFinite(y)){ lo = Math.min(lo, y); hi = Math.max(hi, y); } } if (!Number.isFinite(lo)){ lo = -1; hi = 1; } const pad = (hi - lo || 1)*0.1; ymin ??= lo - pad; ymax ??= hi + pad; }
+    const toLocal = (x, y) => [((x - xmin)/(xmax - xmin) - 0.5)*W, ((y - ymin)/(ymax - ymin) - 0.5)*Hh];
+    g.add(shape.panel(W + 0.1, Hh + 0.1, o.bg ?? 'dark'));
+    const [x0] = toLocal(THREE.MathUtils.clamp(0, xmin, xmax), 0), [, y0] = toLocal(0, THREE.MathUtils.clamp(0, ymin, ymax));
+    g.add(shape.line([[-W/2, y0, 0.004], [W/2, y0, 0.004]], 'grey')); g.add(shape.line([[x0, -Hh/2, 0.004], [x0, Hh/2, 0.004]], 'grey'));
+    for (const [tx, ty, s] of [[xmin, ymin, _fmt(xmin, 1)], [xmax, ymin, _fmt(xmax, 1)]]) label(s, { parent: g, at: [toLocal(tx, 0)[0], -Hh/2 - 0.04, 0.01], capHeight: 0.028*k, bg: false });
+    for (const v of [ymin, ymax]) label(_fmt(v, 1), { parent: g, at: [-W/2 - 0.06, toLocal(0, v)[1], 0.01], capHeight: 0.028*k, bg: false });
+    const curve = (f, c) => { const pts = []; for (let i = 0; i <= N; i++){ const x = xmin + (xmax - xmin)*i/N; const y = f(x); const [lx, ly] = toLocal(x, Number.isFinite(y) ? THREE.MathUtils.clamp(y, ymin, ymax) : ymin); pts.push([lx, ly, 0.008]); } const l = shape.line(pts, c); g.add(l); return l; };
+    let main = curve(fn, o.color ?? 'teal'); const dot = shape.ball(0.018, 'orange'); dot.visible = false; g.add(dot);
+    g.toLocal = toLocal; g.fn = fn;
+    g.mark = x => { const y = g.fn(x); const [lx, ly] = toLocal(x, THREE.MathUtils.clamp(y, ymin, ymax)); dot.position.set(lx, ly, 0.012); dot.visible = true; return dot; };
+    g.add2 = g.addCurve = (f, c) => curve(f, c ?? 'orange');
+    g.setFn = f => { remove(main); g.fn = f; main = curve(f, o.color ?? 'teal'); return g; };
+    g.range = { xmin, xmax, ymin, ymax };
+    return _autoPlace(g, o, { dist: 'near', dir: 'ahead', height: 'chest', face: true, always: true });
+  },
+  /** geo.surface(fn(x, y), { range, size, res, zscale, color, wire, dist, dir, height }) → z = f(x, y) height-map mesh; .setFn(fn) */
+  surface(fn, o = {}){
+    const g = shape.group(); g.name = 'surface'; const size = o.size ?? 1, res = o.res ?? 40, R = o.range ?? [-1, 1], zs = o.zscale ?? 0.3;
+    const geom = new THREE.PlaneGeometry(size, size, res, res); geom.rotateX(-Math.PI/2);
+    const pos = geom.attributes.position; const colors = new Float32Array(pos.count*3); geom.setAttribute('color', new THREE.BufferAttribute(colors, 3));
+    const mesh = new THREE.Mesh(geom, mat(o.color ?? 'teal', { side: THREE.DoubleSide, vertexColors: true, roughness: 0.5 })); g.add(mesh);
+    const wire = o.wire === false ? null : new THREE.LineSegments(new THREE.WireframeGeometry(geom), new THREE.LineBasicMaterial({ color: 0xffffff, transparent: true, opacity: 0.18 })); if (wire) g.add(wire);
+    const lo = new THREE.Color(0x12a594), hi = new THREE.Color(0xffc53d), tmp = new THREE.Color();
+    g.setFn = f => { let zmin = Infinity, zmax = -Infinity; const zs2 = [];
+      for (let i = 0; i < pos.count; i++){ const x = R[0] + (pos.getX(i)/size + 0.5)*(R[1] - R[0]), y = R[0] + (-pos.getZ(i)/size + 0.5)*(R[1] - R[0]); const z = f(x, y); zs2.push(Number.isFinite(z) ? z : 0); zmin = Math.min(zmin, zs2[i]); zmax = Math.max(zmax, zs2[i]); }
+      for (let i = 0; i < pos.count; i++){ pos.setY(i, zs2[i]*zs); tmp.copy(lo).lerp(hi, (zs2[i] - zmin)/((zmax - zmin) || 1)); colors[i*3] = tmp.r; colors[i*3 + 1] = tmp.g; colors[i*3 + 2] = tmp.b; }
+      pos.needsUpdate = true; geom.attributes.color.needsUpdate = true; geom.computeVertexNormals(); geom.computeBoundingBox(); geom.computeBoundingSphere();
+      if (wire){ wire.geometry.dispose(); wire.geometry = new THREE.WireframeGeometry(geom); } g.fn = f; g.zRange = [zmin, zmax]; return g; };
+    g.setFn(fn);
+    return _autoPlace(g, o, { dist: 'near', dir: 'ahead', height: 'waist', always: true });
+  },
+  /** geo.polygon([[x, z], ...], { color, thick }) → flat shape lying on the floor (or table); geo.solid(name, size, { color, wire }) → cube|tetra|octa|icosa|dodeca|sphere|cylinder|cone|prismN|pyramidN */
+  polygon(points, o = {}){
+    const sh = new THREE.Shape(points.map(([x, z]) => new THREE.Vector2(x, -z)));
+    const geom = new THREE.ExtrudeGeometry(sh, { depth: o.thick ?? 0.02, bevelEnabled: false }); geom.rotateX(-Math.PI/2);
+    const m = new THREE.Mesh(geom, mat(o.color ?? 'teal')); m.name = 'polygon';
+    if (o.edges !== false) m.add(new THREE.LineSegments(new THREE.EdgesGeometry(geom), new THREE.LineBasicMaterial({ color: 0xffffff, transparent: true, opacity: 0.5 })));
+    return _autoPlace(m, o, {});
+  },
+  solid(name = 'cube', size = 0.3, o = {}){
+    const r = size/2; let geom;
+    const n = parseInt((name.match(/\d+/) || ['0'])[0]);
+    if (name === 'cube') geom = new THREE.BoxGeometry(size, size, size); else if (name === 'tetra') geom = new THREE.TetrahedronGeometry(r); else if (name === 'octa') geom = new THREE.OctahedronGeometry(r);
+    else if (name === 'icosa') geom = new THREE.IcosahedronGeometry(r); else if (name === 'dodeca') geom = new THREE.DodecahedronGeometry(r); else if (name === 'sphere') geom = new THREE.SphereGeometry(r, 32, 16);
+    else if (name === 'cylinder') geom = new THREE.CylinderGeometry(r, r, size, 32); else if (name === 'cone') geom = new THREE.ConeGeometry(r, size, 32);
+    else if (name.startsWith('prism')) geom = new THREE.CylinderGeometry(r, r, size, n || 6); else if (name.startsWith('pyramid')) geom = new THREE.ConeGeometry(r, size, n || 4);
+    else if (name === 'torus') geom = new THREE.TorusGeometry(r*0.7, r*0.3, 16, 48); else geom = new THREE.BoxGeometry(size, size, size);
+    const m = new THREE.Mesh(geom, mat(o.color ?? 'blue', o.wire ? { transparent: true, opacity: 0.25 } : {})); m.name = 'solid:' + name;
+    if (o.wire || o.edges) m.add(new THREE.LineSegments(new THREE.EdgesGeometry(geom), new THREE.LineBasicMaterial({ color: col(o.edgeColor ?? 'white') })));
+    return _autoPlace(m, o, {});
+  },
+  /** geo.unitCircle({ radius, deg, onChange(deg), dist, dir, height }) → circle + draggable point + sin/cos drops and readouts; .set(deg) */
+  unitCircle(o = {}){
+    const k = _k(o, 'near');
+    const g = shape.group(); g.name = 'unitCircle'; const r = o.radius ?? 0.4;
+    const pts = []; for (let i = 0; i <= 96; i++){ const a = i/96*Math.PI*2; pts.push([r*Math.cos(a), r*Math.sin(a), 0]); } g.add(shape.line(pts, 'white'));
+    g.add(shape.line([[-r*1.15, 0, 0], [r*1.15, 0, 0]], 'grey')); g.add(shape.line([[0, -r*1.15, 0], [0, r*1.15, 0]], 'grey'));
+    const radius = shape.line([[0, 0, 0.004], [r, 0, 0.004]], 'yellow'), sinL = shape.line([[r, 0, 0.004], [r, 0, 0.004]], 'teal'), cosL = shape.line([[0, 0, 0.004], [r, 0, 0.004]], 'orange'); g.add(radius, sinL, cosL);
+    const pt = shape.ball(0.035, 'orange'); g.add(pt);
+    const rd = label('', { parent: g, at: [0, -r - 0.16, 0.01], capHeight: 0.035*k, bg: false }); const ang = label('', { parent: g, at: [r*0.25, r*0.12, 0.01], capHeight: 0.035*k, bg: false, color: '#ffc53d' });
+    const setLine = (line, a, b) => { const p = line.geometry.attributes.position; p.setXYZ(0, ...a); p.setXYZ(1, ...b); p.needsUpdate = true; };
+    g.set = deg => { g.deg = deg; const a = THREE.MathUtils.degToRad(deg), x = r*Math.cos(a), y = r*Math.sin(a); pt.position.set(x, y, 0.01);
+      setLine(radius, [0, 0, 0.004], [x, y, 0.004]); setLine(sinL, [x, 0, 0.004], [x, y, 0.004]); setLine(cosL, [0, 0, 0.004], [x, 0, 0.004]);
+      rd.setText(`sin ${_fmt(Math.sin(a), 2)}   cos ${_fmt(Math.cos(a), 2)}`); ang.setText(_fmt(((deg % 360) + 360) % 360, 0) + '°'); return g; };
+    interactive(pt, { grab: 'hold', drag: (p, { point }) => { const l = g.worldToLocal(point.clone()); const deg = THREE.MathUtils.radToDeg(Math.atan2(l.y, l.x)); g.set(deg); o.onChange?.(g.deg, g); } });
+    g.set(o.deg ?? 30);
+    return _autoPlace(g, o, { dist: 'near', dir: 'ahead', height: 'chest', face: true, always: true });
+  },
+  /** geo.tiling({ shape: 'square'|'triangle'|'hexagon', n, size, gap, color, dist, dir }) → floor tiles around the placement point */
+  tiling(o = {}){
+    const g = shape.group(); g.name = 'tiling'; const s = o.size ?? 0.3, n = o.n ?? 3, gap = o.gap ?? 0.02, kind = o.shape ?? 'square';
+    const tile = (verts, cx, cz, rot = 0) => { const sh = new THREE.Shape(verts.map(([x, y]) => new THREE.Vector2(x, y))); const geom = new THREE.ExtrudeGeometry(sh, { depth: 0.02, bevelEnabled: false }); geom.rotateX(-Math.PI/2); const m = new THREE.Mesh(geom, mat(o.color ?? 'teal')); m.position.set(cx, 0, cz); m.rotation.y = rot; g.add(m); return m; };
+    const a = s - gap;
+    if (kind === 'square'){ for (let i = -n; i <= n; i++) for (let j = -n; j <= n; j++) tile([[-a/2, -a/2], [a/2, -a/2], [a/2, a/2], [-a/2, a/2]], i*s, j*s); }
+    else if (kind === 'hexagon'){ const R = a/Math.sqrt(3), w = s*Math.sqrt(3), verts = []; for (let k = 0; k < 6; k++) verts.push([R*Math.cos(k*Math.PI/3 + Math.PI/6), R*Math.sin(k*Math.PI/3 + Math.PI/6)]);
+      for (let q = -n; q <= n; q++) for (let rr = -n; rr <= n; rr++){ if (Math.abs(q + rr) > n) continue; tile(verts, w*(q + rr/2), 1.5*s*rr); } }
+    else { const h = a*Math.sqrt(3)/2, up = [[-a/2, -h/3], [a/2, -h/3], [0, 2*h/3]], down = [[-a/2, h/3], [a/2, h/3], [0, -2*h/3]];
+      for (let row = -n; row <= n; row++) for (let i = -n; i <= n; i++){ const upTri = (i + row) % 2 === 0; tile(upTri ? up : down, i*s/2, row*(s*Math.sqrt(3)/2) + (upTri ? 0 : 0)); } }
+    return _autoPlace(g, o, { dist: 'near', dir: 'ahead', height: 'floor', origin: true, always: true });
+  },
+  /** geo.slicer(obj, { axis: 'y', color }) → a draggable plane through obj that draws its cross-section outline; .set(h), .height */
+  slicer(obj, o = {}){
+    const g = shape.group(); g.name = 'slicer'; scene.add(g);
+    obj.updateWorldMatrix(true, true); const box = new THREE.Box3().setFromObject(obj, true); const size = box.getSize(new THREE.Vector3()), ctr = box.getCenter(new THREE.Vector3());
+    const span = Math.max(size.x, size.z)*1.3;
+    const plane = new THREE.Mesh(new THREE.PlaneGeometry(span, span), mat(o.color ?? 'yellow', { transparent: true, opacity: 0.25, side: THREE.DoubleSide, depthWrite: false })); plane.rotation.x = -Math.PI/2; g.add(plane);
+    const handle = shape.ball(0.04, 'orange'); handle.position.set(span/2 + 0.05, 0, 0); g.add(handle);
+    const outline = new THREE.LineSegments(new THREE.BufferGeometry(), new THREE.LineBasicMaterial({ color: col(o.lineColor ?? 'white') })); g.add(outline);
+    const rd = label('', { parent: g, at: [span/2 + 0.05, 0.08, 0], capHeight: 0.035, bg: false });
+    g.position.set(ctr.x, 0, ctr.z);
+    const tri = [new THREE.Vector3(), new THREE.Vector3(), new THREE.Vector3()], _p = new THREE.Vector3();
+    g.set = h => { h = THREE.MathUtils.clamp(h, box.min.y + 0.002, box.max.y - 0.002); g.position.y = h; g.height = h; rd.setText(_fmt(h - box.min.y, 2) + ' m up');
+      const segs = []; let area = 0;
+      obj.traverse(m => { if (!m.isMesh || !m.geometry?.attributes?.position || m.parent === g) return; const P = m.geometry.attributes.position, idx = m.geometry.index; const nTri = idx ? idx.count/3 : P.count/3;
+        for (let t = 0; t < nTri; t++){ for (let k = 0; k < 3; k++){ const vi = idx ? idx.getX(t*3 + k) : t*3 + k; tri[k].fromBufferAttribute(P, vi).applyMatrix4(m.matrixWorld); }
+          const pts = []; for (let k = 0; k < 3; k++){ const A = tri[k], B = tri[(k + 1)%3]; if ((A.y - h)*(B.y - h) < 0){ const s = (h - A.y)/(B.y - A.y); pts.push([A.x + (B.x - A.x)*s - g.position.x, 0.003, A.z + (B.z - A.z)*s - g.position.z]); } }
+          if (pts.length === 2) segs.push(...pts[0], ...pts[1]); } });
+      outline.geometry.dispose(); outline.geometry = new THREE.BufferGeometry().setAttribute('position', new THREE.Float32BufferAttribute(segs, 3)); return g; };
+    interactive(handle, { grab: 'hold', drag: (hd, { point }) => { g.set(point.y); o.onChange?.(g.height, g); } });
+    g.set(o.height ?? ctr.y); g.box = box;
+    return g;
+  },
+  /** geo.point([x, y, z], { text, color, radius, parent }) → small ball with a label; coordinates in the parent's space */
+  point(pos, o = {}){
+    const m = shape.ball(o.radius ?? 0.03, o.color ?? 'orange'); m.name = 'point' + (o.text ? ':' + o.text : ''); (o.parent ?? scene).add(m);
+    m.position.set(...(pos.isVector3 ? pos.toArray() : pos));
+    if (o.text) label(o.text, { parent: m, at: [0, (o.radius ?? 0.03) + 0.05, 0], capHeight: o.capHeight ?? 0.04, bg: false });
+    return m;
+  },
+  /** geo.triangle({ a, b, squares, dist, dir, height }) → right triangle (legs a, b) lying flat, with optional squares on all three sides and area labels */
+  triangle(o = {}){
+    const k = _k(o, 'near');
+    const a = o.a ?? 0.6, b = o.b ?? 0.8, c = Math.hypot(a, b); const g = shape.group(); g.name = 'triangle';
+    const tri = geo.polygon([[0, 0], [b, 0], [0, -a]], { color: o.color ?? 'white', thick: 0.02 }); g.add(tri);
+    if (o.squares !== false){
+      const sq = (pts, colr, txt) => { const p = geo.polygon(pts, { color: colr, thick: 0.015 }); g.add(p); const cx = pts.reduce((s, q) => s + q[0], 0)/4, cz = pts.reduce((s, q) => s + q[1], 0)/4; const l = label(txt, { parent: g, at: [cx, 0.03, cz], capHeight: 0.06*k, bg: false }); _flat(l); return p; };
+      sq([[0, 0], [b, 0], [b, b], [0, b]], 'orange', 'b² = ' + _fmt(b*b, 2));           // on leg b (toward +z, i.e. toward the user)
+      sq([[0, 0], [0, -a], [-a, -a], [-a, 0]], 'teal', 'a² = ' + _fmt(a*a, 2));         // on leg a
+      const ux = (0 - b)/c, uz = (-a - 0)/c, nx = -uz, nz = ux;                           // hypotenuse from (b,0) to (0,-a); outward normal away from the triangle
+      sq([[b, 0], [0, -a], [0 + nx*c, -a + nz*c], [b + nx*c, 0 + nz*c]], 'purple', 'c² = ' + _fmt(c*c, 2));
+    }
+    g.a = a; g.b = b; g.c = c;
+    return _autoPlace(g, o, { dist: 'near', dir: 'ahead', height: 'floor', origin: true, always: true });
+  },
+  /** geo.bars(values, { labels, width, gap, maxHeight, colors, dist, dir }) → bar chart standing on the floor; .set(values) */
+  bars(values, o = {}){
+    const k = _k(o, 'near');
+    const g = shape.group(); g.name = 'bars'; const w = o.width ?? 0.12, gap = o.gap ?? 0.06, maxH = o.maxHeight ?? 1;
+    const vmax = () => Math.max(1e-9, o.max ?? Math.max(...values)); const bars = [], tops = [];
+    values.forEach((v, i) => { const colr = o.colors?.[i] ?? ['teal', 'orange', 'blue', 'yellow', 'purple', 'pink', 'green', 'red'][i % 8];
+      const bx = (i - (values.length - 1)/2)*(w + gap); const bar = shape.box(w, 0.01, w, colr); bar.position.set(bx, 0.005, 0); g.add(bar); bars.push(bar);
+      tops.push(label(_fmt(v, o.decimals ?? 0), { parent: g, at: [bx, 0.06, 0], capHeight: 0.035*k, bg: false }));
+      if (o.labels?.[i] !== undefined){ const l = label(String(o.labels[i]), { parent: g, at: [bx, 0.02, w/2 + 0.1], capHeight: 0.035*k, bg: false }); _flat(l); } });
+    g.set = vals => { values = vals; const m = vmax(); vals.forEach((v, i) => { const h = Math.max(0.01, v/m*maxH); bars[i].scale.y = h/0.01; bars[i].position.y = h/2; tops[i].setText(_fmt(v, o.decimals ?? 0)); tops[i].position.y = h + 0.06; }); return g; };
+    g.set(values);
+    return _autoPlace(g, o, { dist: 'near', dir: 'ahead', height: 'floor', origin: true, always: true });
+  },
+  /** geo.fraction(num, den, { style: 'bar'|'pie', size, color, dist, dir, height }) → shaded fraction; .set(num, den) */
+  fraction(num, den, o = {}){
+    const k = _k(o, 'near');
+    const g = shape.group(); g.name = 'fraction'; const size = o.size ?? 0.5;
+    const rd = label('', { parent: g, at: [0, -size*0.62, 0.01], capHeight: 0.05*k, bg: false });
+    g.set = (n, d) => { while (g.children.length > 1) remove(g.children[g.children.length - 1]); g.num = n; g.den = d;
+      if ((o.style ?? 'bar') === 'pie'){ for (let i = 0; i < d; i++){ const geom = new THREE.CircleGeometry(size/2, 24, i/d*Math.PI*2 + Math.PI/2, Math.PI*2/d*0.98); const m = new THREE.Mesh(geom, mat(i < n ? (o.color ?? 'teal') : 'grey', { side: THREE.DoubleSide })); g.add(m); } }
+      else { const cell = size/d; for (let i = 0; i < d; i++){ const m = shape.box(cell*0.94, size*0.3, 0.02, i < n ? (o.color ?? 'teal') : 'grey'); m.position.x = (i - (d - 1)/2)*cell; g.add(m); } }
+      rd.setText(`${n} / ${d}` + (o.decimal ? ` = ${_fmt(n/d, 2)}` : '')); return g; };
+    g.set(num, den);
+    return _autoPlace(g, o, { dist: 'near', dir: 'ahead', height: 'chest', face: true, always: true });
+  },
+};
+
+const template = {
+  /** template.quiz({ title, rounds, question(i) → { prompt, choices, answer, reveal }, onDone(score), dist }) → runs the whole rounds/score/reveal/restart loop; returns { restart } */
+  quiz(o = {}){
+    const rounds = o.rounds ?? 5; let i = 0, score = 0, busy = false;
+    const sign = ui.sign('', { dist: o.dist ?? 'room', dir: 'ahead', height: 'eye', width: o.width ?? 1.8 });
+    const reveal = label(' ', { size: 'comfortable', width: 1.4, dist: o.dist ?? 'room', dir: 'ahead', height: 'chest', anchor: 'top' }); reveal.visible = false;
+    let row = null; let again = null;
+    const head = () => `${o.title ?? 'Quiz'}\nRound ${i + 1} of ${rounds} — Score ${score}`;
+    const ask = () => { busy = false; reveal.visible = false; const q = o.question(i); sign.setText(head() + '\n' + q.prompt); if (row) remove(row);
+      row = ui.choices(q.choices, { dist: 'near', dir: 'ahead', height: 'chest', onPick: (k) => { if (busy) return; busy = true; row.lock(); const ok = k === q.answer; if (ok) score++; row.mark(k, ok ? 'right' : 'wrong'); if (!ok) row.mark(q.answer, 'right');
+        reveal.setText((typeof q.reveal === 'function' ? q.reveal(ok) : q.reveal) ?? (ok ? 'Right.' : 'Not this time.')); reveal.visible = true; sign.setText(head().replace(/Score \d+/, 'Score ' + score) + '\n' + q.prompt);
+        setTimeout(() => { i++; if (i < rounds) ask(); else done(); }, o.delay ?? 2500); } }); };
+    const done = () => { if (row){ remove(row); row = null; } reveal.visible = false; sign.setText(`${o.title ?? 'Quiz'}\nFinal score: ${score} of ${rounds}.${o.closing ? '\n' + o.closing : ''}`); o.onDone?.(score);
+      again = ui.button('Play again', { dist: 'near', dir: 'ahead', height: 'chest', onPress: () => { remove(again); again = null; restart(); } }); };
+    const restart = () => { i = 0; score = 0; ask(); };
+    ask();
+    return { restart, get score(){ return score; }, get round(){ return i; }, sign };
+  },
+  /** template.lineup(items [{ name, size, color, fact, shape }], { unit, dist, dir }) → objects on an arc, scaled by size; tap for the fact; returns group */
+  lineup(items, o = {}){
+    const g = shape.group(); g.name = 'lineup'; scene.add(g); const dist = resolveDist(o.dist ?? 'room'); const unit = o.unit ?? 1;
+    const fact = ui.sign(o.prompt ?? 'Point at one.', { dist: 'room', dir: 'ahead', height: 'eye', width: 1.6 });
+    const n = items.length, span = Math.min(90, Math.max(30, n*14)), centre = resolveDir(o.dir ?? 'ahead');
+    items.forEach((it, k) => { const az = THREE.MathUtils.degToRad(centre + (n === 1 ? 0 : -span/2 + span*k/(n - 1))); const s = Math.max(0.05, Math.min(3, (it.size ?? 0.3)*unit));
+      const m = it.shape === 'box' ? shape.box(s, s, s, it.color ?? 'teal') : shape.ball(s/2, it.color ?? 'teal'); m.position.set(dist*Math.sin(az), s/2, -dist*Math.cos(az)); g.add(m);
+      label(it.name, { above: m, size: 'comfortable' }); interactive(m, { select: () => { fact.setText(`${it.name}\n${it.fact ?? ''}`); tone(600, .08); o.onPick?.(it, m); } }); });
+    g.sign = fact; return g;
+  },
+  /** template.walk(stations [{ at, text }], { length, dir }) → a floor line you walk along; each station reveals its text when reached; returns { reset } */
+  walk(stations, o = {}){
+    const L = o.length ?? 6, az = THREE.MathUtils.degToRad(resolveDir(o.dir ?? 'ahead')); const ux = Math.sin(az), uz = -Math.cos(az);
+    const g = shape.group(); g.name = 'walk'; scene.add(g);
+    g.add(shape.line([[0, 0.012, 0], [ux*L, 0.012, uz*L]], o.color ?? 'white'));
+    const sign = ui.sign(o.prompt ?? 'Walk the line.', { dist: 'room', dir: o.dir ?? 'ahead', height: 'eye', width: 1.6 });
+    const marks = stations.map(s => { const m = shape.cylinder(0.12, 0.02, 'orange'); m.position.set(ux*s.at, 0.01, uz*s.at); g.add(m); return { ...s, m, hit: false }; });
+    input.teleport = o.teleport ?? 'thumbstick';
+    const head = new THREE.Vector3();
+    anims.add(() => { camera.getWorldPosition(head); for (const s of marks){ if (s.hit) continue; const d = Math.hypot(head.x - ux*s.at, head.z - uz*s.at); if (d < (o.radius ?? 0.5)){ s.hit = true; s.m.material.color.setHex(C.green); sign.setText(s.text); tone(700, .1); o.onReach?.(s); } } });
+    return { reset: () => marks.forEach(s => { s.hit = false; s.m.material.color.setHex(C.orange); }), sign };
+  },
+};
+
+// ---------- domain packs: physics · chemistry · biology · literature · history · art · music ----------
+const _G = 9.81;
+const phys = {
+  /** phys.pendulum({ length, deg, dist, dir, height }) → real pendulum (θ'' = −g/L·sinθ); .start(), .stop(), .set(deg), .period, .theta */
+  pendulum(o = {}){
+    const g = shape.group(); g.name = 'pendulum'; const L = o.length ?? 1, k = _k(o, 'near');
+    const bar = shape.box(0.3, 0.03, 0.03, 'grey'); g.add(bar);
+    const arm = shape.group(); g.add(arm); const str = shape.cylinder(0.004, L, 'white'); str.position.y = -L/2; arm.add(str);
+    const bob = shape.ball(o.bobRadius ?? 0.06, o.color ?? 'orange'); bob.position.y = -L; arm.add(bob);
+    let th = THREE.MathUtils.degToRad(o.deg ?? 20), w = 0, running = false;
+    const rd = o.label === false ? null : label('', { parent: g, at: [0.35, -0.05, 0], capHeight: 0.035*k, bg: false });
+    const period = 2*Math.PI*Math.sqrt(L/_G);
+    const show = () => rd?.setText(`L ${_fmt(L, 2)} m · T ${_fmt(period, 2)} s`);
+    anims.add(dt => { if (!running) return; const n = 4, h = Math.min(dt, 0.05)/n; for (let i = 0; i < n; i++){ w += -(_G/L)*Math.sin(th)*h; th += w*h; } arm.rotation.z = th; });
+    g.set = deg => { th = THREE.MathUtils.degToRad(deg); w = 0; arm.rotation.z = th; return g; };
+    g.start = () => { running = true; return g; }; g.stop = () => { running = false; return g; };
+    Object.defineProperty(g, 'theta', { get: () => THREE.MathUtils.radToDeg(th) }); g.period = period; g.bob = bob;
+    g.set(o.deg ?? 20); show();
+    return _autoPlace(g, o, { dist: 'near', dir: 'ahead', height: o.height ?? (L + 0.4), face: true, origin: true, always: true });
+  },
+  /** phys.projectile({ g, dist, dir }) → launcher on the floor; .launch(speed, angleDeg) flies a ball with a trail and returns the range; onLand(range) */
+  projectile(o = {}){
+    const g = shape.group(); g.name = 'projectile'; const gr = o.g ?? _G;
+    const base = shape.cylinder(0.12, 0.08, 'grey'); base.position.y = 0.04; g.add(base);
+    const barrel = shape.group(); const tube = shape.cylinder(0.03, 0.3, 'dark'); tube.position.y = 0.15; barrel.add(tube); barrel.position.y = 0.08; g.add(barrel);
+    const ball = shape.ball(0.05, o.color ?? 'orange'); ball.visible = false; g.add(ball);
+    const trailPts = new Float32Array(3*400); const trail = new THREE.Line(new THREE.BufferGeometry().setAttribute('position', new THREE.BufferAttribute(trailPts, 3)), new THREE.LineBasicMaterial({ color: col(o.trailColor ?? 'yellow') })); trail.geometry.setDrawRange(0, 0); g.add(trail);
+    let flying = null;
+    anims.add(dt => { if (!flying) return; flying.t += dt; const { v, a, t } = flying; const x = v*Math.cos(a)*t, y = 0.2 + v*Math.sin(a)*t - 0.5*gr*t*t;
+      if (y <= 0){ ball.position.set(x, 0.05, 0); flying = null; ball.visible = false; o.onLand?.(x); g.range = x; return; }
+      ball.position.set(x, y, 0); if (flying.n < 400){ trailPts.set([x, y, 0], flying.n*3); flying.n++; trail.geometry.setDrawRange(0, flying.n); trail.geometry.attributes.position.needsUpdate = true; } });
+    g.launch = (speed, angleDeg) => { const a = THREE.MathUtils.degToRad(angleDeg); barrel.rotation.z = -(Math.PI/2 - a); ball.visible = true; flying = { v: speed, a, t: 0, n: 0 }; trail.geometry.setDrawRange(0, 0); const R = speed*speed*Math.sin(2*a)/gr; g.predicted = R; return R; };
+    g.aim = angleDeg => { barrel.rotation.z = -(Math.PI/2 - THREE.MathUtils.degToRad(angleDeg)); return g; };
+    return _autoPlace(g, o, { dist: 'near', dir: 'ahead-left', height: 'floor', origin: true, always: true, face: true });
+  },
+  /** phys.wave({ length, amplitude, wavelength, speed, standing, dist, dir, height }) → animated wave on a string; .set({...}) */
+  wave(o = {}){
+    const g = shape.group(); g.name = 'wave'; const N = 120, L = o.length ?? 2; let A = o.amplitude ?? 0.15, lam = o.wavelength ?? 0.6, c = o.speed ?? 0.8, standing = !!o.standing;
+    const pts = new Float32Array(3*(N + 1)); for (let i = 0; i <= N; i++) pts.set([(i/N - 0.5)*L, 0, 0], i*3);
+    const line = new THREE.Line(new THREE.BufferGeometry().setAttribute('position', new THREE.BufferAttribute(pts, 3)), new THREE.LineBasicMaterial({ color: col(o.color ?? 'teal') })); g.add(line);
+    const beads = []; for (let i = 0; i <= N; i += 10){ const b = shape.ball(0.02, 'orange'); g.add(b); beads.push([i, b]); }
+    let t = 0;
+    anims.add(dt => { t += dt; const kk = 2*Math.PI/lam, w = kk*c; for (let i = 0; i <= N; i++){ const x = (i/N - 0.5)*L; const y = standing ? 2*A*Math.sin(kk*(x + L/2))*Math.cos(w*t) : A*Math.sin(kk*x - w*t); pts[i*3 + 1] = y; } line.geometry.attributes.position.needsUpdate = true; for (const [i, b] of beads) b.position.set(pts[i*3], pts[i*3 + 1], 0); });
+    g.set = p => { if (p.amplitude !== undefined) A = p.amplitude; if (p.wavelength !== undefined) lam = p.wavelength; if (p.speed !== undefined) c = p.speed; if (p.standing !== undefined) standing = p.standing; return g; };
+    Object.defineProperty(g, 'frequency', { get: () => c/lam });
+    return _autoPlace(g, o, { dist: 'near', dir: 'ahead', height: 'chest', face: true, always: true });
+  },
+  /** phys.field(fn(x, z) → [fx, fz], { size, n, dist, dir }) → grid of floor arrows showing a vector field; .setFn(fn) */
+  field(fn, o = {}){
+    const g = shape.group(); g.name = 'field'; const size = o.size ?? 2, n = o.n ?? 7; const arrows = [];
+    for (let i = 0; i < n; i++) for (let j = 0; j < n; j++){ const a = shape.group(); const sh = shape.box(0.006, 0.006, 0.1, o.color ?? 'yellow'); sh.position.z = -0.05; const tip = shape.cone(0.02, 0.05, o.color ?? 'yellow'); tip.rotation.x = -Math.PI/2; tip.position.z = -0.12; a.add(sh, tip);
+      a.position.set((i/(n - 1) - 0.5)*size, 0.03, (j/(n - 1) - 0.5)*size); g.add(a); arrows.push(a); }
+    g.setFn = f => { let mx = 1e-9; const vs = arrows.map(a => { const [fx, fz] = f(a.position.x, a.position.z); mx = Math.max(mx, Math.hypot(fx, fz)); return [fx, fz]; });
+      arrows.forEach((a, i) => { const [fx, fz] = vs[i]; const m = Math.hypot(fx, fz); a.rotation.y = Math.atan2(-fx, -fz); a.scale.setScalar(0.3 + 1.2*m/mx); a.visible = m > 1e-9; }); g.fn = f; return g; };
+    g.setFn(fn);
+    return _autoPlace(g, o, { dist: 'room', dir: 'ahead', height: 'floor', origin: true, always: true });
+  },
+  /** phys.ramp({ angleDeg, length, dist, dir }) → incline with a ball; .release() rolls it (a = g·sinθ, no friction), .reset(); onBottom(time) */
+  ramp(o = {}){
+    const g = shape.group(); g.name = 'ramp'; const L = o.length ?? 1.5, ang = THREE.MathUtils.degToRad(o.angleDeg ?? 20), k = _k(o, 'near');
+    const board = shape.box(L, 0.03, 0.4, o.color ?? 'grey'); const piv = shape.group(); board.position.x = L/2; piv.add(board); piv.rotation.z = ang; g.add(piv);
+    const ball = shape.ball(0.06, 'orange'); g.add(ball);
+    const rd = label(`${_fmt(THREE.MathUtils.radToDeg(ang), 0)}° · a = ${_fmt(_G*Math.sin(ang), 2)} m/s²`, { parent: g, at: [L*0.5, L*Math.sin(ang) + 0.35, 0], capHeight: 0.035*k, bg: false });
+    let s = 0, v = 0, rolling = false, tm = 0;
+    const put = () => ball.position.set((L - s)*Math.cos(ang), 0.075 + (L - s)*Math.sin(ang), 0);
+    anims.add(dt => { if (!rolling) return; tm += dt; v += _G*Math.sin(ang)*dt; s += v*dt; if (s >= L){ s = L; rolling = false; o.onBottom?.(tm, g); } put(); });
+    g.release = () => { rolling = true; return g; }; g.reset = () => { s = 0; v = 0; tm = 0; rolling = false; put(); return g; };
+    Object.defineProperty(g, 'time', { get: () => tm }); g.a = _G*Math.sin(ang); g.reset();
+    return _autoPlace(g, o, { dist: 'near', dir: 'ahead-right', height: 'floor', origin: true, always: true, face: true });
+  },
+};
+
+const _EL = { H: ['Hydrogen', 1, 1.008, 0xffffff, 0.25], C: ['Carbon', 6, 12.011, 0x333333, 0.35], N: ['Nitrogen', 7, 14.007, 0x3050f8, 0.33], O: ['Oxygen', 8, 15.999, 0xff0d0d, 0.33],
+  Na: ['Sodium', 11, 22.990, 0xab5cf2, 0.5], Cl: ['Chlorine', 17, 35.45, 0x1ff01f, 0.45], S: ['Sulfur', 16, 32.06, 0xffff30, 0.4], P: ['Phosphorus', 15, 30.974, 0xff8000, 0.4], F: ['Fluorine', 9, 18.998, 0x90e050, 0.3],
+  Fe: ['Iron', 26, 55.845, 0xe06633, 0.5], Ca: ['Calcium', 20, 40.078, 0x3dff00, 0.5], K: ['Potassium', 19, 39.098, 0x8f40d4, 0.5], Mg: ['Magnesium', 12, 24.305, 0x8aff00, 0.45], He: ['Helium', 2, 4.003, 0xd9ffff, 0.25], Ne: ['Neon', 10, 20.180, 0xb3e3f5, 0.3] };
+const _MOL = { H2O: { atoms: [['O', 0, 0, 0], ['H', 0.76, 0.59, 0], ['H', -0.76, 0.59, 0]], bonds: [[0, 1], [0, 2]] },
+  CO2: { atoms: [['C', 0, 0, 0], ['O', 1.16, 0, 0], ['O', -1.16, 0, 0]], bonds: [[0, 1], [0, 2]] },
+  CH4: { atoms: [['C', 0, 0, 0], ['H', 0.63, 0.63, 0.63], ['H', -0.63, -0.63, 0.63], ['H', -0.63, 0.63, -0.63], ['H', 0.63, -0.63, -0.63]], bonds: [[0, 1], [0, 2], [0, 3], [0, 4]] },
+  NH3: { atoms: [['N', 0, 0, 0], ['H', 0.94, -0.38, 0], ['H', -0.47, -0.38, 0.81], ['H', -0.47, -0.38, -0.81]], bonds: [[0, 1], [0, 2], [0, 3]] },
+  O2: { atoms: [['O', 0.6, 0, 0], ['O', -0.6, 0, 0]], bonds: [[0, 1]] }, N2: { atoms: [['N', 0.55, 0, 0], ['N', -0.55, 0, 0]], bonds: [[0, 1]] }, H2: { atoms: [['H', 0.37, 0, 0], ['H', -0.37, 0, 0]], bonds: [[0, 1]] },
+  HCl: { atoms: [['H', -0.64, 0, 0], ['Cl', 0.64, 0, 0]], bonds: [[0, 1]] }, NaCl: { atoms: [['Na', -1.2, 0, 0], ['Cl', 1.2, 0, 0]], bonds: [] } };
+const chem = {
+  /** chem.molecule('H2O' | { atoms: [['O',x,y,z],...], bonds: [[i,j],...] }, { scale, dist, dir, height, spin }) → ball-and-stick model (CPK colours); .atoms, .name */
+  molecule(spec, o = {}){
+    const g = shape.group(); const name = typeof spec === 'string' ? spec : (spec.name ?? 'molecule'); g.name = 'molecule:' + name; const m = typeof spec === 'string' ? _MOL[spec] : spec; const s = o.scale ?? 0.25;
+    if (!m) throw new Error(`Unknown molecule "${spec}" — presets: ${Object.keys(_MOL).join(', ')}; or pass { atoms, bonds }`);
+    const atoms = m.atoms.map(([el, x, y, z]) => { const e = _EL[el] ?? ['?', 0, 0, 0x888888, 0.35]; const a = shape.ball(e[4]*s, e[3]); a.position.set(x*s, y*s, z*s); a.name = el; g.add(a); return a; });
+    for (const [i, j] of m.bonds){ const A = atoms[i].position, B = atoms[j].position; const d = B.clone().sub(A), L = d.length(); const b = shape.cylinder(0.05*s, L, 'grey'); b.position.copy(A).add(d.clone().multiplyScalar(0.5)); b.quaternion.setFromUnitVectors(new THREE.Vector3(0, 1, 0), d.normalize()); g.add(b); }
+    if (o.labels) atoms.forEach(a => label(a.name, { parent: a, at: [0, (_EL[a.name]?.[4] ?? 0.35)*s + 0.03, 0], capHeight: 0.03*_k(o, 'near'), bg: false }));
+    if (o.spin !== false) spin(g, o.spin ?? 20);
+    g.atoms = atoms; g.molName = name;
+    return _autoPlace(g, o, { dist: 'near', dir: 'ahead', height: 'chest', always: true });
+  },
+  /** chem.element('Na', { dist, dir, height }) → periodic-table tile (symbol, number, name, mass) */
+  element(sym, o = {}){
+    const e = _EL[sym]; if (!e) throw new Error(`No data for element "${sym}" — available: ${Object.keys(_EL).join(', ')}`);
+    const g = shape.group(); g.name = 'element:' + sym; const k = _k(o, 'near');
+    const tile = shape.box(0.3, 0.3, 0.03, o.color ?? 'dark'); g.add(tile);
+    label(String(e[1]), { parent: tile, at: [-0.1, 0.1, 0.02], capHeight: 0.03*k, bg: false });
+    label(sym, { parent: tile, at: [0, 0.01, 0.02], capHeight: 0.09*k, bg: false, color: '#ffc53d' });
+    label(e[0], { parent: tile, at: [0, -0.085, 0.02], capHeight: 0.025*k, bg: false });
+    label(_fmt(e[2], 3), { parent: tile, at: [0, -0.125, 0.02], capHeight: 0.02*k, bg: false });
+    g.data = { symbol: sym, name: e[0], number: e[1], mass: e[2] };
+    return _autoPlace(g, o, { dist: 'near', dir: 'ahead', height: 'chest', face: true });
+  },
+  /** chem.beaker({ fill, color, dist, dir }) → glass beaker with liquid; .set(fill 0..1, color) */
+  beaker(o = {}){
+    const g = shape.group(); g.name = 'beaker'; const R = o.radius ?? 0.1, Hh = o.tall ?? 0.28;
+    const glass = new THREE.Mesh(new THREE.CylinderGeometry(R, R*0.9, Hh, 32, 1, true), mat('white', { transparent: true, opacity: 0.18, side: THREE.DoubleSide })); glass.position.y = Hh/2; g.add(glass);
+    const bottom = shape.cylinder(R*0.9, 0.01, 'grey'); bottom.position.y = 0.005; g.add(bottom);
+    const liquid = new THREE.Mesh(new THREE.CylinderGeometry(R*0.97, R*0.88, 1, 32), mat(o.color ?? 'blue', { transparent: true, opacity: 0.75 })); g.add(liquid);
+    g.set = (fill, colr) => { fill = THREE.MathUtils.clamp(fill ?? 0.5, 0, 1); liquid.scale.y = Math.max(0.001, fill*Hh*0.96); liquid.position.y = 0.01 + liquid.scale.y/2; if (colr) liquid.material.color.setHex(col(colr)); g.fill = fill; return g; };
+    g.set(o.fill ?? 0.5); g.liquid = liquid;
+    return _autoPlace(g, o, { dist: 'reach', dir: 'ahead', height: 'waist', anchor: 'bottom' });
+  },
+  /** chem.gas({ n, temp, size, dist, dir, height }) → particles bouncing in a box; .setTemp(t) scales their speed (kinetic picture of temperature) */
+  gas(o = {}){
+    const g = shape.group(); g.name = 'gas'; const S = o.size ?? 0.5, n = o.n ?? 40; let temp = o.temp ?? 1;
+    const box = new THREE.Mesh(new THREE.BoxGeometry(S, S, S), mat('white', { transparent: true, opacity: 0.1 })); g.add(box); g.add(new THREE.LineSegments(new THREE.EdgesGeometry(box.geometry), new THREE.LineBasicMaterial({ color: 0xffffff, transparent: true, opacity: 0.6 })));
+    const ps = []; for (let i = 0; i < n; i++){ const p = shape.ball(0.012, o.color ?? 'teal'); p.position.set((Math.random() - 0.5)*S*0.9, (Math.random() - 0.5)*S*0.9, (Math.random() - 0.5)*S*0.9); p.userData.v = new THREE.Vector3().randomDirection().multiplyScalar(0.3); g.add(p); ps.push(p); }
+    anims.add(dt => { const lim = S/2 - 0.015; for (const p of ps){ p.position.addScaledVector(p.userData.v, dt*temp); for (const ax of ['x', 'y', 'z']){ if (p.position[ax] > lim){ p.position[ax] = lim; p.userData.v[ax] *= -1; } else if (p.position[ax] < -lim){ p.position[ax] = -lim; p.userData.v[ax] *= -1; } } } });
+    g.setTemp = t => { temp = Math.max(0, t); return g; }; Object.defineProperty(g, 'temp', { get: () => temp });
+    return _autoPlace(g, o, { dist: 'near', dir: 'ahead', height: 'chest', always: true });
+  },
+};
+
+const bio = {
+  /** bio.cell({ type: 'animal'|'plant', size, dist, dir, height }) → translucent cell with labelled organelles; tap one → onPart(name); .parts */
+  cell(o = {}){
+    const g = shape.group(); g.name = 'cell'; const S = o.size ?? 0.5, plant = o.type === 'plant', k = _k(o, 'near');
+    const membrane = shape.ball(S/2, 'pink'); membrane.material = mat('pink', { transparent: true, opacity: 0.18 }); g.add(membrane);
+    if (plant){ const wall = new THREE.Mesh(new THREE.BoxGeometry(S*1.1, S*1.1, S*1.1), mat('green', { transparent: true, opacity: 0.12 })); g.add(wall); }
+    const parts = [['nucleus', 0, 0, 0, S*0.16, 'purple', 'Holds the DNA — the instructions.'], ['mitochondrion', S*0.28, S*0.12, 0, S*0.07, 'orange', 'Burns sugar for energy (ATP).'], ['mitochondrion', -S*0.25, -S*0.15, S*0.1, S*0.07, 'orange', 'Burns sugar for energy (ATP).'],
+      ['ribosome', S*0.1, -S*0.3, 0, S*0.03, 'dark', 'Builds proteins from the recipe.'], ['ribosome', -S*0.15, S*0.28, -S*0.1, S*0.03, 'dark', 'Builds proteins from the recipe.']];
+    if (plant) parts.push(['chloroplast', S*0.3, -S*0.2, -S*0.15, S*0.08, 'green', 'Turns light into sugar.'], ['vacuole', -S*0.28, S*0.05, -S*0.05, S*0.14, 'blue', 'Stores water; keeps the cell firm.']);
+    g.parts = {};
+    for (const [name, x, y, z, r, c, fact] of parts){ const m = shape.ball(r, c); m.position.set(x, y, z); m.name = name; g.add(m); interactive(m, { select: () => { o.onPart?.(name, fact, m); } }); (g.parts[name] ??= []).push(m); }
+    if (o.labels !== false) for (const name of Object.keys(g.parts)) label(name, { above: g.parts[name][0], size: 'small' });
+    return _autoPlace(g, o, { dist: 'near', dir: 'ahead', height: 'chest', always: true });
+  },
+  /** bio.heart({ bpm, dist, dir, height }) → pulsing heart with an audible beat; .setBpm(n), .bpm */
+  heart(o = {}){
+    const g = shape.group(); g.name = 'heart'; const r = o.radius ?? 0.08; let bpm = o.bpm ?? 70, t = 0, beat = 0;
+    const h = shape.ball(r, o.color ?? 'red'); g.add(h);
+    const rd = o.label === false ? null : label(`${bpm} bpm`, { parent: g, at: [0, r + 0.06, 0], capHeight: 0.035*_k(o, 'near'), bg: false });
+    anims.add(dt => { t += dt; const per = 60/bpm; if (t >= beat + per){ beat += per; if (o.sound !== false) tone(o.pitch ?? 110, 0.06, 'sine', 0.15); } const ph = (t - beat)/per; h.scale.setScalar(1 + 0.18*Math.exp(-ph*8)); });
+    g.setBpm = n => { bpm = Math.max(1, n); rd?.setText(`${_fmt(bpm, 0)} bpm`); return g; }; Object.defineProperty(g, 'bpm', { get: () => bpm });
+    return _autoPlace(g, o, { dist: 'reach', dir: 'ahead', height: 'chest', always: true });
+  },
+  /** bio.dna({ turns, length, dist, dir, height }) → double helix with base-pair rungs, slowly spinning */
+  dna(o = {}){
+    const g = shape.group(); g.name = 'dna'; const turns = o.turns ?? 2, L = o.length ?? 0.8, R = o.radius ?? 0.08, N = Math.round(turns*10);
+    const strand = (phase, c) => { const pts = []; for (let i = 0; i <= N*4; i++){ const a = i/(N*4)*turns*Math.PI*2 + phase; pts.push([R*Math.cos(a), i/(N*4)*L - L/2, R*Math.sin(a)]); } const tube = new THREE.Mesh(new THREE.TubeGeometry(new THREE.CatmullRomCurve3(pts.map(p => new THREE.Vector3(...p))), N*8, 0.012, 8, false), mat(c)); g.add(tube); };
+    strand(0, 'blue'); strand(Math.PI, 'orange');
+    const pairs = [['green', 'red'], ['yellow', 'purple']];
+    for (let i = 0; i < N; i++){ const a = (i + 0.5)/N*turns*Math.PI*2, y = (i + 0.5)/N*L - L/2; const [c1, c2] = pairs[i % 2]; const r1 = shape.cylinder(0.008, R, c1), r2 = shape.cylinder(0.008, R, c2); r1.rotation.z = Math.PI/2; r2.rotation.z = Math.PI/2; r1.position.set(R/2*Math.cos(a), y, R/2*Math.sin(a)); r1.rotation.y = -a; r2.position.set(-R/2*Math.cos(a), y, -R/2*Math.sin(a)); r2.rotation.y = -a; g.add(r1, r2); }
+    if (o.spin !== false) spin(g, o.spin ?? 15);
+    return _autoPlace(g, o, { dist: 'near', dir: 'ahead', height: 'chest', always: true });
+  },
+  /** bio.population({ n, max, size, dist, dir }) → a crowd of dots; .set(n) (animates), .grow(rate) each call multiplies */
+  population(o = {}){
+    const g = shape.group(); g.name = 'population'; const max = o.max ?? 400, S = o.size ?? 1.5; let n = 0;
+    const dots = new THREE.InstancedMesh(new THREE.SphereGeometry(0.02, 8, 6), mat(o.color ?? 'teal'), max); dots.frustumCulled = false; g.add(dots);
+    const tmp = new THREE.Object3D(); const spots = Array.from({ length: max }, () => [(Math.random() - 0.5)*S, 0.02, (Math.random() - 0.5)*S]);
+    const rd = label('0', { parent: g, at: [0, 0.25, 0], capHeight: 0.06*_k(o, 'room'), bg: false });
+    g.set = v => { n = THREE.MathUtils.clamp(Math.round(v), 0, max); for (let i = 0; i < max; i++){ tmp.position.set(...spots[i]); tmp.scale.setScalar(i < n ? 1 : 0); tmp.updateMatrix(); dots.setMatrixAt(i, tmp.matrix); } dots.instanceMatrix.needsUpdate = true; rd.setText(String(n) + (n >= max ? ' (full)' : '')); return g; };
+    g.grow = rate => g.set(Math.max(n + 1, n*rate)); Object.defineProperty(g, 'n', { get: () => n });
+    g.set(o.n ?? 10);
+    return _autoPlace(g, o, { dist: 'room', dir: 'ahead', height: 'floor', origin: true, always: true });
+  },
+};
+
+const lit = {
+  /** lit.timeline(events [{ at, text, detail }], { from, to, length, unit, dist, dir, height }) → line with markers; tap a marker → sign shows detail; .sign */
+  timeline(events, o = {}){
+    const from = o.from ?? Math.min(...events.map(e => e.at)), to = o.to ?? Math.max(...events.map(e => e.at)), L = o.length ?? 3, k = _k(o, 'near');
+    const nl = geo.numberLine({ from, to, step: o.step ?? Math.max(1, Math.round((to - from)/6)), length: L, labels: true, capHeight: 0.035*k, dist: o.dist ?? 'near', dir: o.dir ?? 'ahead', height: o.height ?? 'chest' }); nl.name = 'timeline';
+    const sign = ui.sign(o.prompt ?? 'Point at a marker.', { dist: 'room', dir: o.dir ?? 'ahead', height: 'eye', width: 1.6 });
+    events.forEach((e, i) => { const m = shape.ball(0.035, e.color ?? 'orange'); m.position.set(nl.at(e.at), 0.06 + (i % 2)*0.12, 0); nl.add(m);
+      label(e.text, { parent: nl, at: [nl.at(e.at), 0.16 + (i % 2)*0.12, 0], capHeight: 0.03*k, bg: false, width: 0.5 });
+      interactive(m, { select: () => { sign.setText(`${o.unit === 'year' ? e.at : e.at + (o.unit ? ' ' + o.unit : '')} — ${e.text}${e.detail ? '\n' + e.detail : ''}`); tone(660, .08); o.onPick?.(e); } }); });
+    nl.sign = sign; return nl;
+  },
+  /** lit.graph(nodes [{ id, text }], edges [[a, b, label]], { radius, dist, dir, height }) → relationship graph on a ring; tap a node → its edges light; .sign */
+  graph(nodes, edges, o = {}){
+    const g = shape.group(); g.name = 'graph'; const R = o.radius ?? 0.6, k = _k(o, 'near'); const pos = {}, nodeMesh = {}, edgeLines = [];
+    nodes.forEach((n, i) => { const a = i/nodes.length*Math.PI*2; pos[n.id] = new THREE.Vector3(R*Math.cos(a), R*Math.sin(a), 0); });
+    for (const [a, b, txt] of edges){ const l = shape.line([pos[a].toArray(), pos[b].toArray()], 'grey'); g.add(l); edgeLines.push({ a, b, l }); if (txt) label(txt, { parent: g, at: pos[a].clone().lerp(pos[b], 0.5).setZ(0.01).toArray(), capHeight: 0.022*k, bg: false, color: '#9fb3c8' }); }
+    const sign = ui.sign(o.prompt ?? 'Point at a name.', { dist: 'room', dir: o.dir ?? 'ahead', height: 'eye', width: 1.6 });
+    nodes.forEach(n => { const m = shape.ball(0.05, n.color ?? 'teal'); m.position.copy(pos[n.id]); g.add(m); nodeMesh[n.id] = m; label(n.text ?? n.id, { parent: g, at: pos[n.id].clone().multiplyScalar(1.22).setZ(0.01).toArray(), capHeight: 0.03*k, bg: false });
+      interactive(m, { select: () => { edgeLines.forEach(e => e.l.material.color.setHex(e.a === n.id || e.b === n.id ? C.yellow : C.grey)); const rel = edges.filter(e => e[0] === n.id || e[1] === n.id).map(e => `${e[0] === n.id ? e[1] : e[0]}${e[2] ? ' — ' + e[2] : ''}`); sign.setText(`${n.text ?? n.id}\n${n.detail ?? ''}${rel.length ? '\n' + rel.join(' · ') : ''}`); o.onPick?.(n); } }); });
+    g.sign = sign; g.nodes = nodeMesh;
+    return _autoPlace(g, o, { dist: 'near', dir: 'ahead', height: 'chest', face: true, always: true });
+  },
+  /** lit.quote(text, { by, dist, dir, height }) → a quotation plaque with attribution */
+  quote(text, o = {}){ return label(`“${text}”\n— ${o.by ?? 'unknown'}`, { size: o.size ?? 'large', width: o.width ?? 1.8, title: true, theme: o.theme ?? 'light', accent: o.accent ?? '#8e4ec6', dist: o.dist ?? 'room', dir: o.dir ?? 'ahead', height: o.height ?? 'eye' }); },
+  /** lit.words([{ text, weight }], { dist, span, dir }) → a word cloud on an arc around the user, sized by weight; tap → onPick(word) */
+  words(items, o = {}){
+    const g = shape.group(); g.name = 'words'; scene.add(g); const dist = resolveDist(o.dist ?? 'room'), span = o.span ?? 100, centre = resolveDir(o.dir ?? 'ahead'); const wmax = Math.max(...items.map(w => w.weight ?? 1));
+    items.forEach((w, i) => { const az = THREE.MathUtils.degToRad(centre + (items.length === 1 ? 0 : -span/2 + span*i/(items.length - 1))); const y = H.chest + ((i % 3) - 1)*0.35; const t = (w.weight ?? 1)/wmax;
+      const l = label(w.text, { at: [dist*Math.sin(az), y, -dist*Math.cos(az)], capHeight: (0.04 + 0.16*t)*dist/2.5, bg: false, color: w.color, face: 'always' }); l.lookAt(0, y, 0);
+      const hit = shape.hit(l.geometry.parameters.width, l.geometry.parameters.height, 0.05); l.add(hit); interactive(hit, { select: () => o.onPick?.(w, l) }); g.add(l); });
+    return g;
+  },
+};
+
+const hist = {
+  /** hist.timeline(events [{ at: year, text, detail }], { from, to, length, dist, dir }) → lit.timeline with years */
+  timeline(events, o = {}){ return lit.timeline(events, { unit: 'year', step: o.step ?? Math.max(1, Math.round(((o.to ?? Math.max(...events.map(e => e.at))) - (o.from ?? Math.min(...events.map(e => e.at))))/6/10)*10), ...o }); },
+  /** hist.map(regions [{ name, points: [[u, v], ...] (0..1), color, fact }], { size, dist, dir }) → schematic map on the floor; tap a region → sign; .sign */
+  map(regions, o = {}){
+    const g = shape.group(); g.name = 'map'; const S = o.size ?? 2, k = _k(o, 'room');
+    const sign = ui.sign(o.prompt ?? 'Point at a region.', { dist: 'room', dir: o.dir ?? 'ahead', height: 'eye', width: 1.6 });
+    const board = shape.box(S*1.05, 0.02, S*1.05, o.boardColor ?? 'dark'); board.position.y = -0.01; g.add(board);
+    for (const r of regions){ const pts = r.points.map(([u, v]) => [(u - 0.5)*S, (0.5 - v)*S]); const p = geo.polygon(pts, { color: r.color ?? 'teal', thick: 0.02 }); g.add(p);
+      const cx = pts.reduce((s, q) => s + q[0], 0)/pts.length, cz = pts.reduce((s, q) => s + q[1], 0)/pts.length; const l = label(r.name, { parent: g, at: [cx, 0.03, cz], capHeight: 0.05*k, bg: false }); _flat(l);
+      interactive(p, { select: () => { sign.setText(`${r.name}\n${r.fact ?? ''}`); tone(600, .08); o.onPick?.(r); } }); }
+    g.sign = sign;
+    return _autoPlace(g, o, { dist: 'room', dir: 'ahead', height: 'floor', origin: true, always: true });
+  },
+  /** hist.artifact(obj, { caption, dist, dir }) → the object on a pedestal with a caption plaque; returns the pedestal */
+  artifact(obj, o = {}){ const p = ui.pedestal({ height: o.height ?? 'waist', dist: o.dist ?? 'near', dir: o.dir ?? 'ahead' }); p.putOnTop(obj); if (o.caption) label(o.caption, { above: obj, size: 'comfortable', width: 0.7 }); return p; },
+  /** hist.compare([{ label, value }], { unit, dist, dir }) → bars for then-vs-now style comparisons (wraps geo.bars) */
+  compare(items, o = {}){ const b = geo.bars(items.map(i => i.value), { labels: items.map(i => i.label), decimals: o.decimals ?? 0, dist: o.dist ?? 'near', dir: o.dir ?? 'ahead', maxHeight: o.maxHeight ?? 1.2 }); if (o.unit) label(o.unit, { parent: b, at: [0, (o.maxHeight ?? 1.2) + 0.25, 0], capHeight: 0.04*_k(o, 'near'), bg: false }); return b; },
+};
+
+const art = {
+  /** art.palette({ mode: 'light'|'paint', dist, dir, height }) → three overlapping colour discs you can drag; light adds toward white, paint subtracts toward black */
+  palette(o = {}){
+    const g = shape.group(); g.name = 'palette'; const light = (o.mode ?? 'light') === 'light', r = o.radius ?? 0.22;
+    const bg = shape.panel(1.3, 0.9, light ? 'black' : 'white'); bg.position.z = -0.01; g.add(bg);
+    const cols = light ? [0xff0000, 0x00ff00, 0x0000ff] : [0x00ffff, 0xff00ff, 0xffff00];
+    cols.forEach((c, i) => { const d = new THREE.Mesh(new THREE.CircleGeometry(r, 48), new THREE.MeshBasicMaterial({ color: c, transparent: true, opacity: light ? 0.9 : 0.85, blending: light ? THREE.AdditiveBlending : THREE.MultiplyBlending, depthWrite: false }));
+      const a = i/3*Math.PI*2 + Math.PI/2; d.position.set(r*0.7*Math.cos(a), r*0.7*Math.sin(a), 0.002*(i + 1)); g.add(d);
+      interactive(d, { grab: 'hold', drag: (m, { point }) => { const p = g.worldToLocal(point.clone()); m.position.x = THREE.MathUtils.clamp(p.x, -0.5, 0.5); m.position.y = THREE.MathUtils.clamp(p.y, -0.32, 0.32); } }); });
+    label(light ? 'Light: red + green + blue → white' : 'Paint: cyan + magenta + yellow → black', { parent: g, at: [0, -0.5, 0.01], capHeight: 0.035*_k(o, 'near'), bg: false, color: light ? '#ffffff' : '#1a1d26' });
+    return _autoPlace(g, o, { dist: 'near', dir: 'ahead', height: 'chest', face: true, always: true });
+  },
+  /** art.frame({ width, tall, grid: 'thirds'|'golden'|'none', dist, dir, height }) → a canvas with composition guides; .put(obj, u, v) places obj at frame coordinates (0..1) */
+  frame(o = {}){
+    const g = shape.group(); g.name = 'frame'; const W = o.width ?? 1.2, Hh = o.tall ?? 0.8;
+    g.add(shape.panel(W, Hh, o.color ?? 'white')); const edge = new THREE.LineSegments(new THREE.EdgesGeometry(new THREE.PlaneGeometry(W + 0.04, Hh + 0.04)), new THREE.LineBasicMaterial({ color: 0x333333 })); g.add(edge);
+    const grid = o.grid ?? 'thirds'; const lines = grid === 'golden' ? [0.382, 0.618] : grid === 'thirds' ? [1/3, 2/3] : [];
+    for (const f of lines){ g.add(shape.line([[(f - 0.5)*W, -Hh/2, 0.004], [(f - 0.5)*W, Hh/2, 0.004]], 'grey')); g.add(shape.line([[-W/2, (f - 0.5)*Hh, 0.004], [W/2, (f - 0.5)*Hh, 0.004]], 'grey')); }
+    g.put = (obj, u, v) => { g.add(obj); obj.position.set((u - 0.5)*W, (0.5 - v)*Hh, 0.02); return obj; };
+    return _autoPlace(g, o, { dist: 'near', dir: 'ahead', height: 'chest', face: true, always: true });
+  },
+  /** art.turntable(obj, { rpm, dist, dir }) → the object on a slowly rotating stand */
+  turntable(obj, o = {}){ const p = ui.pedestal({ height: o.height ?? 'waist', dist: o.dist ?? 'near', dir: o.dir ?? 'ahead', radius: o.radius ?? 0.22 }); const spinner = shape.group(); spinner.position.y = p.topY; p.add(spinner); spinner.add(obj); obj.position.set(0, 0, 0); obj.updateMatrixWorld(true); const b = new THREE.Box3().setFromObject(obj, true); obj.position.y = -(b.min.y - spinner.getWorldPosition(new THREE.Vector3()).y); spin(spinner, (o.rpm ?? 4)*6); p.turntable = spinner; return p; },
+  /** art.hue({ dist, dir, height }) → a 12-hue colour wheel; tap a tile → onPick({ name, deg, hex, complement }) and its complement lights up */
+  hue(o = {}){
+    const g = shape.group(); g.name = 'hue'; const names = ['red', 'orange', 'yellow', 'chartreuse', 'green', 'spring green', 'cyan', 'azure', 'blue', 'violet', 'magenta', 'rose']; const tiles = [];
+    names.forEach((n, i) => { const deg = i*30; const c = new THREE.Color().setHSL(deg/360, 0.9, 0.5); const t = new THREE.Mesh(new THREE.CircleGeometry(0.07, 24), mat(c.getHex())); const a = Math.PI/2 - i/12*Math.PI*2; t.position.set(0.3*Math.cos(a), 0.3*Math.sin(a), 0); g.add(t); tiles.push(t);
+      interactive(t, { select: () => { tiles.forEach(x => x.scale.setScalar(1)); t.scale.setScalar(1.3); tiles[(i + 6) % 12].scale.setScalar(1.3); o.onPick?.({ name: n, deg, hex: '#' + c.getHexString(), complement: names[(i + 6) % 12] }); } }); });
+    return _autoPlace(g, o, { dist: 'near', dir: 'ahead', height: 'chest', face: true, always: true });
+  },
+};
+
+const _NOTE = n => { const m = /^([A-G])(#|b)?(\d)$/.exec(n); if (!m) return +n || 440; const base = { C: 0, D: 2, E: 4, F: 5, G: 7, A: 9, B: 11 }[m[1]] + (m[2] === '#' ? 1 : m[2] === 'b' ? -1 : 0); return 440*Math.pow(2, (base - 9)/12 + (+m[3] - 4)); };
+const music = {
+  /** music.keys({ notes: ['C4','D4',...], dist, dir, height }) → a row of playable keys; .play(note) */
+  keys(o = {}){
+    const notes = o.notes ?? ['C4', 'D4', 'E4', 'F4', 'G4', 'A4', 'B4', 'C5'];
+    const row = ui.choices(notes, { dist: o.dist ?? 'near', dir: o.dir ?? 'ahead', height: o.height ?? 'waist', width: 0.14, color: 'white', onPick: (i, n) => { tone(_NOTE(n), o.dur ?? 0.4, o.wave ?? 'triangle'); row.mark(i, 'right'); setTimeout(() => row.mark(i, null), 250); o.onPlay?.(n, _NOTE(n)); } });
+    row.name = 'keys'; row.play = n => { tone(_NOTE(n), o.dur ?? 0.4, o.wave ?? 'triangle'); return row; }; row.freq = _NOTE; return row;
+  },
+  /** music.interval({ ratio: [3, 2], dist, dir, height }) → two pipes whose lengths show the ratio; .play() sounds both; .set(a, b) */
+  interval(o = {}){
+    const g = shape.group(); g.name = 'interval'; const base = o.base ?? 220, k = _k(o, 'near'); let [a, b] = o.ratio ?? [3, 2];
+    const p1 = shape.cylinder(0.03, 1, 'teal'), p2 = shape.cylinder(0.03, 1, 'orange'); p1.position.x = -0.12; p2.position.x = 0.12; g.add(p1, p2);
+    const rd = label('', { parent: g, at: [0, -0.45, 0], capHeight: 0.035*k, bg: false });
+    const names = { '2:1': 'octave', '3:2': 'perfect fifth', '4:3': 'perfect fourth', '5:4': 'major third', '6:5': 'minor third', '5:3': 'major sixth', '9:8': 'whole tone', '1:1': 'unison' };
+    g.set = (x, y) => { a = x; b = y; const L1 = 0.7, L2 = 0.7*b/a; p1.scale.y = L1; p2.scale.y = L2; p1.position.y = L1/2 - 0.35; p2.position.y = L2/2 - 0.35; rd.setText(`${a}:${b}${names[a + ':' + b] ? ' — ' + names[a + ':' + b] : ''}`); return g; };
+    g.play = () => { tone(base, o.dur ?? 1, 'sine', 0.15); tone(base*a/b, o.dur ?? 1, 'sine', 0.15); return g; };
+    interactive(p1, { select: () => g.play() }); interactive(p2, { select: () => g.play() });
+    g.set(a, b);
+    return _autoPlace(g, o, { dist: 'near', dir: 'ahead', height: 'chest', face: true, always: true });
+  },
+  /** music.metronome({ bpm, dist, dir, height }) → swinging arm with a tick; .setBpm(n), .start(), .stop() */
+  metronome(o = {}){
+    const g = shape.group(); g.name = 'metronome'; let bpm = o.bpm ?? 80, t = 0, running = o.running ?? true, lastTick = -1;
+    const body = shape.box(0.16, 0.3, 0.1, o.color ?? 'dark'); body.position.y = 0.15; g.add(body); const arm = shape.group(); arm.position.y = 0.05; const rod = shape.box(0.012, 0.32, 0.012, 'white'); rod.position.y = 0.16; arm.add(rod); g.add(arm);
+    const rd = label(`${bpm} bpm`, { parent: body, at: [0, 0.2, 0.06], capHeight: 0.03*_k(o, 'near'), bg: false });
+    anims.add(dt => { if (!running) return; t += dt; const per = 60/bpm; arm.rotation.z = 0.5*Math.sin(Math.PI*t/per); const tick = Math.floor(t/per); if (tick !== lastTick){ lastTick = tick; if (o.sound !== false) tone(tick % (o.beats ?? 4) === 0 ? 1200 : 900, 0.04, 'square', 0.12); o.onTick?.(tick); } });
+    g.setBpm = n => { bpm = Math.max(20, Math.min(300, n)); rd.setText(`${_fmt(bpm, 0)} bpm`); return g; }; g.start = () => { running = true; return g; }; g.stop = () => { running = false; return g; };
+    return _autoPlace(g, o, { dist: 'near', dir: 'ahead', height: 'waist', face: true, always: true });
+  },
+  /** music.wave({ freqs: [220, 330], dist, dir, height }) → the summed waveform drawn as a plot; .play(), .set(freqs) */
+  wave(o = {}){
+    let freqs = o.freqs ?? [220, 330]; const win = o.window ?? 0.02;
+    const f = t => freqs.reduce((s, fr) => s + Math.sin(2*Math.PI*fr*t), 0)/freqs.length;
+    const p = geo.plot(f, { xmin: 0, xmax: win, ymin: -1.1, ymax: 1.1, samples: 300, width: o.width ?? 1.2, tall: 0.5, dist: o.dist ?? 'near', dir: o.dir ?? 'ahead', height: o.height ?? 'chest' }); p.name = 'musicWave';
+    p.set = fr => { freqs = fr; p.setFn(f); return p; }; p.play = () => { freqs.forEach(fr => tone(fr, o.dur ?? 1, 'sine', 0.12)); return p; };
+    const btn = ui.button('▶ play', { dist: o.dist ?? 'near', dir: (typeof o.dir === 'number' ? o.dir : resolveDir(o.dir ?? 'ahead')) + 30, height: 'waist', onPress: () => p.play() }); p.button = btn;
+    return p;
+  },
+};
+
+const XR = { THREE, scene, rig, camera, renderer, floor, grid, H, D, SZ, DIR, C, col, mat, shape, place, fit, spread, remove, label, interactive, tone, spin, bob, ui, geo, template, phys, chem, bio, lit, hist, art, music,
              track, recalibrate, audit, view, run, eyePos, get pointers(){ return pointers; }, ready: false,
              get frame(){ return content.frame; }, set frame(fn){ content.frame = fn; },   // `XR.frame = fn` is a common guess — make it work
              get build(){ return content.build; }, set build(fn){ content.build = fn; },
