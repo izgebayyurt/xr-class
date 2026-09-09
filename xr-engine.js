@@ -249,11 +249,12 @@ const THEMES = {
 };
 const isLight = c => { const m = /^#?([0-9a-f]{6})$/i.exec(c ?? '#ffffff'); if (!m) return true; const v = parseInt(m[1], 16); return (0.299*(v>>16) + 0.587*((v>>8)&255) + 0.114*(v&255)) > 140; };
 function label(text, opts = {}){
+  opts = { ...opts };                                                 // own copy: the engine may adjust capHeight for legibility
   const size = opts.size ?? 'comfortable';
   let pos;
   if (opts.above){ const b = localBox(opts.above); const c = b.getCenter(new THREE.Vector3()); pos = new THREE.Vector3(c.x, b.max.y + (opts.gap ?? 0.06), c.z); }
   else pos = resolvePosition({ height:'eye', ...opts });
-  const distance = Math.max(0.05, pos.distanceTo(eyePos()));
+  let distance = Math.max(0.05, pos.distanceTo(eyePos()));
   const paint = (text) => {
     let arcmin = typeof size === 'number' ? size : TEXT_ARCMIN[size];
     if (arcmin === undefined) throw new Error(`Unknown text size "${size}"`);
@@ -324,6 +325,12 @@ function label(text, opts = {}){
   }
   if (opts.above) { /* keep pos */ } else if (!opts.at) { /* pos is the panel centre */ }
   mesh.userData.label = { text: String(text), arcmin, capHeight: capH, distance, size };
+  mesh.userData.autoSize = opts.capHeight === undefined;               // sized by visual angle → can be re-fitted once its true distance is known
+  mesh.resize = (d) => {                                              // re-fit the text for a new viewing distance (parented labels learn it after build)
+    distance = Math.max(0.05, d); const np = paint(mesh.userData.label.text);
+    mesh.material.map?.dispose(); mesh.material.map = np.tex; mesh.geometry.dispose(); mesh.geometry = new THREE.PlaneGeometry(np.w, np.h);
+    mesh.userData.label.capHeight = np.capH; mesh.userData.label.distance = distance; return mesh;
+  };
   mesh.userData.placement = opts;
   const face = opts.face ?? (opts.parent ? false : 'always');   // parented labels stick to their parent's surface; free labels billboard
   if (face === 'always') billboards.add(mesh); else if (face) mesh.lookAt(eyePos());
@@ -733,9 +740,20 @@ function liftSunkObjects(){        // after build: anything tracked that ended u
     autoNotes.push(`${obj.name || 'object'} ended up ${(-box.min.y).toFixed(2)} m below the floor — its group was auto-lifted; give things that sit on the ground height:'floor' (or add children before place())`);
   }
 }
+function refitLabels(){           // parented / grouped labels were sized before their parent was placed: re-fit them for where they actually ended up
+  const v = new THREE.Vector3(), eye = eyePos();
+  for (const [obj, meta] of tracked){ if (meta.kind !== 'label' || !obj.userData.autoSize || !obj.parent || obj.parent === scene) continue;
+    obj.updateWorldMatrix(true, false); const d = obj.getWorldPosition(v).distanceTo(eye); const was = obj.userData.label.distance;
+    if (d > 0.3 && Math.abs(d - was)/was > 0.15) obj.resize(d); }
+  // explicit capHeights that are unreadable from the start get enlarged to the legibility floor
+  for (const [obj, meta] of tracked){ if (meta.kind !== 'label' || obj.userData.autoSize) continue;
+    obj.updateWorldMatrix(true, false); const d = obj.getWorldPosition(v).distanceTo(eye); if (d < 0.5) continue;
+    const arc = obj.userData.label.capHeight / (d*ARCMIN);
+    if (arc < TEXT_ARCMIN.MIN){ obj.userData.placement.capHeight = TEXT_ARCMIN.MIN*ARCMIN*d*1.05; obj.resize(d); autoNotes.push(`text "${obj.userData.label.text.slice(0, 24)}" was unreadable at ${d.toFixed(1)} m (${arc.toFixed(0)}') — enlarged to the ${TEXT_ARCMIN.MIN}' floor; use size words instead of a fixed capHeight`); } }
+}
 function runNow(c){
   try { c.build?.(XR); } catch (e) { showError('build(): ' + e.message + '\n' + (e.stack||'').split('\n').slice(1,3).join('\n')); }
-  try { liftSunkObjects(); } catch {}
+  try { liftSunkObjects(); refitLabels(); } catch {}
   if (DEBUG && !HARNESS) setTimeout(audit, 50);
   else if (!HARNESS) setTimeout(() => { const r = audit(true); if (r.errors.length || r.warnings.length) auditChip(r); }, 300);   // first-run check without ?debug
   renderer.setAnimationLoop(loop);
