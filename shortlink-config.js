@@ -1,4 +1,3 @@
-// Short-link service for scene links (optional).
-// Deploy the Cloudflare Worker in worker/README-DEPLOY.md, then set its URL here and push this file:
-//   window.SHORTLINK_URL = 'https://xr-links.YOURNAME.workers.dev';
-window.SHORTLINK_URL = null;
+// Short-link + study-log service (Cloudflare Worker, see worker/README-DEPLOY.md).
+// Set to null to switch short links and logging off; make.html then falls back to long self-contained links.
+window.SHORTLINK_URL = 'https://xr-links.griezwahlm.workers.dev';
