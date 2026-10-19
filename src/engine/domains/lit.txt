@@ -1,0 +1,3 @@
+     LITERATURE lit.timeline([{at, text, detail}], {from, to, length, dist, dir, height}) plot/story line with tappable markers; .sign shows the detail
+              lit.graph([{id, text, detail}], [[a, b, 'label'], ...], {radius, dist, dir}) character-relationship ring; tap a name → its links light up; .sign
+              lit.quote(text, {by, dist, dir, height}) attributed quotation plaque · lit.words([{text, weight}], {dist, span, onPick}) word cloud around you, sized by weight

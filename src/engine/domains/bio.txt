@@ -1,0 +1,3 @@
+     BIOLOGY  bio.cell({type:'animal'|'plant', size, onPart(name, fact), dist, dir, height}) translucent cell with labelled organelles you can tap; .parts
+              bio.heart({bpm, dist, dir, height}) pulsing heart with an audible beat; .setBpm(n) · bio.dna({turns, length}) double helix with base pairs
+              bio.population({n, max, size, dist, dir}) a crowd of dots on the floor; .set(n) .grow(rate) .n

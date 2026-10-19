@@ -1,0 +1,3 @@
+     MUSIC    music.keys({notes:['C4','D4',...], dist, dir, height}) playable keys (note names → real frequencies); .play('A4') .freq('E4')
+              music.interval({ratio:[3,2], base, dist, dir, height}) two pipes showing the ratio, tap to hear both; .set(a, b) names octave/fifth/fourth/third
+              music.metronome({bpm, dist, dir}) swinging arm with a tick; .setBpm(n) .start() .stop() · music.wave({freqs:[220,330]}) the summed waveform, with a play button

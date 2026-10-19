@@ -1,0 +1,3 @@
+     CHEMISTRY chem.molecule('H2O'|'CO2'|'CH4'|'NH3'|'O2'|'N2'|'H2'|'HCl'|'NaCl' or {atoms:[['O',x,y,z],...], bonds:[[0,1],...]}, {scale, labels, spin, dist, dir, height}) ball-and-stick, CPK colours
+              chem.element('Na', {dist, dir, height}) periodic-table tile (symbol, number, name, mass) — data for H C N O Na Cl S P F Fe Ca K Mg He Ne
+              chem.beaker({fill, color, dist, dir}) glass beaker; .set(fill 0..1, color) · chem.gas({n, temp, size}) particles in a box; .setTemp(t) = speed (kinetic temperature)

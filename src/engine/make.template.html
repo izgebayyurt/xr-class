@@ -1,0 +1,127 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>XR class · make your link</title>
+<style>
+  :root{color-scheme:dark}
+  body{margin:0;background:#101318;color:#e6eaf1;font:15px/1.5 system-ui,-apple-system,'Segoe UI',sans-serif}
+  main{max-width:880px;margin:0 auto;padding:28px 20px 60px}
+  h1{font-size:22px;margin:0 0 4px} .sub{color:#9fb3c8;margin:0 0 20px}
+  textarea{width:100%;box-sizing:border-box;height:300px;background:#171a21;color:#dfe5ee;border:1px solid #2d3340;border-radius:10px;
+           padding:12px;font:13px/1.45 ui-monospace,'SF Mono',Consolas,monospace;resize:vertical}
+  textarea:focus{outline:2px solid #4a86c8}
+  button{font:600 14px system-ui,sans-serif;padding:10px 18px;border-radius:8px;border:0;background:#3e7bfa;color:#fff;cursor:pointer;margin:12px 8px 0 0}
+  button.ghost{background:#242a35;color:#dfe5ee}
+  #msg{margin-top:10px;font-size:13px} .warn{color:#ffd54f} .err{color:#ff8a80} .ok{color:#9ad5a0}
+  #out{display:none;margin-top:22px;border-top:1px solid #2d3340;padding-top:18px}
+  #link{width:100%;box-sizing:border-box;background:#171a21;color:#8fd3ff;border:1px solid #2d3340;border-radius:8px;padding:10px;font:12px ui-monospace,monospace}
+  .row{display:flex;gap:18px;flex-wrap:wrap;align-items:flex-start;margin-top:14px}
+  #qrbox{background:#fff;padding:10px;border-radius:10px;line-height:0} #qrbox img{image-rendering:pixelated}
+  #qrnote{color:#9fb3c8;font-size:12px;max-width:220px}
+  iframe{width:100%;height:420px;border:1px solid #2d3340;border-radius:10px;background:#101318;margin-top:14px}
+  code{background:#1c212b;padding:1px 5px;border-radius:4px}
+</style>
+</head>
+<body>
+<main>
+  <h1>Make your scene link</h1>
+  <p class="sub">Paste the code block Claude gave you (it starts with <code>const { … } = XR;</code>). You'll get a link that runs it — open it anywhere, or scan the QR with the Quest's cameras to open it in the headset.
+     No code yet? Start with the <a style="color:#8fd3ff" href="brief.html">project brief form</a>.</p>
+  <textarea id="code" spellcheck="false" placeholder="Paste the whole code block here…"></textarea>
+  <div>
+    <button id="go">Create link</button>
+    <button id="test" class="ghost">Create + preview below</button>
+  </div>
+  <div id="msg"></div>
+  <div id="out">
+    <input id="link" readonly>
+    <div>
+      <button id="copy">Copy link</button>
+      <button id="open" class="ghost">Open in a new tab</button>
+      <button id="dbg" class="ghost">Open with audit panel</button>
+    </div>
+    <div class="row">
+      <div id="qrbox"></div>
+      <div id="qrnote">Scan with the Quest: look at the code in passthrough, or use the Camera app, and it opens in the headset browser. Then press ENTER VR.</div>
+    </div>
+    <div id="longwrap" style="display:none;margin-top:10px;font-size:12px;color:#9fb3c8">
+      Backup: a permanent self-contained link that works even without the link service —
+      <button id="copylong" class="ghost" style="font-size:12px;padding:4px 10px;margin:0">Copy it</button>
+      <input id="longlink" readonly style="display:none">
+    </div>
+    <iframe id="preview" hidden allow="xr-spatial-tracking; fullscreen"></iframe>
+  </div>
+</main>
+<script src="shortlink-config.js"></script>
+<script>window.KIT_VERSION = "{{VERSION}}";</script>
+<script src="xr-log.js"></script>
+<script>{{QRLIB}}</script>
+<script>
+const $ = id => document.getElementById(id);
+function clean(text){
+  let t = text.trim();
+  t = t.replace(/^```[a-z]*\s*\n?/i, '').replace(/\n?```\s*$/, '');   // strip pasted markdown fences
+  return t.trim();
+}
+async function makeLink(){
+  const code = clean($('code').value);
+  const msg = $('msg'); msg.textContent = ''; msg.className = '';
+  if (!code){ msg.textContent = 'Paste the code block first.'; msg.className = 'err'; return null; }
+  if (!code.includes('XR.run')){ msg.textContent = 'That does not look like a scene block — it must end with XR.run({ build, frame }). Paste the whole block Claude gave you.'; msg.className = 'err'; return null; }
+  if (!/^const\s*\{/.test(code)){ msg.innerHTML = '<span class="warn">Heads up: the block usually starts with <code>const { … } = XR;</code>. Creating the link anyway.</span>'; }
+  const stream = new Blob([new TextEncoder().encode(code)]).stream().pipeThrough(new CompressionStream('deflate-raw'));
+  const buf = new Uint8Array(await new Response(stream).arrayBuffer());
+  let b64 = ''; for (let i = 0; i < buf.length; i += 0x8000) b64 += String.fromCharCode(...buf.subarray(i, i + 0x8000));
+  b64 = btoa(b64).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
+  const longLink = new URL('run.html', location.href).href + '#c=' + b64;
+  let link = longLink, gotShort = false;
+  if (window.SHORTLINK_URL){                      // short-link service configured: trade the payload for a 6-char id
+    try {
+      const q = window.XRLOG?.pid ? `?pid=${encodeURIComponent(window.XRLOG.pid)}&kit=${encodeURIComponent(window.KIT_VERSION || '')}` : '';
+      const r = await fetch(window.SHORTLINK_URL + q, { method: 'POST', body: b64 });
+      if (r.ok){ const { id } = await r.json(); if (id){ link = new URL('run.html', location.href).href + '?p=' + id; gotShort = true; } }
+    } catch {}
+  }
+  if (!gotShort) window.XRLOG?.send('link', { id: null, bytes: b64.length, lines: code.split('\n').length });
+  $('link').value = link; $('out').style.display = 'block';
+  $('longwrap').style.display = gotShort ? 'block' : 'none';
+  $('longlink').value = longLink;
+  const okNote = gotShort
+    ? `Short link ready — ${code.length.toLocaleString()} characters of code behind a ${link.length}-character link.`
+    : `Link ready — ${code.length.toLocaleString()} characters of code, ${link.length.toLocaleString()} in the link.`;
+  msg.className = 'ok'; if (!msg.textContent) msg.textContent = okNote;
+  // QR (a QR code holds ~2.9 KB of URL at most; bigger scenes get the link instead)
+  const qrbox = $('qrbox'); qrbox.innerHTML = '';
+  try {
+    const qr = qrcode(0, 'L'); qr.addData(link); qr.make();
+    qrbox.innerHTML = qr.createImgTag(3, 8);
+    qrbox.style.display = ''; $('qrnote').style.display = 'block';
+    $('qrnote').textContent = "Scan with the Quest: look at the code in passthrough, or use the Camera app, and it opens in the headset browser. Then press ENTER VR.";
+  } catch (e) {
+    qrbox.style.display = 'none';
+    $('qrnote').style.display = 'block';
+    $('qrnote').textContent = `This scene is bigger than a QR code can hold (${link.length.toLocaleString()} characters; QR max ≈ 2,900). Use Copy link and send it to your headset (email/chat), or ask your instructor to add it to the class site's scenes/ folder for a short link that fits a QR.`;
+  }
+  return link;
+}
+$('go').onclick = () => { makeLink(); $('preview').hidden = true; };
+$('test').onclick = async () => { const l = await makeLink(); if (l){ const p = $('preview'); p.hidden = false; p.src = l; } };
+$('copy').onclick = async () => { try { await navigator.clipboard.writeText($('link').value); $('copy').textContent = 'Copied ✓'; setTimeout(() => $('copy').textContent = 'Copy link', 1500); } catch { $('link').select(); document.execCommand('copy'); } };
+$('copylong').onclick = async () => { try { await navigator.clipboard.writeText($('longlink').value); $('copylong').textContent = 'Copied ✓'; setTimeout(() => $('copylong').textContent = 'Copy it', 1500); } catch { const l = $('longlink'); l.style.display = 'inline'; l.select(); document.execCommand('copy'); } };
+$('open').onclick = () => window.open($('link').value, '_blank');
+$('dbg').onclick = () => { const u = new URL($('link').value); u.search = '?debug'; window.open(u.href, '_blank'); };
+// remix: arriving from a run link pre-fills the code
+(async () => {
+  const m = location.hash.match(/c=([A-Za-z0-9\-_]+)/);
+  if (!m) return;
+  try {
+    const bytes = Uint8Array.from(atob(m[1].replace(/-/g, '+').replace(/_/g, '/')), c => c.charCodeAt(0));
+    const code = await new Response(new Blob([bytes]).stream().pipeThrough(new DecompressionStream('deflate-raw'))).text();
+    $('code').value = code; $('msg').textContent = 'Loaded the code from the link you came from.'; $('msg').className = 'ok';
+  } catch {}
+})();
+</script>
+</body>
+</html>

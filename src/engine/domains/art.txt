@@ -1,0 +1,3 @@
+     ART      art.palette({mode:'light'|'paint', dist, dir, height}) three draggable colour discs — light adds toward white, paint subtracts toward black
+              art.frame({width, tall, grid:'thirds'|'golden', dist, dir, height}) canvas with composition guides; .put(obj, u, v) at frame coords 0..1
+              art.turntable(obj, {rpm, dist, dir}) slowly rotating sculpture stand · art.hue({onPick({name, deg, hex, complement}), dist, dir}) 12-hue colour wheel

@@ -1,0 +1,3 @@
+     HISTORY  hist.timeline([{at: year, text, detail}], {from, to, length, dist, dir}) years on a line with tappable events; .sign
+              hist.map([{name, points:[[u,v],...] (0..1), color, fact}], {size, dist, dir}) schematic map on the floor; tap a region → fact; .sign
+              hist.artifact(obj, {caption, dist, dir}) object on a pedestal with a caption · hist.compare([{label, value}], {unit}) then-vs-now bars

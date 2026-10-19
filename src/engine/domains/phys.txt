@@ -1,0 +1,5 @@
+     PHYSICS  phys.pendulum({length, deg, dist, dir}) real θ''=−(g/L)sinθ; .start() .stop() .set(deg) .period .theta
+              phys.projectile({dist, dir}) launcher on the floor; .launch(speed, angleDeg) → range (ball flies with a trail); .aim(deg); onLand(range)
+              phys.wave({length, amplitude, wavelength, speed, standing}) animated string; .set({...}) .frequency
+              phys.field((x, z) => [fx, fz], {size, n, dist, dir}) floor arrows showing a vector field; .setFn(fn)
+              phys.ramp({angleDeg, length, dist, dir}) incline + ball; .release() rolls with a = g·sinθ, .reset(), .time; onBottom(t)
