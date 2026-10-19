@@ -7,133 +7,83 @@
 <style>
   :root{color-scheme:dark}
   body{margin:0;background:#101318;color:#e6eaf1;font:15px/1.5 system-ui,-apple-system,'Segoe UI',sans-serif}
-  main{max-width:820px;margin:0 auto;padding:28px 20px 80px}
+  main{max-width:780px;margin:0 auto;padding:28px 20px 80px}
   h1{font-size:22px;margin:0 0 4px} .sub{color:#9fb3c8;margin:0 0 8px}
   .sub a, .steps a{color:#8fd3ff}
-  h2{font-size:16px;margin:30px 0 4px;color:#8fd3ff} .hint{color:#9fb3c8;font-size:13px;margin:0 0 10px}
-  label.q{display:block;margin:14px 0 4px;font-weight:600;font-size:14px}
-  input[type=text],textarea,select{width:100%;box-sizing:border-box;background:#171a21;color:#dfe5ee;border:1px solid #2d3340;border-radius:8px;padding:9px 11px;font:14px/1.45 inherit}
-  textarea{resize:vertical;min-height:56px}
-  input:focus,textarea:focus,select:focus{outline:2px solid #4a86c8}
-  .radio-row{display:flex;flex-direction:column;gap:8px;margin-top:6px}
-  .radio-row label{display:flex;gap:9px;align-items:flex-start;background:#171a21;border:1px solid #2d3340;border-radius:8px;padding:9px 11px;cursor:pointer;font-size:14px}
-  .radio-row label:has(input:checked){border-color:#4a86c8;background:#1a2230}
-  .radio-row input{margin-top:3px}
-  .radio-row b{margin-right:4px}
-  .inter{border:1px solid #2d3340;border-radius:10px;padding:12px 14px;margin:12px 0;background:#14171e}
-  .inter h3{margin:0 0 6px;font-size:14px;color:#cfd6e0}
-  .slots{display:grid;grid-template-columns:110px 1fr;gap:8px 10px;align-items:center;font-size:13px;color:#9fb3c8}
-  button{font:600 14px system-ui,sans-serif;padding:11px 20px;border-radius:8px;border:0;background:#3e7bfa;color:#fff;cursor:pointer;margin:14px 10px 0 0}
+  h2{font-size:15px;margin:26px 0 4px;color:#8fd3ff}
+  .hint{color:#9fb3c8;font-size:13px;margin:2px 0 8px}
+  label.q{display:block;margin:20px 0 4px;font-weight:600;font-size:15px}
+  label.q .opt{font-weight:400;color:#9fb3c8;font-size:13px}
+  input[type=text],textarea{width:100%;box-sizing:border-box;background:#171a21;color:#dfe5ee;border:1px solid #2d3340;border-radius:8px;padding:9px 11px;font:14px/1.45 inherit}
+  textarea{resize:vertical;min-height:58px}
+  input:focus,textarea:focus{outline:2px solid #4a86c8}
+  .key{border-left:3px solid #ffc53d;padding-left:12px;margin-left:-15px}
+  .packs{display:flex;flex-wrap:wrap;gap:6px;margin-top:8px}
+  .packs label{background:#171a21;border:1px solid #2d3340;border-radius:16px;padding:4px 11px;cursor:pointer;font-size:13px}
+  .packs label:has(input:checked){border-color:#4a86c8;background:#1a2230}
+  .packs input{margin:0 5px 0 0;vertical-align:-1px}
+  button{font:600 14px system-ui,sans-serif;padding:11px 20px;border-radius:8px;border:0;background:#3e7bfa;color:#fff;cursor:pointer;margin:18px 10px 0 0}
   button.ghost{background:#242a35;color:#dfe5ee}
-  #msg{margin-top:10px;font-size:13px} .warn{color:#ffd54f} .err{color:#ff8a80} .ok{color:#9ad5a0}
-  #preview{display:none;margin-top:14px;width:100%;box-sizing:border-box;height:280px;font:12px/1.4 ui-monospace,'SF Mono',Consolas,monospace}
-  details{margin:22px 0;border:1px solid #2d3340;border-radius:10px;padding:12px 16px;color:#c3ccd8;font-size:14px}
-  summary{cursor:pointer;font-weight:600;color:#dfe5ee}
+  #msg{margin-top:10px;font-size:13px} .err{color:#ff8a80} .ok{color:#9ad5a0}
+  #preview{display:none;margin-top:14px;width:100%;box-sizing:border-box;height:260px;font:12px/1.4 ui-monospace,'SF Mono',Consolas,monospace}
   .steps{background:#14202b;border:1px solid #23405a;border-radius:10px;padding:12px 16px;margin-top:26px;font-size:14px}
   .steps b{color:#8fd3ff}
-  #secD[hidden]{display:none}
 </style>
 </head>
 <body>
 <main>
   <h1>Your XR project brief</h1>
-  <p class="sub">Fill this in with body words, not metres: <i>arm's reach · a step away · across the room</i> and <i>floor · knee · waist · chest · eye</i>.
-     Sizes: <i>fingertip · egg · apple · hand · head · torso · person · door</i>. Leave a line blank if you truly don't care — Claude will choose.
-     One button at the bottom turns your answers into the complete first message for Claude.</p>
+  <p class="sub">Answer in plain words — sizes and places like <i>head-sized, an arm's length away, at eye level</i> are perfect.
+     The button at the bottom turns your answers into the message you paste into Claude.</p>
 
-  <details><summary>What you get without asking (don't spend words on these)</summary>
-    <p>A metric world with the floor at floor level and you at the centre facing forward. Controllers with a pointing ray, trigger to select,
-    thumbstick to teleport and turn. Hover glow on anything interactive. Ground, sky, lighting, a 1&nbsp;m grid. Text sized to be readable at its
-    distance. Everything at "eye" or "chest" height adjusts to the real wearer. Desktop preview with mouse and keyboard. Errors appear as red text
-    on screen. Shapes are primitives (boxes, balls, cylinders, cones, rings, panels, lines) — no downloaded models, images, fonts or sounds.
-    Sounds are simple tones. No physics engine. One person, no multiplayer.</p>
-  </details>
+  <label class="q" for="pid">Study code <span class="opt">— only if you're in the class study; leave blank otherwise</span></label>
+  <input type="text" id="pid" placeholder="e.g. K7Q2" maxlength="32" autocomplete="off" style="max-width:220px">
 
-  <h2>Study code</h2>
-  <p class="hint">Only if you're taking part in the class study: enter the code you were given. It links your brief and scene links anonymously; leave it blank and nothing is recorded.</p>
-  <input type="text" id="pid" placeholder="e.g. K7Q2" maxlength="32" autocomplete="off">
-
-  <h2>Your field</h2>
-  <p class="hint">Name your field, then tick any building-block packs that fit it (physics simulations, molecules, timelines, colour mixing, playable notes…). Tick none for the core set only — it covers most ideas; tick several for cross-disciplinary work.</p>
-  <input type="text" id="field" placeholder='e.g. "Geography", "Nursing", "Economics", "Linguistics"'>
-  <div class="radio-row" id="packs" style="margin-top:8px">
-    <label><input type="checkbox" name="pack" value="phys"><span><b>Physics</b> — pendulum, projectile, waves, vector fields, ramp</span></label>
-    <label><input type="checkbox" name="pack" value="chem"><span><b>Chemistry</b> — molecules, element tiles, beaker, gas box</span></label>
-    <label><input type="checkbox" name="pack" value="bio"><span><b>Biology</b> — cell, heart, DNA, population</span></label>
-    <label><input type="checkbox" name="pack" value="lit"><span><b>Literature</b> — story timeline, relationship graph, quotes, word cloud</span></label>
-    <label><input type="checkbox" name="pack" value="hist"><span><b>History</b> — year timeline, schematic map, artifacts, then-vs-now</span></label>
-    <label><input type="checkbox" name="pack" value="art"><span><b>Art &amp; design</b> — colour mixing, composition frame, turntable, hue wheel</span></label>
-    <label><input type="checkbox" name="pack" value="music"><span><b>Music</b> — playable keys, intervals, metronome, waveform</span></label>
+  <label class="q" for="field">Your field</label>
+  <input type="text" id="field" placeholder='e.g. "Nursing", "History", "Math education", "Economics"'>
+  <div class="packs" id="packs" title="Optional ready-made building blocks">
+    <label><input type="checkbox" name="pack" value="phys">Physics</label>
+    <label><input type="checkbox" name="pack" value="chem">Chemistry</label>
+    <label><input type="checkbox" name="pack" value="bio">Biology</label>
+    <label><input type="checkbox" name="pack" value="lit">Literature</label>
+    <label><input type="checkbox" name="pack" value="hist">History</label>
+    <label><input type="checkbox" name="pack" value="art">Art &amp; design</label>
+    <label><input type="checkbox" name="pack" value="music">Music</label>
   </div>
 
-  <h2>A. The idea</h2>
-  <label class="q" for="idea">1. One sentence: "You put on the headset and …"</label>
-  <input type="text" id="idea" placeholder="e.g. …you're standing next to a cubic metre.">
-  <label class="q" for="feel">2. After two minutes, a visitor should understand or feel:</label>
-  <input type="text" id="feel">
-  <label class="q">3. Tier</label>
-  <div class="radio-row" id="tier">
-    <label><input type="radio" name="tier" value="1"><span><b>1 · Explore</b> — look at and walk around something. No interaction beyond moving.</span></label>
-    <label><input type="radio" name="tier" value="2" checked><span><b>2 · Touch</b> — point-and-select or grab things; each does one thing (glow, grow, speak, play a tone, show text).</span></label>
-    <label><input type="radio" name="tier" value="3"><span><b>3 · Rules</b> — score, turns, order, timing, win/lose. <i>Only if your interactions below are simple.</i> Usually needs a second round.</span></label>
+  <h2>The idea</h2>
+  <label class="q" for="idea">1. You put on the headset and …</label>
+  <input type="text" id="idea" placeholder="…where are you, and what's there?">
+  <label class="q" for="goal">2. By the end, the visitor should understand:</label>
+  <input type="text" id="goal" placeholder="…one sentence.">
+
+  <div class="key">
+    <label class="q" for="guess">3. What would most people guess before trying it — and what's actually true?</label>
+    <input type="text" id="guess" placeholder="…the common belief, then the truth.">
+    <label class="q" for="why">4. Why is it true — and what could the visitor do to see why for themselves?</label>
+    <p class="hint">Not an animation that shows the answer — something they can cut, rearrange, stack, compare or count.</p>
+    <textarea id="why" placeholder="…what makes it true, and what they could do to see it."></textarea>
   </div>
 
-  <h2>B. The space</h2>
-  <label class="q" for="posture">4. Posture</label>
-  <select id="posture">
-    <option>standing in place</option>
-    <option>standing, with teleport</option>
-    <option>seated</option>
-  </select>
-  <label class="q" for="first">5. The first thing you see when you arrive (1–3 things — for each: what, how big, how far, which direction, how high)</label>
-  <p class="hint">Things you'll read or point at work best between chest and eye height and in front of you (ahead, ahead-left, ahead-right). "Waist-high" and "to my right" are fine for props, but they make text hard to read and controls easy to miss.</p>
-  <textarea id="first" placeholder='e.g. "a head-sized glowing sphere, a step away, straight ahead, at chest height"'></textarea>
-  <label class="q" for="rest">6. Everything else in the space, same format (group repeated things)</label>
-  <textarea id="rest"></textarea>
-  <label class="q" for="around">7. Anything deliberately above, below, or behind you? (otherwise everything goes in front)</label>
-  <input type="text" id="around">
-
-  <h2>C. Interactions <span style="font-weight:400;color:#9fb3c8">(max 3 — Tier 1 leaves these blank)</span></h2>
-  <div id="inters"></div>
-
-  <div id="secD" hidden>
-    <h2>D. Rules and state <span style="font-weight:400;color:#9fb3c8">(Tier 3 only)</span></h2>
-    <label class="q" for="track">8. What is counted or tracked, and where it's shown</label>
-    <input type="text" id="track" placeholder='e.g. "strokes, on a sign across the room at eye level"'>
-    <label class="q" for="ends">9. What ends it, and what the visitor sees when it ends</label>
-    <input type="text" id="ends">
-    <label class="q" for="restart">10. How to start over</label>
-    <input type="text" id="restart">
-  </div>
-
-  <h2>E. Look, feel, words</h2>
-  <label class="q" for="mood">11. Three words for the mood</label>
-  <input type="text" id="mood">
-  <label class="q" for="colours">Colours (up to three from red orange yellow green teal blue purple pink white grey dark — or "you choose")</label>
-  <input type="text" id="colours">
-  <label class="q" for="exact">12. Any text that must appear exactly as written (title, labels, instructions)</label>
-  <textarea id="exact"></textarea>
-
-  <h2>F. Scope guard</h2>
-  <label class="q" for="oos">13. Out of scope — things you're explicitly not asking for</label>
-  <input type="text" id="oos" placeholder='e.g. "no realistic physics, no scoring, no sound"'>
-  <label class="q" for="cut">14. If something has to be cut to make it work today, cut this first:</label>
-  <input type="text" id="cut">
-  <label class="q" for="keep">15. Don't change:</label>
-  <input type="text" id="keep" placeholder='e.g. "keep the grid floor"'>
+  <h2>Details <span style="font-weight:400;color:#9fb3c8">(optional — Claude fills in anything you leave out)</span></h2>
+  <label class="q" for="steps">5. What does the visitor do, step by step?</label>
+  <textarea id="steps" placeholder="…first they…, then…"></textarea>
+  <label class="q" for="first">6. What do they see first?</label>
+  <input type="text" id="first" placeholder="…what, how big, how far, how high.">
+  <label class="q" for="look">7. Look and feel <span class="opt">(mood, colours, any exact text)</span></label>
+  <input type="text" id="look" placeholder="…mood, colours, a title.">
 
   <div>
     <button id="copy">Copy my message for Claude</button>
     <button id="show" class="ghost">Show the message</button>
-    <button id="clear" class="ghost">Clear the form</button>
+    <button id="clear" class="ghost">Clear</button>
   </div>
   <div id="msg"></div>
   <textarea id="preview" readonly></textarea>
 
   <div class="steps">
-    <b>Then:</b> paste it as your first message to Claude (claude.ai) and send. Claude replies with one code block —
-    copy the whole block and turn it into a headset link at <a href="make.html">make.html</a>.
-    If something's off in the scene, open your link with <code>?debug</code>, press "Copy report for Claude", and paste that back into the chat.
+    <b>Then:</b> open <a href="https://claude.ai" target="_blank" rel="noopener">claude.ai</a>, start a new chat, paste, and send.
+    Claude replies with one code block — copy all of it and turn it into a link at <a href="make.html">make.html</a>.
   </div>
 </main>
 <script src="shortlink-config.js"></script>
@@ -142,96 +92,52 @@
 <script>
 const KIT = {{KIT_JSON}};
 const DOMAINS = {{DOMAINS_JSON}};
+const $ = id => document.getElementById(id);
 const packsChosen = () => [...document.querySelectorAll('input[name=pack]:checked')].map(c => c.value);
 const kitFor = packs => KIT.replace(/^@@DOMAIN@@\n?/m, packs.length ? packs.map(p => DOMAINS[p]).join('\n') + '\n' : '');
-const $ = id => document.getElementById(id);
-const DOES = ['', 'point + trigger', 'grab and move', 'walk up to', 'look at for a moment'];
-const THENS = ['', 'it stays', 'resets when you let go', 'resets after a few seconds', 'happens once only'];
-// three interaction blocks
-$('inters').innerHTML = [1,2,3].map(i => `
-  <div class="inter"><h3>Interaction ${i}</h3><div class="slots">
-    <span>You do</span><select id="do${i}">${DOES.map(o => `<option>${o}</option>`).join('')}</select>
-    <span>to</span><input type="text" id="to${i}" placeholder="which thing">
-    <span>and it</span><input type="text" id="it${i}" placeholder="what changes — visible change, sound, text that appears (write the text)">
-    <span>then</span><select id="then${i}">${THENS.map(o => `<option>${o}</option>`).join('')}</select>
-  </div></div>`).join('');
-
-const FIELDS = ['field', 'idea','feel','posture','first','rest','around','track','ends','restart','mood','colours','exact','oos','cut','keep',
-                'do1','to1','it1','then1','do2','to2','it2','then2','do3','to3','it3','then3'];
-const tierVal = () => document.querySelector('input[name=tier]:checked').value;
-const TIERS = { 1: '1 (Explore)', 2: '2 (Touch)', 3: '3 (Rules)' };
+const FIELDS = ['field', 'idea', 'goal', 'guess', 'why', 'steps', 'first', 'look'];
+const v = id => $(id).value.trim();
 
 function buildBrief(){
-  const v = id => $(id).value.trim();
   const L = [];
-  L.push('A. The idea');
-  if (v('field')) L.push('0. My field: ' + v('field') + (packsChosen().length ? ' (building-block packs included: ' + packsChosen().join(', ') + ')' : ''));
-  L.push('1. You put on the headset and ' + (v('idea').replace(/^(you put on the headset and\s*)/i, '') || '(you choose a small scene that fits the rest of this brief)'));
-  if (v('feel')) L.push('2. After two minutes a visitor should understand or feel: ' + v('feel'));
-  L.push('3. Tier: ' + TIERS[tierVal()]);
-  L.push('');
-  L.push('B. The space');
-  L.push('4. Posture: ' + v('posture') + '.');
-  L.push('5. First thing you see: ' + (v('first') || '(you choose — follow the placement rules)'));
-  if (v('rest')) L.push('6. Everything else: ' + v('rest'));
-  L.push('7. ' + (v('around') ? 'Above/below/behind me: ' + v('around') : 'Nothing behind me.'));
-  L.push('');
-  const ints = [1,2,3].map(i => ({ d: v('do'+i), to: v('to'+i), it: v('it'+i), then: v('then'+i) })).filter(x => x.d || x.to || x.it);
-  L.push('C. Interactions (max 3)');
-  if (tierVal() === '1' || !ints.length) L.push('(none — Tier 1, just looking and moving)');
-  ints.forEach((x, i) => L.push(`${i+1}. You do: ${x.d || 'point + trigger'} — to: ${x.to || '(you choose)'} — and it: ${x.it || '(you choose one simple response)'} — then: ${x.then || 'repeatable'}`));
-  L.push('');
-  if (tierVal() === '3'){
-    L.push('D. Rules and state');
-    L.push('8. Tracked: ' + (v('track') || '(you choose, keep it simple)'));
-    L.push('9. Ends: ' + (v('ends') || '(you choose)'));
-    L.push('10. Start over: ' + (v('restart') || '(you choose)'));
-    L.push('');
-  }
-  L.push('E. Look, feel, words');
-  L.push('11. Mood: ' + (v('mood') || 'you choose') + '. Colours: ' + (v('colours') || 'you choose') + '.');
-  if (v('exact')) L.push('12. Text that must appear exactly as written: ' + v('exact'));
-  L.push('');
-  L.push('F. Scope guard');
-  L.push('13. Out of scope: ' + (v('oos') || 'anything not described above'));
-  if (v('cut')) L.push('14. If something has to be cut, cut this first: ' + v('cut'));
-  if (v('keep')) L.push("15. Don't change: " + v('keep'));
+  if (v('field')) L.push('My field: ' + v('field') + (packsChosen().length ? ' (building-block packs included: ' + packsChosen().join(', ') + ')' : ''));
+  L.push('1. You put on the headset and ' + v('idea').replace(/^(you put on the headset and\s*)/i, '').replace(/^…\s*/, ''));
+  L.push('2. By the end, the visitor should understand: ' + v('goal').replace(/^…\s*/, ''));
+  L.push('3. What most people would guess before trying, and what is actually true: ' + (v('guess') || '(not given — decide whether a guess-first step fits)'));
+  L.push('4. Why it is true, and what the visitor could do to see why: ' + (v('why') || '(not given — choose the clearest way for the visitor to see why, with pieces they can inspect)'));
+  if (v('steps')) L.push('5. What the visitor does, step by step: ' + v('steps'));
+  if (v('first')) L.push('6. What they see first: ' + v('first'));
+  if (v('look')) L.push('7. Look and feel: ' + v('look'));
+  L.push('Anything I did not mention: you choose, following the rules above.');
   return kitFor(packsChosen()) + L.join('\n') + '\n';
-}
-function validate(){
-  const missing = [];
-  if (!$('idea').value.trim()) missing.push('the one-sentence idea (A1)');
-  if (!$('first').value.trim()) missing.push('the first thing you see (B5)');
-  return missing;
 }
 async function copyMessage(){
   const msg = $('msg'); msg.className = ''; msg.textContent = '';
-  const missing = validate();
-  if (missing.length){ msg.className = 'err'; msg.textContent = 'Fill in ' + missing.join(' and ') + ' first — everything else can stay blank.'; return; }
+  const missing = [!v('idea') && 'question 1', !v('goal') && 'question 2'].filter(Boolean);
+  if (missing.length){ msg.className = 'err'; msg.textContent = 'Answer ' + missing.join(' and ') + ' first — the rest can stay blank.'; return; }
   const text = buildBrief();
   $('preview').value = text;
   try { await navigator.clipboard.writeText(text); }
   catch { $('preview').style.display = 'block'; $('preview').select(); document.execCommand('copy'); }
   msg.className = 'ok';
-  msg.textContent = `Copied ✓ — ${text.length.toLocaleString()} characters. Paste it as your first message to Claude.`;
-  window.XRLOG?.send('brief', { tier: tierVal(), field: $('field').value.trim(), packs: packsChosen(), brief: text.split('---- My brief (from the questionnaire) ----')[1]?.trim().slice(0, 6000) });
+  msg.textContent = `Copied ✓ — now paste it into a new Claude chat and send.`;
+  window.XRLOG?.send('brief', { field: v('field'), packs: packsChosen(), answered: FIELDS.filter(f => v(f)), brief: text.split('---- My brief (from the questionnaire) ----')[1]?.trim().slice(0, 6000) });
 }
 $('copy').onclick = copyMessage;
 $('show').onclick = () => { $('preview').value = buildBrief(); const p = $('preview'); p.style.display = p.style.display === 'block' ? 'none' : 'block'; };
-$('clear').onclick = () => { if (!confirm('Clear all your answers?')) return; FIELDS.forEach(f => $(f).value = ''); $('posture').selectedIndex = 0; document.querySelector('input[name=tier][value="2"]').checked = true; syncTier(); saveDraft(); $('msg').textContent = ''; $('preview').style.display = 'none'; };
-function syncTier(){ $('secD').hidden = tierVal() !== '3'; }
-document.querySelectorAll('input[name=tier]').forEach(r => r.onchange = () => { syncTier(); saveDraft(); });
-document.querySelectorAll('input[name=pack]').forEach(r => r.onchange = saveDraft);
+$('clear').onclick = () => { if (!confirm('Clear all your answers?')) return; FIELDS.forEach(f => $(f).value = ''); document.querySelectorAll('input[name=pack]').forEach(c => c.checked = false); saveDraft(); $('msg').textContent = ''; $('preview').style.display = 'none'; };
 // draft persistence (best-effort: private windows or blocked storage just skip it)
-function saveDraft(){ try { localStorage.setItem('xr-brief', JSON.stringify({ tier: tierVal(), packs: packsChosen(), f: Object.fromEntries(FIELDS.map(f => [f, $(f).value])) })); } catch {} }
+function saveDraft(){ try { localStorage.setItem('xr-brief-v2', JSON.stringify({ packs: packsChosen(), f: Object.fromEntries(FIELDS.map(f => [f, $(f).value])) })); } catch {} }
 function loadDraft(){ try {
-  const d = JSON.parse(localStorage.getItem('xr-brief')); if (!d) return;
+  const d = JSON.parse(localStorage.getItem('xr-brief-v2')); if (!d) return;
   FIELDS.forEach(f => { if (d.f?.[f] != null) $(f).value = d.f[f]; });
-  const t = document.querySelector(`input[name=tier][value="${d.tier}"]`); if (t) t.checked = true;
   (d.packs || []).forEach(p => { const c = document.querySelector(`input[name=pack][value="${p}"]`); if (c) c.checked = true; });
 } catch {} }
 FIELDS.forEach(f => $(f).addEventListener('input', saveDraft));
-loadDraft(); syncTier();
+document.querySelectorAll('input[name=pack]').forEach(c => c.onchange = saveDraft);
+loadDraft();
+const urlPid = new URLSearchParams(location.search).get('code');            // brief.html?code=K7Q2 pre-fills the study code
+if (urlPid && window.XRLOG) window.XRLOG.pid = urlPid;
 $('pid').value = window.XRLOG?.pid || ''; $('pid').addEventListener('input', () => { if (window.XRLOG) window.XRLOG.pid = $('pid').value.trim(); });
 </script>
 </body>

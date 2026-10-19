@@ -37,7 +37,8 @@ if (R.boot){
   await page.screenshot({ path: out + '-start.png' });
   R.handlerErrors = await page.evaluate(async () => {
     const errs = [];
-    for (let pass = 0; pass < 3; pass++) for (const [obj, h] of [...XR._test.interactables]){
+    const shown = o => { for (; o; o = o.parent) if (!o.visible) return false; return true; };
+    for (let pass = 0; pass < 3; pass++) for (const [obj, h] of [...XR._test.interactables]){ if (!shown(obj)) continue;   // visitors can only point at what they can see
       try { h.select?.(obj, { point: obj.getWorldPosition(new XR.THREE.Vector3()) }); } catch (e) { errs.push((obj.name || 'obj') + ': ' + e.message); }
       try { h.release?.(obj); } catch (e) { errs.push((obj.name || 'obj') + ' release: ' + e.message); }
       await new Promise(r => setTimeout(r, 300));

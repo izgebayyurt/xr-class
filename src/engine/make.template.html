@@ -30,6 +30,10 @@
   <p class="sub">Paste the code block Claude gave you (it starts with <code>const { … } = XR;</code>). You'll get a link that runs it — open it anywhere, or scan the QR with the Quest's cameras to open it in the headset.
      No code yet? Start with the <a style="color:#8fd3ff" href="brief.html">project brief form</a>.</p>
   <textarea id="code" spellcheck="false" placeholder="Paste the whole code block here…"></textarea>
+  <div id="part2wrap" hidden>
+    <p class="sub" style="margin:14px 0 6px">Claude's reply was cut off. In the same Claude chat, type <code>continue</code> and send — then paste the rest here:</p>
+    <textarea id="code2" spellcheck="false" placeholder="Paste the rest of the code here…" style="height:180px"></textarea>
+  </div>
   <div>
     <button id="go">Create link</button>
     <button id="test" class="ghost">Create + preview below</button>
@@ -62,14 +66,28 @@
 const $ = id => document.getElementById(id);
 function clean(text){
   let t = text.trim();
-  t = t.replace(/^```[a-z]*\s*\n?/i, '').replace(/\n?```\s*$/, '');   // strip pasted markdown fences
-  return t.trim();
+  const fence = /```[a-z]*[^\S\n]*\n([\s\S]*?)(\n```|$)/gi;                 // pasted the whole reply? keep the largest code block
+  let best = null, m; while ((m = fence.exec(t))) if (!best || m[1].length > best.length) best = m[1];
+  if (best !== null && t.includes('```')) t = best;
+  return t.replace(/^```[a-z]*\s*\n?/i, '').replace(/\n?```\s*$/, '').trim();
+}
+// join a cut-off reply with Claude's continuation: drop any repeated overlap at the seam
+function joinParts(a, b){
+  if (/^const\s*\{/.test(b) && b.includes('XR.run')) return b;                // Claude re-sent the whole block
+  for (let k = Math.min(a.length, b.length, 600); k >= 8; k--) if (a.endsWith(b.slice(0, k))) return a + b.slice(k);
+  const lastNL = a.lastIndexOf('\n'), tail = a.slice(lastNL + 1).trim(), firstLine = b.split('\n')[0].trim();
+  if (tail && firstLine.startsWith(tail)) return a.slice(0, lastNL + 1) + b;       // continuation restarted the cut line
+  return a + (a.endsWith('\n') || b.startsWith('\n') ? '' : '\n') + b;
 }
 async function makeLink(){
-  const code = clean($('code').value);
+  let code = clean($('code').value);
+  const part2 = clean($('code2').value);
+  if (part2) code = joinParts(code, part2);
   const msg = $('msg'); msg.textContent = ''; msg.className = '';
   if (!code){ msg.textContent = 'Paste the code block first.'; msg.className = 'err'; return null; }
-  if (!code.includes('XR.run')){ msg.textContent = 'That does not look like a scene block — it must end with XR.run({ build, frame }). Paste the whole block Claude gave you.'; msg.className = 'err'; return null; }
+  if (!code.includes('XR.run')){
+    if (/^const\s*\{/.test(code) || code.split('\n').length > 30){ $('part2wrap').hidden = false; msg.textContent = part2 ? 'Still no ending — paste everything Claude sent after "continue" (it must end with XR.run({ build, frame });).' : 'This code stops before the end — Claude ran out of room. See below.'; msg.className = 'err'; window.XRLOG?.send('cutoff', { lines: code.split('\n').length, part2: !!part2 }); $('code2').focus(); return null; }
+    msg.textContent = 'That does not look like a scene block — it must end with XR.run({ build, frame }). Paste the whole block Claude gave you.'; msg.className = 'err'; return null; }
   if (!/^const\s*\{/.test(code)){ msg.innerHTML = '<span class="warn">Heads up: the block usually starts with <code>const { … } = XR;</code>. Creating the link anyway.</span>'; }
   const stream = new Blob([new TextEncoder().encode(code)]).stream().pipeThrough(new CompressionStream('deflate-raw'));
   const buf = new Uint8Array(await new Response(stream).arrayBuffer());

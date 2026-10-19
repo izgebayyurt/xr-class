@@ -32,7 +32,7 @@ const R = {};
 await page.goto(`${SITE}/brief.html`);
 await page.evaluate(() => localStorage.clear()); await page.reload();
 await page.fill('#idea', 'You put on the headset and see a cubic metre.');
-await page.fill('#first', 'a wireframe cube on the floor ahead');
+await page.fill('#goal', 'how big a cubic metre really is');
 await page.click('#copy'); await page.waitForTimeout(400);
 R.noPidLogged = (await exportLog()).length - before;
 // 2. study code → brief event; kit header carries the version
@@ -45,6 +45,19 @@ await page.fill('#code', '```js\n' + readFileSync(join(HERE, '../engine/default-
 await page.click('#go');
 await page.waitForFunction(() => document.getElementById('out').style.display === 'block', null, { timeout: 5000 });
 R.link = await page.inputValue('#link'); R.short = /\?p=[a-z2-9]{6}$/.test(R.link); R.qr = await page.evaluate(() => !!document.querySelector('#qrbox img'));
+// 3b. a reply cut off mid-line, then the continuation (restarting the cut line) → one joined, working block
+{ const full = readFileSync(join(HERE, '../engine/default-content.js'), 'utf8').trim(); const cut = Math.floor(full.length*0.6);
+  const lineStart = full.lastIndexOf('\n', cut) + 1;
+  await page.fill('#code', 'Here is your scene:\n\n```js\n' + full.slice(0, cut));
+  await page.click('#go'); await page.waitForTimeout(300);
+  R.cutoffPrompt = await page.evaluate(() => !document.getElementById('part2wrap').hidden);
+  await page.fill('#code2', '```js\n' + full.slice(lineStart) + '\n```\nThat completes the scene.');
+  await page.click('#go');
+  await page.waitForFunction(() => document.getElementById('msg').className === 'ok', null, { timeout: 5000 }).catch(() => {});
+  const l2 = await page.inputValue('#link');
+  const body = await (await fetch(MOCK + '/' + l2.split('?p=')[1])).text();
+  const joined = await page.evaluate(async b64 => { const bytes = Uint8Array.from(atob(b64.replace(/-/g, '+').replace(/_/g, '/')), c => c.charCodeAt(0)); return new Response(new Blob([bytes]).stream().pipeThrough(new DecompressionStream('deflate-raw'))).text(); }, body.trim());
+  R.cutoffJoined = joined === full; }
 // 4. open it (no ?harness → first-run scene check)
 await page.goto(R.link);
 await page.waitForFunction(() => window.XR && XR.ready === true, null, { timeout: 20000 }); await page.waitForTimeout(1500);
@@ -64,5 +77,5 @@ R.errors = errors;
 console.log(JSON.stringify(R, null, 1));
 await browser.close(); server.kill();
 const need = ['brief', 'link', 'open', 'scene-check'];
-const ok = R.noPidLogged === 0 && R.short && R.qr && R.objects >= 3 && R.named && R.graceful && R.badKey === 403 && need.every(n => R.events.includes(n)) && R.allPid && R.kit.length === 1 && R.kitHeader.includes(R.kit[0]) && !errors.length && (!R.chip || (R.events.includes('chip-open') && R.events.includes('report')));
+const ok = R.cutoffPrompt && R.cutoffJoined && R.noPidLogged === 0 && R.short && R.qr && R.objects >= 3 && R.named && R.graceful && R.badKey === 403 && need.every(n => R.events.includes(n)) && R.allPid && R.kit.length === 1 && R.kitHeader.includes(R.kit[0]) && !errors.length && (!R.chip || (R.events.includes('chip-open') && R.events.includes('report')));
 console.log(ok ? 'site test passed' : 'SITE TEST FAILED'); process.exit(ok ? 0 : 1);

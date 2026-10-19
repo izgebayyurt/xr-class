@@ -157,6 +157,7 @@ function resolvePosition(o){
  *   at     [x,y,z] to bypass the body words (avoid unless you must)
  */
 function place(obj, opts = {}){
+  if (opts.slot) return _toSlot(obj, opts.slot, opts);
   if (!obj.parent) scene.add(obj);
   obj.userData.placement = opts;
   const pos = resolvePosition(opts);
@@ -354,6 +355,7 @@ function interactive(obj, h = {}){
   track(obj, 'interactive');
   return obj;
 }
+function isShown(o){ for (; o; o = o.parent) if (o.visible === false) return false; return true; }
 function rootInteractable(o){ while (o){ if (interactables.has(o)) return o; o = o.parent; } return null; }
 function setGlow(obj, on){
   obj.traverse(m => { if (m.material?.emissive){ if (on){ m.userData._em ??= m.material.emissive.clone(); m.material.emissive.setHex(0x444444); } else if (m.userData._em){ m.material.emissive.copy(m.userData._em); } } });
@@ -378,7 +380,7 @@ function pointerRay(p){
 function updatePointer(p){
   pointerRay(p);
   const targets = [...interactables.keys()];
-  const hits = raycaster.intersectObjects(targets, true).filter(h => h.object.visible);
+  const hits = raycaster.intersectObjects(targets, true).filter(h => isShown(h.object));   // anything inside a hidden group is not pointable
   const hit = hits[0]; const root = hit ? rootInteractable(hit.object) : null;
   if (root !== p.hovered){
     if (p.hovered){ const h = interactables.get(p.hovered); if (h?.highlight) setGlow(p.hovered, false); h?.unhover?.(p.hovered, { pointer:p }); }
@@ -487,7 +489,8 @@ function snapTurn(deg){
 // ---------- desktop fallback (no pointer lock needed: works inside sandboxed previews too) ----------
 const desk = makePointer(camera, false, 'desktop');
 const keys = new Set();
-let yaw = 0, pitch = 0;
+const DESK_PITCH = -0.13;                      // ≈ -7.5°: a laptop view shows from about waist height at 'near' up to just above eye level
+let yaw = 0, pitch = DESK_PITCH;
 const mouse = new THREE.Vector2(0, 0);          // NDC, updated on every move
 const canvas = renderer.domElement;
 let drag = null;                                 // { x, y, moved, button }
@@ -545,7 +548,7 @@ function bob(obj, amp = 0.05, period = 2){ const y0 = obj.position.y; anims.add(
 // ---------- eye-height calibration (real wearer) ----------
 let calibrated = false;
 renderer.xr.addEventListener('sessionstart', () => { calibrated = false; setTimeout(calibrate, 1500); });
-renderer.xr.addEventListener('sessionend', () => { camera.position.set(0, H.eye, 0); camera.rotation.set(0, 0, 0); yaw = 0; pitch = 0; });
+renderer.xr.addEventListener('sessionend', () => { camera.position.set(0, H.eye, 0); camera.rotation.set(0, 0, 0); yaw = 0; pitch = DESK_PITCH; });
 function calibrate(){
   if (!renderer.xr.isPresenting || calibrated) return;
   const eye = camera.getWorldPosition(new THREE.Vector3()).y - rig.position.y;
@@ -671,7 +674,10 @@ function audit(quiet = false){
       if (dist < 0.5){ flags.push('too-close-to-focus'); warnings.push(`label "${L.text}" is ${dist.toFixed(2)} m away — closer than 0.5 m is hard to focus on`); }
       if (Math.abs(el) > 45){ flags.push('neck-strain'); warnings.push(`label "${L.text}" is ${el.toFixed(0)}° ${el>0?'above':'below'} eye level — needs a sustained head tilt; raise the object it belongs to, or float the text with above:`); }
     }
-    boxes.push({ obj, b, kind: meta.kind }); rows.push(r);
+    const freeLabel = !!obj.userData.label && obj.parent === scene;
+    if ((meta.kind === 'interactive' || freeLabel) && !flags.includes('neck-strain') && !flags.includes('far-off-view') && !flags.includes('behind-user') && !awayStations.length && (el < -40 || el > 28 || Math.abs(az) > 50)){
+      flags.push('off-laptop-view'); warnings.push(`${obj.name}${obj.userData.label ? ` ("${obj.userData.label.text.split('\n')[0].slice(0, 30)}")` : ''} is outside the starting view on a laptop (az ${az.toFixed(0)}°, el ${el.toFixed(0)}°) — a student testing on a laptop won't see it without dragging the view. Put controls at 'near', 'chest' height, within ±35°`); }
+    boxes.push({ obj, b, kind: meta.kind, inView, freeLabel }); rows.push(r);
   }
   const _related = (a, b) => { for (let o = a; o; o = o.parent) if (o === b) return true; for (let o = b; o; o = o.parent) if (o === a) return true; return false; };
   const _is = new THREE.Box3(), _iv = new THREE.Vector3();
@@ -684,6 +690,16 @@ function audit(quiet = false){
     if (deep && aL && bL) warnings.push(`labels ${A.obj.name} and ${B.obj.name} overlap — their text collides. Space per item ≈ dist × angle between items: spread the row wider or move it to 'near'`);
     else if (deep && A.kind === 'interactive' && B.kind === 'interactive') warnings.push(`${A.obj.name} and ${B.obj.name} are overlapping interactive targets — pointing will hit the wrong one. Increase the angle between them or move the row further out`);
     else if (!aL && !bL) notes.push(`${A.obj.name} and ${B.obj.name} overlap (fine if intended)`);
+  }
+  { // text that something else blocks from the starting position
+    const rc = new THREE.Raycaster(), tc = new THREE.Vector3();
+    const solids = []; scene.traverse(o => { if (o.isMesh && !o.userData.label && isShown(o) && o !== floor && o.name !== 'plain' && o.name !== 'sky' && o.name !== 'grid-mask' && o.name !== 'ahead-arrow' && !(o.material?.transparent && o.material.opacity < 0.15) && !debugGroup.children.includes(o) && o.parent !== debugGroup) solids.push(o); });
+    const nameOf = o => { for (let x = o; x; x = x.parent) if (tracked.has(x)) return x.name; return o.name || 'an object'; };
+    for (const B of boxes){ if (!B.obj.userData.label || !B.inView) continue;
+      B.obj.getWorldPosition(tc); const d = tc.distanceTo(eye); rc.set(eye, tc.clone().sub(eye).normalize()); rc.far = d - 0.05;
+      const own = new Set(); for (let x = B.obj.parent; x && x !== scene; x = x.parent) own.add(x);   // the pad/plate a label is printed on doesn't count
+      const hit = rc.intersectObjects(solids, false).find(h => !own.has(h.object) && !own.has(h.object.parent));
+      if (hit) warnings.push(`label "${B.obj.userData.label.text.split('\n')[0].slice(0, 30)}" is hidden behind ${nameOf(hit.object)} from the starting position — move the text above it or in front of it`); }
   }
   if (rows.length && !rows.some(r => r.inStartView) && !awayStations.length) warnings.push('Nothing is inside the comfortable starting view (±45° horizontal, -35°..+30° vertical)');
   const report = { stature_m: H.stature, eye_m: H.eye, reach_m: H.reach, stations: stations.length, objects: rows, errors, warnings, notes };
@@ -784,20 +800,72 @@ function hand(which){ return pointers.find(p => p.isXR && p.hand === which) ?? p
 const _hasPlacement = o => o.dist !== undefined || o.dir !== undefined || o.height !== undefined || o.at !== undefined;
 function _autoPlace(g, o, def = {}){
   if (!g.parent) scene.add(g);
+  if (o.slot) return place(g, { slot: o.slot, dist: o.dist, dir: o.dir, height: o.height, face: def.face });   // slot defaults beat the widget's own
   if (_hasPlacement(o) || def.always){ const opts = { ...def, ...o }; delete opts.always;
     if (opts.origin){ g.position.copy(resolvePosition(opts)); g.userData.placement = opts; if (opts.face) g.lookAt(0, g.position.y, 0); track(g, tracked.get(g)?.kind ?? 'object'); }
     else place(g, opts); }
   return g;
 }
 const _fmt = (v, d = 1) => typeof v === 'number' ? (Number.isInteger(v) && d === 0 ? String(v) : v.toFixed(d)) : String(v);
-const _k = (o, d) => Math.max(1, resolveDist(o.dist ?? d));   // text scale so widget labels keep their visual angle at the placement distance
+const _k = (o, d) => Math.max(1, resolveDist(o.dist ?? (o.slot === 'stage' ? 'room' : o.slot ? 'near' : d)));   // text scale so widget labels keep their visual angle at the placement distance
 const _flat = (l) => { l.rotation.x = -Math.PI/2; return l; };   // lay a parented label flat on the floor/table (reads from the user's side)
+
+// ---------- layout slots: card · controls · side · stage — so pieces never land on top of each other ----------
+// 'card'     the instruction sign: 'room', ahead, its bottom edge a hand above eye height (grows upward as text is added)
+// 'controls' one shared row of buttons / choices / sliders a step past 'near' (1.15 m), waist height, centred ahead; wraps to a lower row if full
+// 'side'     a column of readouts at 'near', 32° right, stacked downward from eye height
+// 'stage'    the main thing to look at: 'room', ahead, standing on the floor (or at the height you give)
+const _UP = new THREE.Vector3(0, 1, 0);
+const _slots = { controls: [], side: [] };
+const _ROWS = ['waist', 'hip', 'knee'];
+const _CTRL_DIST = 1.15;   // a little past 'near': more controls fit side by side, still easy to point at
+function _azSpan(obj){
+  obj.updateWorldMatrix(true, true); const b = new THREE.Box3().setFromObject(obj, true); if (b.isEmpty()) return [0, 0, 0, 0];
+  let lo = Infinity, hi = -Infinity; for (const x of [b.min.x, b.max.x]) for (const z of [b.min.z, b.max.z]){ const a = THREE.MathUtils.radToDeg(Math.atan2(x, -z)); lo = Math.min(lo, a); hi = Math.max(hi, a); }
+  return [lo, hi, b.min.y, b.max.y];
+}
+function _orbit(obj, deg){ const r = -THREE.MathUtils.degToRad(deg); obj.position.applyAxisAngle(_UP, r); obj.rotateOnWorldAxis(_UP, r); }
+function _layoutControls(){
+  const items = _slots.controls.filter(o => o.parent), GAP = 6, MAX = 76;
+  const span = new Map(items.map(o => [o, _azSpan(o)])), rows = [[]]; let w = 0;
+  for (const o of items){ const [lo, hi] = span.get(o), sw = hi - lo; if (rows.at(-1).length && w + GAP + sw > MAX && rows.length < _ROWS.length){ rows.push([]); w = 0; } w += (rows.at(-1).length ? GAP : 0) + sw; rows.at(-1).push(o); }
+  let rowTop = null;
+  rows.forEach((row, ri) => {
+    const total = row.reduce((t, o) => t + span.get(o)[1] - span.get(o)[0], 0) + GAP*(row.length - 1); let cursor = -total/2;
+    const rowH = Math.max(...row.map(o => span.get(o)[3] - span.get(o)[2]));
+    const yc = ri === 0 ? H.waist : rowTop - 0.06 - rowH/2; rowTop = yc - rowH/2;            // each wrapped row sits fully below the one above
+    for (const o of row){ const [lo, hi, y0, y1] = span.get(o), target = cursor + (hi - lo)/2; cursor += hi - lo + GAP;
+      if (o.userData.placement && !o.userData.arcRow){ place(o, { dist: _CTRL_DIST, dir: +target.toFixed(1), height: ri === 0 ? 'waist' : +yc.toFixed(3), face: true }); }
+      else { _orbit(o, target - (lo + hi)/2); o.position.y += yc - (y0 + y1)/2; }
+    }
+  });
+}
+function _toSlot(obj, slot, o = {}){
+  if (!obj.parent) scene.add(obj);
+  if (slot === 'controls'){ if (!obj.userData.arcRow) place(obj, { dist: _CTRL_DIST, dir: 'ahead', height: 'waist', face: true }); _slots.controls.push(obj); track(obj, tracked.get(obj)?.kind ?? 'object'); _layoutControls(); }
+  else if (slot === 'side'){
+    _slots.side.push(obj); let top = H.eye + 0.1;
+    for (const it of _slots.side){ if (!it.parent) continue; it.updateWorldMatrix(true, true); const b = new THREE.Box3().setFromObject(it, true); const h = b.isEmpty() ? 0.1 : b.max.y - b.min.y;
+      place(it, { dist: 'near', dir: 32, height: +(top - h/2).toFixed(3), face: !it.userData.label }); top -= h + 0.05; }
+  }
+  else if (slot === 'card'){
+    place(obj, { dist: 'room', dir: 'ahead', height: 'eye' }); obj.updateWorldMatrix(true, true);
+    const b = new THREE.Box3().setFromObject(obj, true); const h = b.isEmpty() ? 0 : b.max.y - b.min.y;
+    obj.position.y += H.eye + 0.18 + h/2 - obj.position.y; obj.userData.placement = { dist: 'room', dir: 'ahead', height: +obj.position.y.toFixed(3) };
+  }
+  else if (slot === 'stage') place(obj, { dist: o.dist ?? 'room', dir: o.dir ?? 'ahead', height: o.height ?? 'floor', face: o.face });
+  else throw new Error(`Unknown slot "${slot}" — use 'card', 'controls', 'side' or 'stage'`);
+  return obj;
+}
+const _wantsSlot = (o, def) => o.slot ?? (_hasPlacement(o) || o.above ? null : def);
 
 const ui = {
   /** ui.sign(text, { title, width, theme, accent, dist, dir, height }) → plaque label at eye level ahead by default; .setText() */
   sign(text, o = {}){
-    return label(text, { size: o.size ?? 'large', width: o.width ?? 1.6, title: o.title ?? true, theme: o.theme, accent: o.accent, anchor: 'top',
-                         dist: o.dist ?? 'room', dir: o.dir ?? 'ahead', height: o.height ?? 'eye' });
+    const slot = _wantsSlot(o, 'card');
+    const l = label(text, { size: o.size ?? 'large', width: o.width ?? 1.6, title: o.title ?? true, theme: o.theme, accent: o.accent, anchor: slot === 'card' ? 'bottom' : 'top',
+                            dist: o.dist ?? 'room', dir: o.dir ?? 'ahead', height: o.height ?? 'eye' });
+    return slot ? _toSlot(l, slot, o) : l;
   },
   /** ui.button(text, { onPress(btn), color, width, dist, dir, height }) → pressable plate; .setText(), .setEnabled(bool) */
   button(text, o = {}){
@@ -805,19 +873,28 @@ const ui = {
     const g = shape.group(); g.name = 'button:' + String(text).slice(0, 14);
     const w = o.width ?? 0.28, h = o.tall ?? 0.11;
     const plate = shape.box(w, h, 0.03, o.color ?? 'blue'); g.add(plate);
-    const lbl = label(String(text), { parent: plate, at: [0, 0, 0.035], capHeight: o.capHeight ?? 0.035*k, bg: false, width: w - 0.04 });
+    const lbl = label(String(text), { parent: plate, at: [0, 0, 0.035], capHeight: o.capHeight ?? 0.035*k, bg: false, width: Math.max(w, 0.6) - 0.04 });
+    const fit = () => { const { width: lw, height: lh } = lbl.geometry.parameters; const W = Math.max(w, lw + 0.05), Hh = Math.max(h, lh + 0.02);   // the plate grows to hold its text
+      if (Math.abs(W - plate.geometry.parameters.width) > 1e-3 || Math.abs(Hh - plate.geometry.parameters.height) > 1e-3){ plate.geometry.dispose(); plate.geometry = new THREE.BoxGeometry(W, Hh, 0.03); } };
+    fit();
     let enabled = true;
     interactive(plate, { select: () => { if (!enabled) return; plate.material.emissive.setHex(0x444444); setTimeout(() => plate.material.emissive.setHex(0), 120); tone(o.tone ?? 720, 0.06); o.onPress?.(g); } });
-    g.setText = t => { lbl.setText(String(t)); return g; };
+    g.setText = t => { lbl.setText(String(t)); fit(); return g; };
     g.setEnabled = v => { enabled = !!v; plate.material.transparent = !v; plate.material.opacity = v ? 1 : 0.35; return g; };
     g.plate = plate;
+    const slot = _wantsSlot(o, 'controls'); if (slot) return _toSlot(g, slot, o);
     return _autoPlace(g, o, { dist: 'near', dir: 'ahead', height: 'chest', face: true });
   },
   /** ui.choices([texts], { onPick(i, text, row), dist, dir, height, width, color }) → arc-fitted pad row; .mark(i,'right'|'wrong'|null), .reset(), .setChoices([...]), .lock() */
   choices(items, o = {}){
+    const slot = _wantsSlot(o, 'controls');
+    if (slot) o = { ...o, dist: _CTRL_DIST, dir: 'ahead', height: 'waist' };
     const k = _k(o, 'near');
     const g = shape.group(); g.name = 'choices'; scene.add(g);
-    const dist = resolveDist(o.dist ?? 'near'), w = o.width ?? 0.26, h = 0.11, n = items.length;
+    const dist = resolveDist(o.dist ?? 'near'), h = 0.11, n = items.length;
+    let w = o.width ?? 0.26;
+    { const probe = items.map(t => label(String(t), { at: [0, -50, 0], capHeight: 0.035*k, bg: false, width: 0.56 }));   // measure the longest answer, then size every pad to fit it
+      w = Math.max(w, ...probe.map(l => l.geometry.parameters.width + 0.05)); probe.forEach(l => remove(l)); }
     const gapDeg = Math.max(o.gapDeg ?? 0, THREE.MathUtils.radToDeg((w + 0.07) / dist));
     const centre = resolveDir(o.dir ?? 'ahead'), y = resolveHeight(o.height ?? 'chest');
     const base = col(o.color ?? 'white'), pads = [], labels = [];
@@ -825,7 +902,8 @@ const ui = {
     items.forEach((t, i) => {
       const az = THREE.MathUtils.degToRad(centre + (i - (n - 1)/2) * gapDeg);
       const pad = shape.box(w, h, 0.03, base); pad.position.set(dist*Math.sin(az), y, -dist*Math.cos(az)); pad.lookAt(0, y, 0);
-      const l = label(String(t), { parent: pad, at: [0, 0, 0.035], capHeight: 0.035*k, bg: false, width: w - 0.04, color: '#1a1d26' });
+      const l = label(String(t), { parent: pad, at: [0, 0, 0.035], capHeight: 0.035*k, bg: false, width: w - 0.03, color: '#1a1d26' });
+      const lh = l.geometry.parameters.height; if (lh + 0.02 > h){ pad.geometry.dispose(); pad.geometry = new THREE.BoxGeometry(w, lh + 0.02, 0.03); }
       interactive(pad, { select: () => { if (g.locked) return; o.onPick?.(i, items[i], g); } });
       g.add(pad); pads.push(pad); labels.push(l);
     });
@@ -834,13 +912,14 @@ const ui = {
     g.reset = () => { pads.forEach(p => p.material.color.setHex(base)); g.locked = false; return g; };
     g.lock = () => { g.locked = true; return g; };
     g.setChoices = arr => { arr.forEach((t, i) => { if (labels[i]) labels[i].setText(String(t)); }); items = [...arr]; g.reset(); return g; };
+    if (slot){ g.userData.arcRow = true; return _toSlot(g, slot, o); }
     return g;
   },
   /** ui.slider({ min, max, value, step, onChange(v), onRelease(v), length, format(v), dist, dir, height }) → rail + knob; .value get/set */
   slider(o = {}){
     const k = _k(o, 'reach');
     const g = shape.group(); g.name = 'slider';
-    const len = o.length ?? 0.5, min = o.min ?? 0, max = o.max ?? 1, dec = o.decimals ?? 1;
+    const len = o.length ?? (_wantsSlot(o, 'controls') ? 0.4 : 0.5), min = o.min ?? 0, max = o.max ?? 1, dec = o.decimals ?? 1;
     const rail = shape.box(len, 0.015, 0.015, o.color ?? 'white'); g.add(rail);
     const knob = shape.ball(0.035, o.knobColor ?? 'orange'); g.add(knob);
     let value = THREE.MathUtils.clamp(o.value ?? min, min, max);
@@ -854,6 +933,7 @@ const ui = {
       release: () => o.onRelease?.(value, g) });
     Object.defineProperty(g, 'value', { get: () => value, set: v => { value = THREE.MathUtils.clamp(v, min, max); setKnob(); o.onChange?.(value, g); } });
     g.knob = knob; g.rail = rail;
+    const slot = _wantsSlot(o, 'controls'); if (slot) return _toSlot(g, slot, o);
     return _autoPlace(g, o, { dist: 'reach', dir: 'ahead-right', height: 'waist', face: true });
   },
   /** ui.dial({ min, max, value, onChange(v), radius, format, dist, dir, height }) → rotary knob (270° sweep); .value get/set */
@@ -873,6 +953,7 @@ const ui = {
         let v = min + (deg + 135)/270*(max - min); if (o.step) v = Math.round(v/o.step)*o.step; if (v !== value){ value = v; apply(); o.onChange?.(value, g); } },
       release: () => o.onRelease?.(value, g) });
     Object.defineProperty(g, 'value', { get: () => value, set: v => { value = THREE.MathUtils.clamp(v, min, max); apply(); o.onChange?.(value, g); } });
+    const slot = _wantsSlot(o, 'controls'); if (slot) return _toSlot(g, slot, o);
     return _autoPlace(g, o, { dist: 'reach', dir: 'ahead-right', height: 'chest', face: true });
   },
   /** ui.readout(prefix, { units, decimals, value, above, dist, dir, height }) → live number label; .set(v) */
@@ -881,7 +962,7 @@ const ui = {
     const l = label(fmt(o.value ?? 0), { size: o.size ?? 'comfortable', width: o.width, theme: o.theme, accent: o.accent,
       ...(o.above ? { above: o.above } : { dist: o.dist ?? 'near', dir: o.dir ?? 'ahead', height: o.height ?? 'chest' }) });
     l.set = v => { l.setText(fmt(v)); return l; };
-    return l;
+    const slot = _wantsSlot(o, 'side'); return slot ? _toSlot(l, slot, o) : l;
   },
   /** ui.pedestal({ height, radius, color, dist, dir }) → column; .putOnTop(obj) sets obj on it; .topY */
   pedestal(o = {}){
