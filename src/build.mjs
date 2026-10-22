@@ -5,7 +5,8 @@
 //   node build.mjs --engine-url URL     → engine address baked into run.html / student.html
 // Sources: engine/xr-engine.js (engine incl. widgets + domain packs), engine/cheatsheet.html (API text, @@DOMAIN@@ marker),
 // engine/domains/*.txt (per-field cheat sections), engine/*.template.html, engine/VERSION (stamped everywhere).
-import { readFileSync, writeFileSync, mkdirSync, readdirSync } from 'node:fs';
+import { readFileSync, writeFileSync, mkdirSync, readdirSync, cpSync } from 'node:fs';
+import { resolve } from 'node:path';
 import { join, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 const HERE = dirname(fileURLToPath(import.meta.url));
@@ -17,8 +18,16 @@ mkdirSync(OUT, { recursive: true });
 const out = (p, s) => writeFileSync(join(OUT, p), s);
 
 const VERSION = src('engine/VERSION').trim();
-const engine = src('engine/xr-engine.js').replace('__KIT_VERSION__', VERSION);
-const cheat = src('engine/cheatsheet.html');
+let cheat = src('engine/cheatsheet.html');
+const MODEL_CAT = JSON.parse(readFileSync(join(HERE, '../models/catalog.json'), 'utf8'));
+const modelSizes = Object.fromEntries(Object.entries(MODEL_CAT.models).map(([k, m]) => [k, m.size]));
+const engine = src('engine/xr-engine.js').replace('__KIT_VERSION__', VERSION).replace('__MODEL_CATALOG__', () => JSON.stringify(modelSizes));
+// MODELS section for the cheat sheet: names grouped by category, with height for scale intuition
+const byCat = {}; for (const [k, m] of Object.entries(MODEL_CAT.models)) (byCat[m.category] ??= []).push(k);
+const MODELS_TEXT = '     MODELS   model(name, { dist, dir, height, face, slot, size, scale, color }) — a real 3D model at REAL size, standing on its base.\n' +
+  "              Use these for real-world things instead of building them from boxes. Don't fit() or resize them unless the size is the point.\n" +
+  Object.entries(byCat).map(([c, ks]) => `              ${c}: ${ks.join(' ')}`).join('\n');
+cheat = cheat.replace('@@MODELS@@', MODELS_TEXT);
 const content = src('engine/default-content.js');
 const RULES = src('engine/kit-rules.md');
 const domains = Object.fromEntries(readdirSync(join(HERE, 'engine/domains')).filter(f => f.endsWith('.txt')).map(f => [f.replace('.txt', ''), src('engine/domains/' + f).trimEnd()]));
@@ -110,4 +119,5 @@ for (const d of DOMAIN_ORDER) out(`prompt-kit-${d}.md`, kitMd.replace('@@DOMAIN@
 const kitJson = JSON.stringify(kitMd).replace(/</g, '\\u003c');
 const domainsJson = JSON.stringify(domains).replace(/</g, '\\u003c');
 out('brief.html', src('engine/brief.template.html').replace('{{KIT_JSON}}', () => kitJson).replace('{{DOMAINS_JSON}}', () => domainsJson).replaceAll('{{VERSION}}', VERSION));
+if (resolve(OUT) !== resolve(HERE, '..')) cpSync(join(HERE, '../models'), join(OUT, 'models'), { recursive: true });   // tests build elsewhere: bring the models along
 console.log(`built v${VERSION} → ${OUT}  (engine url: ${ENGINE_URL})`);

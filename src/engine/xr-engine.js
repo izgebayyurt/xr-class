@@ -36,6 +36,7 @@ function explainError(msg){
   if ((m = /(?:XR\.)?(\w+) is not a function/.exec(msg))){ const n = nearest(m[1]); return n && n !== m[1] ? `→ FIX: there is no ${m[1]}() in the API — did you mean ${n}()?` : `→ FIX: ${m[1]}() is not in the API cheat sheet; build it from the listed functions instead`; }
   if ((m = /shape\.(\w+) is not a function/.exec(msg))) return `→ FIX: shape.${m[1]} does not exist — shapes are box, ball, cylinder, cone, torus, panel, group, line, hit, hitball`;
   if (/Unknown (dir|dist|height|text size)/.test(msg)) return '→ FIX: use only the body words from the cheat sheet (or a number)';
+  if (/Unknown model/.test(msg)) return '→ FIX: pick one of the names suggested above from the MODELS list';
   if (/Cannot read propert.* of (undefined|null)/.test(msg)) return '→ FIX: something is used before it is created — build everything inside build(), and create objects before place()/label() refer to them';
   return '';
 }
@@ -794,6 +795,36 @@ function ground(o = {}){
 }
 /** hand('right'|'left') → that controller's pointer { object, hovered, held, ... } (object is the controller; add things to it to hold them). */
 function hand(which){ return pointers.find(p => p.isXR && p.hand === which) ?? pointers.find(p => p.isXR); }
+
+// ---------- model library: real-world-size 3D models hosted with the engine (CC0 Kenney / KayKit, NASA) ----------
+const MODELS = __MODEL_CATALOG__;                     // id → [width, height, depth] in metres (filled in by the build)
+const MODELS_URL = new URL('models/', import.meta.url).href;
+let _gltf = null;
+function _loader(){ return _gltf ??= Promise.all([import('three/addons/loaders/GLTFLoader.js'), import('three/addons/libs/meshopt_decoder.module.js')])
+  .then(([{ GLTFLoader }, { MeshoptDecoder }]) => new GLTFLoader().setMeshoptDecoder(MeshoptDecoder)); }
+/**
+ * model(name, { size, scale, color, dist, dir, height, face, slot }) → a group holding the model at real-world size, standing on its base.
+ * The group has the model's real dimensions immediately (an invisible stand-in), so place(), labels and pointing work before the file arrives.
+ *   size  metres for its longest side (only when the brief needs a different size) · scale  multiply the real size · color  tint every part
+ */
+function model(name, o = {}){
+  const key = String(name).trim().toLowerCase().replace(/[\s_]+/g, '-');
+  const dims = MODELS[key];
+  if (!dims){ const near = Object.keys(MODELS).map(k => [k, lev(key, k)]).sort((a, b) => a[1] - b[1]).slice(0, 3).map(x => x[0]);
+    throw new Error(`Unknown model "${name}" — closest in the library: ${near.join(', ')}. Use a name from the MODELS list, or build it from shapes.`); }
+  const k = o.size ? o.size / Math.max(...dims) : (o.scale ?? 1);
+  const g = shape.group(); g.name = 'model:' + key;
+  const stand = shape.hit(dims[0]*k, dims[1]*k, dims[2]*k); stand.position.y = dims[1]*k/2; stand.name = 'stand-in'; g.add(stand);
+  g.ready = _loader().then(l => l.loadAsync(MODELS_URL + key + '.glb')).then(gl => {
+    const m = gl.scene; m.scale.setScalar(k);
+    if (o.color !== undefined) m.traverse(x => { if (x.material){ x.material = x.material.clone(); x.material.color?.setHex(col(o.color)); x.material.map = null; } });
+    g.add(m); return g;
+  }).catch(e => { showError(`model("${key}") did not load (${e.message}) — showing its outline box instead`); stand.material.opacity = 0.25; stand.material.transparent = true; return g; });
+  return _autoPlace(g, o, { dist: 'near', dir: 'ahead', height: 'floor', face: o.face ?? true, always: true });
+}
+model.list = () => Object.keys(MODELS);
+model.size = name => MODELS[name] ? [...MODELS[name]] : null;
+
 
 // ---------- widgets: composite pieces, spatially pre-tuned, so scenes don't reinvent them ----------
 // Every widget returns a group (or label) you can place() with body words; pass dist/dir/height in the options to auto-place.
@@ -1575,7 +1606,7 @@ const music = {
   },
 };
 
-const XR = { THREE, scene, rig, camera, renderer, floor, grid, H, D, SZ, DIR, C, col, mat, shape, place, fit, spread, remove, label, interactive, tone, spin, bob, ui, geo, template, phys, chem, bio, lit, hist, art, music,
+const XR = { THREE, scene, rig, camera, renderer, floor, grid, H, D, SZ, DIR, C, col, mat, shape, model, place, fit, spread, remove, label, interactive, tone, spin, bob, ui, geo, template, phys, chem, bio, lit, hist, art, music,
              track, recalibrate, audit, view, run, eyePos, get pointers(){ return pointers; }, ready: false,
              get frame(){ return content.frame; }, set frame(fn){ content.frame = fn; },   // `XR.frame = fn` is a common guess — make it work
              get build(){ return content.build; }, set build(fn){ content.build = fn; },

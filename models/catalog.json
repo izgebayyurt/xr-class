@@ -1,0 +1,1962 @@
+{
+ "version": 1,
+ "sources": {
+  "kenney": {
+   "name": "Kenney",
+   "url": "https://kenney.nl",
+   "license": "CC0-1.0"
+  },
+  "kaykit": {
+   "name": "KayKit (Kay Lousberg)",
+   "url": "https://kaylousberg.com",
+   "license": "CC0-1.0"
+  },
+  "nasa": {
+   "name": "NASA 3D Resources",
+   "url": "https://github.com/nasa/NASA-3D-Resources",
+   "license": "NASA media usage guidelines (no endorsement implied)"
+  }
+ },
+ "models": {
+  "astronaut": {
+   "category": "people",
+   "size": [
+    1.76,
+    1.9,
+    0.71
+   ],
+   "source": "nasa",
+   "kb": 67
+  },
+  "armchair": {
+   "category": "furniture",
+   "size": [
+    1,
+    0.68,
+    0.89
+   ],
+   "source": "kaykit",
+   "kb": 16
+  },
+  "sofa": {
+   "category": "furniture",
+   "size": [
+    2.08,
+    0.85,
+    1.11
+   ],
+   "source": "kaykit",
+   "kb": 17
+  },
+  "bed": {
+   "category": "furniture",
+   "size": [
+    1.07,
+    0.67,
+    2
+   ],
+   "source": "kaykit",
+   "kb": 17
+  },
+  "bed-double": {
+   "category": "furniture",
+   "size": [
+    2.05,
+    0.66,
+    1.98
+   ],
+   "source": "kaykit",
+   "kb": 18
+  },
+  "chair": {
+   "category": "furniture",
+   "size": [
+    0.54,
+    0.9,
+    0.6
+   ],
+   "source": "kaykit",
+   "kb": 15
+  },
+  "chair-wood": {
+   "category": "furniture",
+   "size": [
+    0.54,
+    0.9,
+    0.6
+   ],
+   "source": "kaykit",
+   "kb": 15
+  },
+  "stool": {
+   "category": "furniture",
+   "size": [
+    0.45,
+    0.3,
+    0.45
+   ],
+   "source": "kaykit",
+   "kb": 13
+  },
+  "table": {
+   "category": "furniture",
+   "size": [
+    1.5,
+    0.75,
+    1.5
+   ],
+   "source": "kaykit",
+   "kb": 12
+  },
+  "table-long": {
+   "category": "furniture",
+   "size": [
+    2.25,
+    0.75,
+    1.5
+   ],
+   "source": "kaykit",
+   "kb": 12
+  },
+  "table-small": {
+   "category": "furniture",
+   "size": [
+    0.6,
+    0.6,
+    0.6
+   ],
+   "source": "kaykit",
+   "kb": 12
+  },
+  "coffee-table": {
+   "category": "furniture",
+   "size": [
+    1.1,
+    0.23,
+    0.69
+   ],
+   "source": "kaykit",
+   "kb": 13
+  },
+  "round-table": {
+   "category": "furniture",
+   "size": [
+    1.2,
+    0.4,
+    1.2
+   ],
+   "source": "kaykit",
+   "kb": 15
+  },
+  "cabinet": {
+   "category": "furniture",
+   "size": [
+    1.8,
+    0.9,
+    0.9
+   ],
+   "source": "kaykit",
+   "kb": 17
+  },
+  "cabinet-small": {
+   "category": "furniture",
+   "size": [
+    0.6,
+    0.6,
+    0.6
+   ],
+   "source": "kaykit",
+   "kb": 16
+  },
+  "wall-shelf-books": {
+   "category": "furniture",
+   "size": [
+    1.2,
+    0.49,
+    0.3
+   ],
+   "source": "kaykit",
+   "kb": 19
+  },
+  "wall-shelf": {
+   "category": "furniture",
+   "size": [
+    1.2,
+    0.24,
+    0.3
+   ],
+   "source": "kaykit",
+   "kb": 13
+  },
+  "books": {
+   "category": "furniture",
+   "size": [
+    0.3,
+    0.19,
+    0.14
+   ],
+   "source": "kaykit",
+   "kb": 13
+  },
+  "book": {
+   "category": "furniture",
+   "size": [
+    0.12,
+    0.24,
+    0.18
+   ],
+   "source": "kaykit",
+   "kb": 11
+  },
+  "spellbook": {
+   "category": "furniture",
+   "size": [
+    0.4,
+    0.27,
+    0.11
+   ],
+   "source": "kaykit",
+   "kb": 16
+  },
+  "floor-lamp": {
+   "category": "furniture",
+   "size": [
+    0.63,
+    1.6,
+    0.63
+   ],
+   "source": "kaykit",
+   "kb": 13
+  },
+  "table-lamp": {
+   "category": "furniture",
+   "size": [
+    0.44,
+    0.45,
+    0.44
+   ],
+   "source": "kaykit",
+   "kb": 14
+  },
+  "picture-frame": {
+   "category": "furniture",
+   "size": [
+    0.76,
+    0.9,
+    0.15
+   ],
+   "source": "kaykit",
+   "kb": 10
+  },
+  "picture-frame-standing": {
+   "category": "furniture",
+   "size": [
+    0.2,
+    0.25,
+    0.15
+   ],
+   "source": "kaykit",
+   "kb": 11
+  },
+  "rug": {
+   "category": "furniture",
+   "size": [
+    2,
+    0.07,
+    1.33
+   ],
+   "source": "kaykit",
+   "kb": 10
+  },
+  "rug-round": {
+   "category": "furniture",
+   "size": [
+    1.6,
+    0.05,
+    1.07
+   ],
+   "source": "kaykit",
+   "kb": 11
+  },
+  "pillow": {
+   "category": "furniture",
+   "size": [
+    0.5,
+    0.15,
+    0.38
+   ],
+   "source": "kaykit",
+   "kb": 10
+  },
+  "cactus-pot": {
+   "category": "furniture",
+   "size": [
+    0.48,
+    0.45,
+    0.46
+   ],
+   "source": "kaykit",
+   "kb": 16
+  },
+  "door": {
+   "category": "furniture",
+   "size": [
+    1.17,
+    2.05,
+    0.4
+   ],
+   "source": "kaykit",
+   "kb": 20
+  },
+  "fridge": {
+   "category": "kitchen",
+   "size": [
+    1.44,
+    1.8,
+    1.61
+   ],
+   "source": "kaykit",
+   "kb": 23
+  },
+  "oven": {
+   "category": "kitchen",
+   "size": [
+    0.89,
+    0.9,
+    1.05
+   ],
+   "source": "kaykit",
+   "kb": 23
+  },
+  "stove": {
+   "category": "kitchen",
+   "size": [
+    1.49,
+    0.9,
+    1.7
+   ],
+   "source": "kaykit",
+   "kb": 23
+  },
+  "kitchen-counter": {
+   "category": "kitchen",
+   "size": [
+    1.8,
+    0.9,
+    1.84
+   ],
+   "source": "kaykit",
+   "kb": 13
+  },
+  "kitchen-sink": {
+   "category": "kitchen",
+   "size": [
+    1,
+    0.9,
+    1.02
+   ],
+   "source": "kaykit",
+   "kb": 21
+  },
+  "kitchen-table": {
+   "category": "kitchen",
+   "size": [
+    1.79,
+    0.9,
+    1.79
+   ],
+   "source": "kaykit",
+   "kb": 14
+  },
+  "cooking-pot": {
+   "category": "kitchen",
+   "size": [
+    0.3,
+    0.11,
+    0.21
+   ],
+   "source": "kaykit",
+   "kb": 15
+  },
+  "frying-pan": {
+   "category": "kitchen",
+   "size": [
+    0.45,
+    0.05,
+    0.29
+   ],
+   "source": "kenney",
+   "kb": 6
+  },
+  "cutting-board": {
+   "category": "kitchen",
+   "size": [
+    0.28,
+    0.02,
+    0.4
+   ],
+   "source": "kenney",
+   "kb": 5
+  },
+  "kitchen-knife": {
+   "category": "kitchen",
+   "size": [
+    0.3,
+    0.01,
+    0.05
+   ],
+   "source": "kenney",
+   "kb": 4
+  },
+  "jar": {
+   "category": "kitchen",
+   "size": [
+    0.14,
+    0.18,
+    0.14
+   ],
+   "source": "kaykit",
+   "kb": 13
+  },
+  "mortar-pestle": {
+   "category": "kitchen",
+   "size": [
+    0.05,
+    0.15,
+    0.06
+   ],
+   "source": "kenney",
+   "kb": 4
+  },
+  "whisk": {
+   "category": "kitchen",
+   "size": [
+    0.28,
+    0.06,
+    0.06
+   ],
+   "source": "kenney",
+   "kb": 4
+  },
+  "rolling-pin": {
+   "category": "kitchen",
+   "size": [
+    0.45,
+    0.08,
+    0.09
+   ],
+   "source": "kenney",
+   "kb": 5
+  },
+  "crate-tomatoes": {
+   "category": "kitchen",
+   "size": [
+    0.5,
+    0.23,
+    0.5
+   ],
+   "source": "kaykit",
+   "kb": 42
+  },
+  "plate": {
+   "category": "kitchen",
+   "size": [
+    0.27,
+    0.07,
+    0.27
+   ],
+   "source": "kenney",
+   "kb": 11
+  },
+  "bowl": {
+   "category": "kitchen",
+   "size": [
+    0.14,
+    0.06,
+    0.16
+   ],
+   "source": "kenney",
+   "kb": 3
+  },
+  "cup": {
+   "category": "kitchen",
+   "size": [
+    0.12,
+    0.1,
+    0.1
+   ],
+   "source": "kenney",
+   "kb": 3
+  },
+  "mug": {
+   "category": "kitchen",
+   "size": [
+    0.13,
+    0.1,
+    0.1
+   ],
+   "source": "kenney",
+   "kb": 6
+  },
+  "tea-cup": {
+   "category": "kitchen",
+   "size": [
+    0.15,
+    0.02,
+    0.15
+   ],
+   "source": "kenney",
+   "kb": 3
+  },
+  "glass": {
+   "category": "kitchen",
+   "size": [
+    0.07,
+    0.13,
+    0.08
+   ],
+   "source": "kenney",
+   "kb": 3
+  },
+  "wine-glass": {
+   "category": "kitchen",
+   "size": [
+    0.09,
+    0.2,
+    0.08
+   ],
+   "source": "kenney",
+   "kb": 7
+  },
+  "bottle": {
+   "category": "kitchen",
+   "size": [
+    0.12,
+    0.3,
+    0.12
+   ],
+   "source": "kenney",
+   "kb": 7
+  },
+  "soda-can": {
+   "category": "kitchen",
+   "size": [
+    0.08,
+    0.12,
+    0.08
+   ],
+   "source": "kenney",
+   "kb": 7
+  },
+  "milk-carton": {
+   "category": "kitchen",
+   "size": [
+    0.1,
+    0.25,
+    0.1
+   ],
+   "source": "kenney",
+   "kb": 5
+  },
+  "fork": {
+   "category": "kitchen",
+   "size": [
+    0.19,
+    0.01,
+    0.03
+   ],
+   "source": "kenney",
+   "kb": 2
+  },
+  "knife": {
+   "category": "kitchen",
+   "size": [
+    0.21,
+    0.01,
+    0.03
+   ],
+   "source": "kenney",
+   "kb": 2
+  },
+  "spoon": {
+   "category": "kitchen",
+   "size": [
+    0.17,
+    0.01,
+    0.04
+   ],
+   "source": "kenney",
+   "kb": 3
+  },
+  "salt-shaker": {
+   "category": "kitchen",
+   "size": [
+    0.04,
+    0.09,
+    0.04
+   ],
+   "source": "kenney",
+   "kb": 6
+  },
+  "apple": {
+   "category": "food",
+   "size": [
+    0.08,
+    0.08,
+    0.08
+   ],
+   "source": "kenney",
+   "kb": 6
+  },
+  "apple-half": {
+   "category": "food",
+   "size": [
+    0.04,
+    0.08,
+    0.08
+   ],
+   "source": "kenney",
+   "kb": 8
+  },
+  "banana": {
+   "category": "food",
+   "size": [
+    0.04,
+    0.06,
+    0.19
+   ],
+   "source": "kenney",
+   "kb": 5
+  },
+  "orange": {
+   "category": "food",
+   "size": [
+    0.08,
+    0.08,
+    0.08
+   ],
+   "source": "kenney",
+   "kb": 5
+  },
+  "lemon": {
+   "category": "food",
+   "size": [
+    0.06,
+    0.08,
+    0.07
+   ],
+   "source": "kenney",
+   "kb": 5
+  },
+  "lemon-half": {
+   "category": "food",
+   "size": [
+    0.07,
+    0.04,
+    0.08
+   ],
+   "source": "kenney",
+   "kb": 5
+  },
+  "pear": {
+   "category": "food",
+   "size": [
+    0.07,
+    0.1,
+    0.07
+   ],
+   "source": "kenney",
+   "kb": 5
+  },
+  "strawberry": {
+   "category": "food",
+   "size": [
+    0.02,
+    0.04,
+    0.02
+   ],
+   "source": "kenney",
+   "kb": 6
+  },
+  "cherries": {
+   "category": "food",
+   "size": [
+    0.03,
+    0.06,
+    0.06
+   ],
+   "source": "kenney",
+   "kb": 6
+  },
+  "grapes": {
+   "category": "food",
+   "size": [
+    0.1,
+    0.15,
+    0.08
+   ],
+   "source": "kenney",
+   "kb": 13
+  },
+  "watermelon": {
+   "category": "food",
+   "size": [
+    0.33,
+    0.35,
+    0.33
+   ],
+   "source": "kenney",
+   "kb": 14
+  },
+  "pineapple": {
+   "category": "food",
+   "size": [
+    0.15,
+    0.3,
+    0.16
+   ],
+   "source": "kenney",
+   "kb": 6
+  },
+  "coconut": {
+   "category": "food",
+   "size": [
+    0.15,
+    0.15,
+    0.15
+   ],
+   "source": "kenney",
+   "kb": 4
+  },
+  "avocado": {
+   "category": "food",
+   "size": [
+    0.07,
+    0.1,
+    0.08
+   ],
+   "source": "kenney",
+   "kb": 3
+  },
+  "carrot": {
+   "category": "food",
+   "size": [
+    0.09,
+    0.18,
+    0.09
+   ],
+   "source": "kenney",
+   "kb": 5
+  },
+  "broccoli": {
+   "category": "food",
+   "size": [
+    0.13,
+    0.15,
+    0.13
+   ],
+   "source": "kenney",
+   "kb": 7
+  },
+  "cauliflower": {
+   "category": "food",
+   "size": [
+    0.14,
+    0.11,
+    0.15
+   ],
+   "source": "kenney",
+   "kb": 6
+  },
+  "corn": {
+   "category": "food",
+   "size": [
+    0.2,
+    0.18,
+    0.17
+   ],
+   "source": "kenney",
+   "kb": 5
+  },
+  "tomato": {
+   "category": "food",
+   "size": [
+    0.07,
+    0.06,
+    0.07
+   ],
+   "source": "kenney",
+   "kb": 5
+  },
+  "onion": {
+   "category": "food",
+   "size": [
+    0.07,
+    0.08,
+    0.08
+   ],
+   "source": "kenney",
+   "kb": 3
+  },
+  "eggplant": {
+   "category": "food",
+   "size": [
+    0.1,
+    0.2,
+    0.11
+   ],
+   "source": "kenney",
+   "kb": 6
+  },
+  "mushroom": {
+   "category": "food",
+   "size": [
+    0.05,
+    0.06,
+    0.06
+   ],
+   "source": "kenney",
+   "kb": 4
+  },
+  "pumpkin": {
+   "category": "food",
+   "size": [
+    0.3,
+    0.16,
+    0.3
+   ],
+   "source": "kenney",
+   "kb": 6
+  },
+  "egg": {
+   "category": "food",
+   "size": [
+    0.04,
+    0.06,
+    0.05
+   ],
+   "source": "kenney",
+   "kb": 3
+  },
+  "bread": {
+   "category": "food",
+   "size": [
+    0.28,
+    0.21,
+    0.18
+   ],
+   "source": "kenney",
+   "kb": 4
+  },
+  "baguette": {
+   "category": "food",
+   "size": [
+    0.6,
+    0.18,
+    0.18
+   ],
+   "source": "kenney",
+   "kb": 5
+  },
+  "cheese": {
+   "category": "food",
+   "size": [
+    0.15,
+    0.05,
+    0.15
+   ],
+   "source": "kenney",
+   "kb": 7
+  },
+  "fish": {
+   "category": "food",
+   "size": [
+    0.11,
+    0.18,
+    0.35
+   ],
+   "source": "kenney",
+   "kb": 8
+  },
+  "pizza": {
+   "category": "food",
+   "size": [
+    0.32,
+    0.02,
+    0.32
+   ],
+   "source": "kenney",
+   "kb": 9
+  },
+  "burger": {
+   "category": "food",
+   "size": [
+    0.11,
+    0.08,
+    0.11
+   ],
+   "source": "kenney",
+   "kb": 13
+  },
+  "sandwich": {
+   "category": "food",
+   "size": [
+    0.14,
+    0.05,
+    0.14
+   ],
+   "source": "kenney",
+   "kb": 8
+  },
+  "taco": {
+   "category": "food",
+   "size": [
+    0.15,
+    0.09,
+    0.04
+   ],
+   "source": "kenney",
+   "kb": 12
+  },
+  "sushi": {
+   "category": "food",
+   "size": [
+    0.03,
+    0.03,
+    0.06
+   ],
+   "source": "kenney",
+   "kb": 6
+  },
+  "cake": {
+   "category": "food",
+   "size": [
+    0.24,
+    0.1,
+    0.24
+   ],
+   "source": "kenney",
+   "kb": 10
+  },
+  "cake-birthday": {
+   "category": "food",
+   "size": [
+    0.24,
+    0.14,
+    0.24
+   ],
+   "source": "kenney",
+   "kb": 13
+  },
+  "cupcake": {
+   "category": "food",
+   "size": [
+    0.07,
+    0.08,
+    0.06
+   ],
+   "source": "kenney",
+   "kb": 11
+  },
+  "donut": {
+   "category": "food",
+   "size": [
+    0.08,
+    0.03,
+    0.09
+   ],
+   "source": "kenney",
+   "kb": 9
+  },
+  "cookie": {
+   "category": "food",
+   "size": [
+    0.06,
+    0.03,
+    0.07
+   ],
+   "source": "kenney",
+   "kb": 4
+  },
+  "ice-cream-cone": {
+   "category": "food",
+   "size": [
+    0.11,
+    0.18,
+    0.13
+   ],
+   "source": "kenney",
+   "kb": 4
+  },
+  "pie": {
+   "category": "food",
+   "size": [
+    0.24,
+    0.04,
+    0.24
+   ],
+   "source": "kenney",
+   "kb": 8
+  },
+  "pancakes": {
+   "category": "food",
+   "size": [
+    0.13,
+    0.04,
+    0.15
+   ],
+   "source": "kenney",
+   "kb": 12
+  },
+  "chocolate-bar": {
+   "category": "food",
+   "size": [
+    0.15,
+    0.02,
+    0.08
+   ],
+   "source": "kenney",
+   "kb": 4
+  },
+  "honey-jar": {
+   "category": "food",
+   "size": [
+    0.12,
+    0.12,
+    0.12
+   ],
+   "source": "kenney",
+   "kb": 6
+  },
+  "building": {
+   "category": "city",
+   "size": [
+    9.34,
+    12,
+    11.23
+   ],
+   "source": "kaykit",
+   "kb": 18
+  },
+  "building-tall": {
+   "category": "city",
+   "size": [
+    20.73,
+    20,
+    16.77
+   ],
+   "source": "kaykit",
+   "kb": 21
+  },
+  "building-shop": {
+   "category": "city",
+   "size": [
+    4.29,
+    8,
+    4.62
+   ],
+   "source": "kaykit",
+   "kb": 22
+  },
+  "building-office": {
+   "category": "city",
+   "size": [
+    10.71,
+    15,
+    8.67
+   ],
+   "source": "kaykit",
+   "kb": 25
+  },
+  "building-apartment": {
+   "category": "city",
+   "size": [
+    12.49,
+    14,
+    9.02
+   ],
+   "source": "kaykit",
+   "kb": 26
+  },
+  "building-small": {
+   "category": "city",
+   "size": [
+    6.24,
+    7,
+    4.04
+   ],
+   "source": "kaykit",
+   "kb": 29
+  },
+  "building-wide": {
+   "category": "city",
+   "size": [
+    8.92,
+    10,
+    6.44
+   ],
+   "source": "kaykit",
+   "kb": 28
+  },
+  "building-tower": {
+   "category": "city",
+   "size": [
+    17.01,
+    25,
+    11.02
+   ],
+   "source": "kaykit",
+   "kb": 33
+  },
+  "house": {
+   "category": "city",
+   "size": [
+    10.57,
+    6,
+    7.45
+   ],
+   "source": "kenney",
+   "kb": 10
+  },
+  "house-2": {
+   "category": "city",
+   "size": [
+    9.01,
+    6,
+    4.83
+   ],
+   "source": "kenney",
+   "kb": 12
+  },
+  "house-3": {
+   "category": "city",
+   "size": [
+    10.13,
+    7,
+    5.87
+   ],
+   "source": "kenney",
+   "kb": 13
+  },
+  "water-tower": {
+   "category": "city",
+   "size": [
+    11.17,
+    15,
+    11.17
+   ],
+   "source": "kaykit",
+   "kb": 13
+  },
+  "bench": {
+   "category": "city",
+   "size": [
+    1.6,
+    0.4,
+    0.6
+   ],
+   "source": "kaykit",
+   "kb": 11
+  },
+  "street-light": {
+   "category": "city",
+   "size": [
+    1.4,
+    5,
+    0.36
+   ],
+   "source": "kaykit",
+   "kb": 13
+  },
+  "traffic-light": {
+   "category": "city",
+   "size": [
+    0.84,
+    3.5,
+    0.72
+   ],
+   "source": "kaykit",
+   "kb": 21
+  },
+  "fire-hydrant": {
+   "category": "city",
+   "size": [
+    0.45,
+    0.75,
+    0.44
+   ],
+   "source": "kaykit",
+   "kb": 13
+  },
+  "dumpster": {
+   "category": "city",
+   "size": [
+    1.9,
+    1.07,
+    1.18
+   ],
+   "source": "kaykit",
+   "kb": 13
+  },
+  "road": {
+   "category": "city",
+   "size": [
+    8,
+    0.4,
+    8
+   ],
+   "source": "kaykit",
+   "kb": 11
+  },
+  "road-corner": {
+   "category": "city",
+   "size": [
+    8,
+    0.4,
+    8
+   ],
+   "source": "kaykit",
+   "kb": 12
+  },
+  "road-crossing": {
+   "category": "city",
+   "size": [
+    8,
+    0.4,
+    8
+   ],
+   "source": "kaykit",
+   "kb": 12
+  },
+  "potted-bush": {
+   "category": "nature",
+   "size": [
+    0.45,
+    0.9,
+    0.47
+   ],
+   "source": "kaykit",
+   "kb": 12
+  },
+  "car": {
+   "category": "vehicles",
+   "size": [
+    2.05,
+    1.81,
+    4.6
+   ],
+   "source": "kaykit",
+   "kb": 29
+  },
+  "car-hatchback": {
+   "category": "vehicles",
+   "size": [
+    2.08,
+    1.83,
+    4
+   ],
+   "source": "kaykit",
+   "kb": 29
+  },
+  "taxi": {
+   "category": "vehicles",
+   "size": [
+    2.05,
+    2.13,
+    4.6
+   ],
+   "source": "kaykit",
+   "kb": 30
+  },
+  "police-car": {
+   "category": "vehicles",
+   "size": [
+    2.14,
+    2.11,
+    4.8
+   ],
+   "source": "kaykit",
+   "kb": 31
+  },
+  "station-wagon": {
+   "category": "vehicles",
+   "size": [
+    2.14,
+    1.89,
+    4.8
+   ],
+   "source": "kaykit",
+   "kb": 30
+  },
+  "ambulance": {
+   "category": "vehicles",
+   "size": [
+    2.81,
+    3.19,
+    6
+   ],
+   "source": "kenney",
+   "kb": 38
+  },
+  "fire-truck": {
+   "category": "vehicles",
+   "size": [
+    3.66,
+    4.78,
+    9
+   ],
+   "source": "kenney",
+   "kb": 38
+  },
+  "truck": {
+   "category": "vehicles",
+   "size": [
+    4.14,
+    3.59,
+    8
+   ],
+   "source": "kenney",
+   "kb": 20
+  },
+  "delivery-truck": {
+   "category": "vehicles",
+   "size": [
+    3.28,
+    3.5,
+    7
+   ],
+   "source": "kenney",
+   "kb": 38
+  },
+  "van": {
+   "category": "vehicles",
+   "size": [
+    2.89,
+    2.5,
+    5.2
+   ],
+   "source": "kenney",
+   "kb": 20
+  },
+  "garbage-truck": {
+   "category": "vehicles",
+   "size": [
+    4.24,
+    4.23,
+    9
+   ],
+   "source": "kenney",
+   "kb": 43
+  },
+  "race-car": {
+   "category": "vehicles",
+   "size": [
+    2.54,
+    1.43,
+    5
+   ],
+   "source": "kenney",
+   "kb": 27
+  },
+  "tractor": {
+   "category": "vehicles",
+   "size": [
+    2.73,
+    2.55,
+    4
+   ],
+   "source": "kenney",
+   "kb": 44
+  },
+  "boat": {
+   "category": "vehicles",
+   "size": [
+    2.71,
+    1.06,
+    4.5
+   ],
+   "source": "kenney",
+   "kb": 3
+  },
+  "boat-large": {
+   "category": "vehicles",
+   "size": [
+    6.04,
+    2.37,
+    12
+   ],
+   "source": "kenney",
+   "kb": 4
+  },
+  "sailing-ship": {
+   "category": "vehicles",
+   "size": [
+    10.56,
+    24.26,
+    30
+   ],
+   "source": "kenney",
+   "kb": 83
+  },
+  "shipwreck": {
+   "category": "vehicles",
+   "size": [
+    8.85,
+    18.39,
+    25
+   ],
+   "source": "kenney",
+   "kb": 37
+  },
+  "tree": {
+   "category": "nature",
+   "size": [
+    2.2,
+    8,
+    2.47
+   ],
+   "source": "kenney",
+   "kb": 7
+  },
+  "tree-small": {
+   "category": "nature",
+   "size": [
+    1.49,
+    4,
+    1.7
+   ],
+   "source": "kenney",
+   "kb": 7
+  },
+  "palm-tree": {
+   "category": "nature",
+   "size": [
+    6.87,
+    9,
+    6.87
+   ],
+   "source": "kenney",
+   "kb": 6
+  },
+  "palm-tree-short": {
+   "category": "nature",
+   "size": [
+    4.9,
+    5,
+    4.9
+   ],
+   "source": "kenney",
+   "kb": 6
+  },
+  "plant": {
+   "category": "nature",
+   "size": [
+    1.23,
+    0.8,
+    1.11
+   ],
+   "source": "kenney",
+   "kb": 3
+  },
+  "rock": {
+   "category": "nature",
+   "size": [
+    1.3,
+    1.5,
+    1.31
+   ],
+   "source": "kenney",
+   "kb": 5
+  },
+  "rock-large": {
+   "category": "nature",
+   "size": [
+    4.94,
+    5,
+    3.43
+   ],
+   "source": "kenney",
+   "kb": 5
+  },
+  "stone": {
+   "category": "nature",
+   "size": [
+    1.04,
+    1.2,
+    1.05
+   ],
+   "source": "kenney",
+   "kb": 4
+  },
+  "cactus": {
+   "category": "nature",
+   "size": [
+    1.09,
+    1.2,
+    1.09
+   ],
+   "source": "kaykit",
+   "kb": 13
+  },
+  "space-base": {
+   "category": "space",
+   "size": [
+    8.99,
+    4,
+    8.7
+   ],
+   "source": "kaykit",
+   "kb": 23
+  },
+  "space-base-dome": {
+   "category": "space",
+   "size": [
+    8,
+    4,
+    8.82
+   ],
+   "source": "kaykit",
+   "kb": 25
+  },
+  "lander": {
+   "category": "space",
+   "size": [
+    6.9,
+    6,
+    7.16
+   ],
+   "source": "kaykit",
+   "kb": 39
+  },
+  "landing-pad": {
+   "category": "space",
+   "size": [
+    10,
+    2.63,
+    10
+   ],
+   "source": "kaykit",
+   "kb": 21
+  },
+  "solar-panel": {
+   "category": "space",
+   "size": [
+    6.07,
+    2.5,
+    3.03
+   ],
+   "source": "kaykit",
+   "kb": 14
+  },
+  "moon-rover": {
+   "category": "space",
+   "size": [
+    2.19,
+    2.54,
+    4
+   ],
+   "source": "kaykit",
+   "kb": 30
+  },
+  "space-drill": {
+   "category": "space",
+   "size": [
+    5.25,
+    6,
+    5.25
+   ],
+   "source": "kaykit",
+   "kb": 37
+  },
+  "wind-turbine": {
+   "category": "space",
+   "size": [
+    16.65,
+    30,
+    10
+   ],
+   "source": "kaykit",
+   "kb": 25
+  },
+  "moon-rock": {
+   "category": "space",
+   "size": [
+    2.56,
+    1.2,
+    2.4
+   ],
+   "source": "kaykit",
+   "kb": 13
+  },
+  "apollo-lunar-module": {
+   "category": "space",
+   "size": [
+    8.98,
+    7,
+    8.97
+   ],
+   "source": "nasa",
+   "kb": 626
+  },
+  "iss": {
+   "category": "space",
+   "size": [
+    109,
+    67.93,
+    65.42
+   ],
+   "source": "nasa",
+   "kb": 46
+  },
+  "james-webb-telescope": {
+   "category": "space",
+   "size": [
+    21,
+    9.2,
+    11.32
+   ],
+   "source": "nasa",
+   "kb": 4136
+  },
+  "hubble-telescope": {
+   "category": "space",
+   "size": [
+    11.47,
+    13.2,
+    12.56
+   ],
+   "source": "nasa",
+   "kb": 165
+  },
+  "perseverance-rover": {
+   "category": "space",
+   "size": [
+    2.61,
+    1.78,
+    3
+   ],
+   "source": "nasa",
+   "kb": 1916
+  },
+  "opportunity-rover": {
+   "category": "space",
+   "size": [
+    1.09,
+    0.92,
+    1.6
+   ],
+   "source": "nasa",
+   "kb": 42
+  },
+  "ingenuity-helicopter": {
+   "category": "space",
+   "size": [
+    1.07,
+    0.61,
+    1.2
+   ],
+   "source": "nasa",
+   "kb": 390
+  },
+  "saturn-v-rocket": {
+   "category": "space",
+   "size": [
+    17.15,
+    110.6,
+    17.15
+   ],
+   "source": "nasa",
+   "kb": 234
+  },
+  "space-shuttle": {
+   "category": "space",
+   "size": [
+    17.59,
+    12.65,
+    37.2
+   ],
+   "source": "nasa",
+   "kb": 1668
+  },
+  "voyager-probe": {
+   "category": "space",
+   "size": [
+    3.86,
+    8.08,
+    13
+   ],
+   "source": "nasa",
+   "kb": 394
+  },
+  "skylab": {
+   "category": "space",
+   "size": [
+    26,
+    7.91,
+    20.04
+   ],
+   "source": "nasa",
+   "kb": 79
+  },
+  "juno-probe": {
+   "category": "space",
+   "size": [
+    19.04,
+    4.59,
+    20
+   ],
+   "source": "nasa",
+   "kb": 752
+  },
+  "wall": {
+   "category": "blocks",
+   "size": [
+    3,
+    3,
+    0.75
+   ],
+   "source": "kaykit",
+   "kb": 15
+  },
+  "wall-half": {
+   "category": "blocks",
+   "size": [
+    0.75,
+    1.5,
+    0.38
+   ],
+   "source": "kaykit",
+   "kb": 15
+  },
+  "wall-window": {
+   "category": "blocks",
+   "size": [
+    3,
+    3,
+    0.75
+   ],
+   "source": "kaykit",
+   "kb": 15
+  },
+  "wall-doorway": {
+   "category": "blocks",
+   "size": [
+    3,
+    3,
+    0.75
+   ],
+   "source": "kaykit",
+   "kb": 15
+  },
+  "floor-tile": {
+   "category": "blocks",
+   "size": [
+    2,
+    0.5,
+    2
+   ],
+   "source": "kaykit",
+   "kb": 15
+  },
+  "stairs": {
+   "category": "blocks",
+   "size": [
+    1.5,
+    1.5,
+    1.5
+   ],
+   "source": "kaykit",
+   "kb": 16
+  },
+  "ramp": {
+   "category": "blocks",
+   "size": [
+    1,
+    1,
+    1
+   ],
+   "source": "kaykit",
+   "kb": 15
+  },
+  "pillar": {
+   "category": "blocks",
+   "size": [
+    0.44,
+    3,
+    0.44
+   ],
+   "source": "kaykit",
+   "kb": 16
+  },
+  "barrel": {
+   "category": "blocks",
+   "size": [
+    1.01,
+    0.9,
+    0.9
+   ],
+   "source": "kenney",
+   "kb": 8
+  },
+  "crate": {
+   "category": "blocks",
+   "size": [
+    1.25,
+    0.5,
+    1.25
+   ],
+   "source": "kaykit",
+   "kb": 13
+  },
+  "wooden-box": {
+   "category": "blocks",
+   "size": [
+    0.54,
+    0.6,
+    0.55
+   ],
+   "source": "kaykit",
+   "kb": 16
+  },
+  "pallet": {
+   "category": "blocks",
+   "size": [
+    1.2,
+    0.15,
+    1.2
+   ],
+   "source": "kaykit",
+   "kb": 17
+  },
+  "target": {
+   "category": "blocks",
+   "size": [
+    0.8,
+    1.6,
+    1.2
+   ],
+   "source": "kaykit",
+   "kb": 19
+  },
+  "cargo-container": {
+   "category": "blocks",
+   "size": [
+    2.4,
+    2.5,
+    2.5
+   ],
+   "source": "kaykit",
+   "kb": 14
+  },
+  "treasure-chest": {
+   "category": "history",
+   "size": [
+    0.8,
+    0.9,
+    0.72
+   ],
+   "source": "kenney",
+   "kb": 10
+  },
+  "cannon": {
+   "category": "history",
+   "size": [
+    1.89,
+    1.83,
+    2.5
+   ],
+   "source": "kenney",
+   "kb": 13
+  },
+  "cannon-ball": {
+   "category": "history",
+   "size": [
+    0.15,
+    0.15,
+    0.15
+   ],
+   "source": "kenney",
+   "kb": 6
+  },
+  "castle-tower": {
+   "category": "history",
+   "size": [
+    10.73,
+    12,
+    10.79
+   ],
+   "source": "kenney",
+   "kb": 19
+  },
+  "sword": {
+   "category": "history",
+   "size": [
+    0.26,
+    0.9,
+    0.07
+   ],
+   "source": "kaykit",
+   "kb": 15
+  },
+  "shield": {
+   "category": "history",
+   "size": [
+    0.7,
+    0.7,
+    0.26
+   ],
+   "source": "kaykit",
+   "kb": 14
+  },
+  "bow-and-arrows": {
+   "category": "history",
+   "size": [
+    0.26,
+    0.8,
+    0.17
+   ],
+   "source": "kaykit",
+   "kb": 17
+  },
+  "axe": {
+   "category": "history",
+   "size": [
+    0.4,
+    0.7,
+    0.1
+   ],
+   "source": "kaykit",
+   "kb": 15
+  },
+  "shovel": {
+   "category": "history",
+   "size": [
+    0.27,
+    0.05,
+    1.1
+   ],
+   "source": "kenney",
+   "kb": 5
+  },
+  "tankard": {
+   "category": "history",
+   "size": [
+    0.15,
+    0.15,
+    0.11
+   ],
+   "source": "kaykit",
+   "kb": 16
+  },
+  "paddle": {
+   "category": "history",
+   "size": [
+    0.19,
+    0.09,
+    1.4
+   ],
+   "source": "kenney",
+   "kb": 3
+  }
+ }
+}

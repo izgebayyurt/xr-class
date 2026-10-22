@@ -23,7 +23,9 @@ const browser = await chromium.launch({ executablePath: '/opt/pw-browsers/chromi
 const page = await browser.newPage({ viewport: { width: 1280, height: 800 } });
 const errs = []; page.on('pageerror', e => errs.push(e.message));
 await page.route(/cdn\.jsdelivr\.net\/npm\/three@[^/]+\/(.*)/, r => r.fulfill({ body: readFileSync(resolve(HERE, '../node_modules/three', r.request().url().match(/three@[^/]+\/(.*)$/)[1])), contentType: 'application/javascript' }));
-await page.route('http://xr.test/**', r => new URL(r.request().url()).pathname === '/xr-engine.js' ? r.fulfill({ body: readFileSync(enginePath), contentType: 'application/javascript' }) : r.fulfill({ body: html, contentType: 'text/html' }));
+await page.route('http://xr.test/**', r => { const u = new URL(r.request().url()); if (u.pathname === '/xr-engine.js') return r.fulfill({ body: readFileSync(enginePath), contentType: 'application/javascript' });
+  if (u.pathname.startsWith('/models/')) { try { return r.fulfill({ body: readFileSync(join(dirname(enginePath), decodeURIComponent(u.pathname))), contentType: 'model/gltf-binary' }); } catch { return r.fulfill({ status: 404, body: '' }); } }
+  return r.fulfill({ body: html, contentType: 'text/html' }); });
 await page.goto('http://xr.test/scene.html');   // no ?harness: the visitor's view, incl. the scene-check chip
 await page.waitForFunction(() => window.XR && XR.ready === true, null, { timeout: 30000 }); await page.waitForTimeout(1200);
 await page.evaluate(() => {

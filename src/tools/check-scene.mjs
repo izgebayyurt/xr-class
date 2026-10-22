@@ -24,7 +24,9 @@ const pageErrors = [];
 page.on('pageerror', e => pageErrors.push(e.message));
 page.on('console', m => { if (m.type() === 'error') pageErrors.push('console: ' + m.text()); });
 await page.route(/cdn\.jsdelivr\.net\/npm\/three@[^/]+\/(.*)/, r => r.fulfill({ body: readFileSync(resolve(threeRoot, r.request().url().match(/three@[^/]+\/(.*)$/)[1])), contentType: 'application/javascript' }));
-await page.route('http://xr.test/**', r => { const u = new URL(r.request().url()); if (u.pathname === '/xr-engine.js') return r.fulfill({ body: readFileSync(enginePath), contentType: 'application/javascript' }); return r.fulfill({ body: html, contentType: 'text/html' }); });
+await page.route('http://xr.test/**', r => { const u = new URL(r.request().url()); if (u.pathname === '/xr-engine.js') return r.fulfill({ body: readFileSync(enginePath), contentType: 'application/javascript' });
+  if (u.pathname.startsWith('/models/')) { try { return r.fulfill({ body: readFileSync(join(dirname(enginePath), decodeURIComponent(u.pathname))), contentType: u.pathname.endsWith('.json') ? 'application/json' : 'model/gltf-binary' }); } catch { return r.fulfill({ status: 404, body: '' }); } }
+  return r.fulfill({ body: html, contentType: 'text/html' }); });
 await page.goto('http://xr.test/scene.html?harness');
 const R = { file, lines: code.split('\n').length };
 try { await page.waitForFunction(() => window.XR && XR.ready === true, null, { timeout: 30000 }); R.boot = true; } catch { R.boot = false; }
