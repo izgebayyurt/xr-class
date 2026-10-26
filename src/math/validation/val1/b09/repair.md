@@ -1,0 +1,8 @@
+- **Blocking: stale card after balancing.** I added a `balanceFb` variable that keeps the guess feedback, plus a `balanceText()` helper for the balance message. In `report()`:
+  - If the level is off-balance while `phase === 'explore'` and the size sliders haven't moved, the card now says "At X: N points short/left over. The even level for these classes is 85." It then restates the guess feedback and the "Next: change the class sizes" step. Before, it showed a bare "Move 'Everyone gets' down" message.
+  - If the visitor returns to even in that state, the card shows the full balance result again (nothing left over, 85 not 80, guess feedback, next step). Before, the stale "20 points short" card stayed up.
+  - I checked this in a headless browser: 75 → 85 → 90 → 85 gives a correct card at every step.
+- **Minor: readout vs. card contradiction.** When the level counts as "even" but isn't exact (the exact mean falls between slider marks), the Left over readout now adds "(closest mark to even)", e.g. "4 short (closest mark to even)". It no longer seems to contradict "Even at …" on the card.
+- **Minor: guess range.** The guess prompt now reads "Your guess (0 to 100): …" so the expected range is clear.
+- **Minor: small phone text.** The y-axis tick labels and the "points" axis title went from size 15 to 17, so they're a bit easier to read on phones.
+- No other changes. The student's design, the math, and the rest of the flow are the same. check-page.mjs passes with no problems or warnings (screenshots: repair-start.png, repair-after.png, repair-phone.png).

@@ -1,0 +1,266 @@
+[
+ {
+  "dir": "/home/claude/pme/val1/b01",
+  "bid": "b01",
+  "review1": {
+   "verdict": "ok",
+   "blocking": [],
+   "minor": [
+    "Phone width (390 px): the SVG scales down so far that row labels ('mm pieces', '1 each', the caption under the ribbon) are about 6-8 px tall and hard to read. The readouts below still carry the key numbers.",
+    "With the Cuts slider at 1, the Why box says 'in all 1 rows' (bad grammar) and 'So the cutting never ends' after only one row, which is an overclaim. The wording should depend on n.",
+    "With 9 friends, only 3 colours repeat, so friends 1/4/7 (and so on) look the same colour. The numbers on the pieces still tell them apart.",
+    "On the first slider or friends change the card switches straight to the takeaway, so the earlier prompt to 'try the slider / 9 friends' goes away. After that the card no longer suggests anything more to try. Acceptable as an ending, but abrupt.",
+    "The Why box packs four ideas into one dense paragraph. A friend who finds math hard may need it split up or revealed in steps.",
+    "Little empty space at the bottom of the stage on desktop before the cuts start. Cosmetic."
+   ],
+   "math_errors": [],
+   "shows_why": 4,
+   "fidelity": 4,
+   "clarity": 4,
+   "summary": "The visitor first guesses whether 0.999\u2026 is less than, equal to, or more than 1. They then share a 1 m ribbon among 3 friends by repeatedly cutting the leftover into 10 (long division made physical). Every share, total and gap is computed from the cuts: share 0.333\u2026, total 0.999\u2026, gap 10^-n m. The Why box ties this to 3 \u00d7 1/3 = 1 and to a gap that shrinks with every cut. A Cuts slider (1-12) and a 3 vs 9 friends option let them explore, ending with a takeaway that 0.999\u2026 is another way to write 1. I checked all values, including slider extremes and the 9-friend case (0.111111111111 m, gap 0.000000000001 m = 1 piece of 0.000000001 mm), and they are correct with no console errors. The guess comes first, the student's 1/3-times-3 idea is the core, and the layout holds at phone width apart from small SVG text."
+  },
+  "repaired": false
+ },
+ {
+  "dir": "/home/claude/pme/val1/b02",
+  "bid": "b02",
+  "review1": {
+   "verdict": "ok",
+   "blocking": [],
+   "minor": [
+    "Toggling the button to 'Hide the tiny pieces' only removes the grid lines. The 'Tiny pieces' readout and the common-denominator note stay visible because MK.show(tinyR, tinyN) runs on every press and nothing ever hides them.",
+    "Before the bars are cut, the lower half of the stage (where the rows will go) is empty. It looks like dead space in the start screenshots on both desktop and phone.",
+    "In explore mode the bar label is '1/12' at size 11. On a 390px phone that renders at roughly 9px, which is hard to read. With fine mode on and denominators 11 and 12, the bar gets 131 grid lines (1/132 pieces), which reads as visual noise.",
+    "The 'pieces taken' sliders always go up to 12. Moving one past the 'cut into' value silently snaps back to that value, with no message.",
+    "The card after the comparison gives the gap as 1/63 of a bar before the visitor has seen 63rds. It is computed correctly, but the tiny-pieces step that explains it comes only after.",
+    "The explanation note in the side column is long for a friend who finds math hard: it defines denominator and numerator, piece sizes and decimals all in one box."
+   ],
+   "math_errors": [],
+   "shows_why": 5,
+   "fidelity": 5,
+   "clarity": 4,
+   "summary": "The visitor first guesses whether 5/9 or 4/7 of a same-size chocolate bar is more. They then cut Bar A into 9 pieces and Bar B into 7, tap 5 and 4 pieces into aligned rows to compare lengths, and press a button that cuts both into matching 1/63 pieces (35 vs 36), with decimals shown as well. After that, sliders let them try any fractions up to twelfths, and every number shown is computed exactly from the pieces on screen, correct across all slider values."
+  },
+  "repaired": false
+ },
+ {
+  "dir": "/home/claude/pme/val1/b03",
+  "bid": "b03",
+  "review1": {
+   "verdict": "ok",
+   "blocking": [],
+   "minor": [
+    "Price-tag text runs into the tag's hole circle for 7-character prices (e.g. '$200.00', '$100.00'). The tag's text area is tight. Cosmetic only.",
+    "At phone width (390px) the SVG scales down, so the sign and tag text is small (about 11px) but still readable.",
+    "After the visitor's first slider or order change, the card switches to the takeaway and drops the 'change the percent, the start price or the order' instruction. It works as an ending, but the card no longer says what to try next.",
+    "The title stays 'Up 25%, Down 25%' even after the sliders change the percent.",
+    "Guess feedback for 'More than $100' says the guess 'was off by $6.25'. That is the gap between $100 and $93.75, not a distance from a number the visitor gave. The wording is loose but not wrong.",
+    "In the 'down first' variation, the white dashed slice line inside the Tuesday bar (e.g. at $18 inside a $20 bar at 90%) is easy to misread as a price level. The explanation box covers it, but the picture is busy at high percents."
+   ],
+   "math_errors": [],
+   "shows_why": 5,
+   "fidelity": 5,
+   "clarity": 4,
+   "summary": "A $100 shirt has price tags and green and red sale signs. The visitor first guesses where the price ends up (back to $100, less, or more). Then they press Monday (+25%) and Tuesday (25% off) and watch exactly computed bars reach $125 and then $93.75. Dashed slices show that each 25% is a piece of a different price, and the loss equals 25% of Monday's $25 change. After that, sliders for percent (5-90%) and start price ($20-$200) plus an order toggle let them explore. I recomputed every value with MK.frac, including the extremes ($200 down 90% then up 90% = $38, 81% less), and all of them are correct."
+  },
+  "repaired": false
+ },
+ {
+  "dir": "/home/claude/pme/val1/b04",
+  "bid": "b04",
+  "review1": {
+   "verdict": "ok",
+   "blocking": [],
+   "minor": [
+    "When exploring large values (coin size $2,000 or more, e.g. 12% for 39 or more years, or 10% for 46 or more years), the first $1,000 is smaller than one coin. The 'your first $1,000' dark-green band then disappears, and that money is drawn in the interest colour, so the legend no longer matches the stacks.",
+    "The rule-of-72 line rounds the number of doublings, so it can be quite far off for short periods. For example, 12% for 3 years gives 0.5, which rounds to 'about 1 doubling: $1,000 \u2192 $2,000', but the exact amount is $1,404.93. It is labelled a rough estimate and the exact value is shown next to it, so this is not misleading.",
+    "At 390px phone width the SVG scales to about 0.62. The legend and the 'earns 7% of...' captions shrink to about 8px and are hard to read.",
+    "The finish card says 'Year 30.' and the button says 'Play to year 30' as fixed text. Both are only reachable before the sliders unlock, so they are correct, but they are fragile.",
+    "While 'Play to year 30' runs, the card says 'Playing one year at a time\u2026' and gives no instruction. That is acceptable during an automatic run."
+   ],
+   "math_errors": [],
+   "shows_why": 4,
+   "fidelity": 5,
+   "clarity": 4,
+   "summary": "The visitor guesses how much $1,000 at 7% grows to in 30 years. They then step or play year by year while two green/gold coin stacks grow: the compound stack earns 7% of the whole stack and the simple stack earns a flat $70. The brackets show each year's interest, a gap arrow shows the difference, and readouts give the computed amounts ($7,612.26 vs $3,100.00). At the end there is honest feedback on the guess, a rule-of-72 check, a table of yearly interest, and rate/years sliders to explore."
+  },
+  "repaired": false
+ },
+ {
+  "dir": "/home/claude/pme/val1/b05",
+  "bid": "b05",
+  "review1": {
+   "verdict": "ok",
+   "blocking": [],
+   "minor": [
+    "Harness note, not a page defect: the stock check-page.mjs failed here (kit:false, empty card, ERR_TUNNEL_CONNECTION_FAILED). Its catch-all route is registered last, so Playwright runs it first and sends three.js requests out to the blocked CDN, skipping the local three.js route. I ran a scratch copy that falls back to the local three route (/tmp/claude-0/-home-claude/8d8ce653-0660-58d8-910b-ce7d93049386/scratchpad/chk/check.mjs). It passed with no problems or warnings. Screenshots are in that folder as review1-*.png. Any 3D page will fail the stock checker in this sandbox the same way.",
+    "The takeaway only shows in the card after the visitor moves the slider. A visitor who stops after building the big box gets the guess feedback and the Why note, but never the closing takeaway sentence.",
+    "At slider x1 the Why note reads '1 cubes (1 \u00d7 1 \u00d7 1)' and the card says '1 times the paint'. Small grammar issue.",
+    "'mL' and 'cm\u00b2' appear in the readouts and table without a plain-word gloss in the card. They are only explained in the small-print Model footer.",
+    "With 'Add 1 cube' alone, the big box takes 48 clicks. 'Finish this layer' cuts that down, but the card could suggest using it for the big box.",
+    "On desktop, the tall Why note in the side column leaves a large empty area under the 3D view. Cosmetic."
+   ],
+   "math_errors": [],
+   "shows_why": 5,
+   "fidelity": 5,
+   "clarity": 4,
+   "summary": "The visitor first picks one multiple-choice guess for how much more paint and water the doubled box needs. They then build a 3\u00d72\u00d71 Lego-style box and its 6\u00d74\u00d72 double from studded cubes in 3D, while readouts count the cubes (water) and the faces open to air (paint): 6/22 becomes 48/88, so \u00d74 paint and \u00d78 water. All of these numbers, and the \u00d71\u2013\u00d74 slider values (\u00d73 gives 162/198, \u00d74 gives 384/352), are computed from the cubes on screen and check out. Colour-matched blocks let the visitor see that one small cube becomes k\u00b3 cubes and one outside square becomes a k\u00b2 patch. The feedback compares the guess honestly with the counted result."
+  },
+  "repaired": false
+ },
+ {
+  "dir": "/home/claude/pme/val1/b06",
+  "bid": "b06",
+  "review1": {
+   "verdict": "ok",
+   "blocking": [],
+   "minor": [
+    "The words note ('6P means 6 \u00d7 P', 'a letter stands for a number') only appears after both tests are done. A friend who finds math hard sees '6P' and '6S' in the guess before anyone explains them. A short line in the opening card would fix this.",
+    "When the slider is at P = 6, the Why box reads 'S = 6 \u00d7 6 = 36'. With two sixes it is hard to tell which one is the multiplier and which is the professor count.",
+    "The footer starts with 'Model:', but nothing here is random. It describes the picture's grouping, so the label can read oddly to a visitor.",
+    "The takeaway arrives on the first slider move, in the same card as the question 'which equation still works?'. The question and its answer show up together.",
+    "Phone width was only checked at the start screen. The 4-column table on the stage, with entries like '6S = 6 \u00d7 36 = 216', may wrap tightly at 390 px (not verified).",
+    "The slider only changes the number of professors (1 to 6) and the ratio is fixed at 6. That fits the design, but the exploration step is thin."
+   ],
+   "math_errors": [],
+   "shows_why": 4,
+   "fidelity": 5,
+   "clarity": 4,
+   "summary": "The visitor first picks S = 6P or 6S = P. Then they see 2 professors, each drawn with a group of 6 students (12 in all), and press each equation to plug in counts taken from the drawn circles: S = 6P checks out (12 = 12) and 6S = P fails (72 \u2260 2). After that, a Professors slider (1 to 6) redraws the picture and the table, and the card gives the takeaway that the 6 goes with the smaller group. Checked: no checker problems or warnings, every number comes from the drawn circles and is correct at both slider ends (P=1: 6=6 and 36\u22601; P=6: 36=36 and 216\u22606), wrong-guess feedback names the word-order mix-up from the student's design, and nothing overlaps on desktop or phone."
+  },
+  "repaired": false
+ },
+ {
+  "dir": "/home/claude/pme/val1/b07",
+  "bid": "b07",
+  "review1": {
+   "verdict": "ok",
+   "blocking": [],
+   "minor": [
+    "Phone: after a tile is clicked, its game details appear in a note far below the grid, after the readouts and the long Why text. The visitor may not notice that anything happened. The Play button and sliders also sit far below the chart, even though the card tells the visitor to use them.",
+    "Phone: the chart and square-grid labels are rendered quite small (about 9-10 px effective) once the 380-unit SVG scales down.",
+    "Guess feedback has edge-case wording bugs that can't trigger on the first run (always 100 games, 3 doors) but are sloppy. If switching and staying tie, a 'switching' guess is told staying won more, and a 'staying' guess is told switching won more. In the 50/50 branch, if staying won by 15 points or more, it prints 'Switching won -N more games'.",
+    "The '\u2605 PICK A DOOR \u2605' banner stays up during the stay/switch and results phases.",
+    "The readouts list Switching first, but the chart lists Stay first. That is a small order mismatch.",
+    "The Doors slider (up to 10 on desktop, 7 on phone) is a variation the builder added. It fits the explore step, but the student didn't ask for it.",
+    "The Why note is long (about 7 sentences) for a friend who finds math hard."
+   ],
+   "math_errors": [],
+   "shows_why": 5,
+   "fidelity": 5,
+   "clarity": 4,
+   "summary": "The page is a bright game-show stage with three doors. The visitor first guesses whether staying, switching, or 50/50 wins more often, then plays one real round (pick a door, the host opens a goat door, stay or switch). Next the computer plays 100 seeded random games, labelled as a model. A bar chart and a grid of clickable squares show the results, one square per game, coloured by whether the first pick was the car. Every count and percentage is computed from those games, and the Why text explains it from those counts. I checked the simulation logic, the counts and the explanation text for 3 to 10 doors and 10 to 300 games: all correct, no errors, no overlap or horizontal scroll at desktop or phone width."
+  },
+  "repaired": false
+ },
+ {
+  "dir": "/home/claude/pme/val1/b08",
+  "bid": "b08",
+  "review1": {
+   "verdict": "ok",
+   "blocking": [],
+   "minor": [
+    "After 'Sum it up' (stage 'done'), report() no longer updates the card. If the visitor then moves the sliders, the grid, readouts and Why note switch to the new numbers, but the card still shows the 5-and-6 takeaway. The checker's after-state shows this: sliders at 6/6, Compare reads 'Same thing', and the card still says 'a 5 and a 6 is twice as likely'.",
+    "Right after the guess, with 0 rolls, the Compare readout says 'Same count so far: keep rolling'. 'No rolls yet' would be clearer.",
+    "If after 200 rolls two 6s happens to have come up more often than 5-and-6 (unlucky but possible), a visitor who guessed 'Two 6s' is told 'The grid shows that's not how it works'. This is still honest because the box count decides it, but the card could say more clearly that the boxes, not this run's rolls, settle the answer.",
+    "The guess panel stays on screen after the guess and pushes the 'Roll once' button onto its row, apart from the other roll buttons. The controls row looks a little scattered.",
+    "The phone check only captured the start screen. At 390 px the 560-unit grid scales to about 0.64, so axis labels come out around 10 px. They are readable but small.",
+    "The Why note says every box is equally likely (1 in 36) without showing it. The roughly even grid counts back it up only implicitly."
+   ],
+   "math_errors": [],
+   "shows_why": 5,
+   "fidelity": 5,
+   "clarity": 4,
+   "summary": "The visitor first guesses whether a 5-and-6 or a double 6 is more likely. They then roll a red die and a blue die in batches, and every roll is tallied in a 6\u00d76 grid where the two orange 5-and-6 boxes and the one blue 6-6 box are highlighted, so the 2-in-36 vs 1-in-36 difference shows up in counts they made themselves. After 200 rolls a box-counting explanation and sliders for other number pairs appear, and the page ends with a computed takeaway that answers the student's 'each is 1/6' intuition by counting the two orders."
+  },
+  "repaired": false
+ },
+ {
+  "dir": "/home/claude/pme/val1/b09",
+  "bid": "b09",
+  "review1": {
+   "verdict": "repair",
+   "blocking": [
+    "Stale, false card after balancing (page.html report(), lines 95-115). Once the level first hits 85, phase becomes 'explore'. If the visitor keeps dragging past it, which is likely on a continuous drag from 75 toward 90, the 'not even' branch replaces the card with e.g. '20 points short. Move \"Everyone gets\" down.' The guess feedback and the 'Next: change the class sizes' instruction are lost. Back at 85, the branch for phase==='explore' && !sizesMoved says nothing, so the card keeps saying '20 points short' while the readout shows 0 points. The card is wrong and no longer says what to do next. Fix: add an explore/!sizesMoved even-case MK.say that restates the balance result and the next step, or only leave 'balance' after the size sliders are revealed and acknowledged."
+   ],
+   "minor": [
+    "When the exact mean sits 0.25 from two slider marks (e.g. nA=15, nB=1 gives 71.25), both 71 and 71.5 count as 'even'. The card explains the exact value, so this is harmless.",
+    "After sizes change, the 'even' tolerance lets the card say 'Even at 82.5' while the Left over readout still shows several points extra/short (up to \u00b120 with 80 students). The '(exact even level is \u2026)' note covers it, but the readout and card can look contradictory to a friend.",
+    "On phone, the SVG axis and label text renders quite small (about 9-10px effective).",
+    "The guess field accepts nonsense like 5 points with no range hint. Feedback stays honest ('80 points too low')."
+   ],
+   "math_errors": [],
+   "shows_why": 4,
+   "fidelity": 4,
+   "clarity": 4,
+   "summary": "The page shows 10 teal bars at 70 and 30 purple bars at 90. It asks for one typed guess, then has the visitor slide an 'everyone gets' line until the points above it (given by class B) equal the gaps below it (needed by class A). That level is 85, not the halfway value of 80 from the student's design, and class-size sliders follow so the visitor sees how the bigger class pulls the average. The math is correct for every slider setting (all values computed from the bars; the mean is always within 70-90). One card-state bug can leave a false '\u2026points short, move down' message when the visitor is actually balanced."
+  },
+  "repaired": true,
+  "repairNote": "Fixed the stale card that appeared after balancing: dragging past 85 and back now keeps the guess feedback and the next step. I also made the four minor fixes (Left over readout, 0\u2013100 guess range, bigger axis text on phones). check-page.mjs passes with no problems or warnings, and the changes are listed in /home/claude/pme/val1/b09/repair.md."
+ },
+ {
+  "dir": "/home/claude/pme/val1/b10",
+  "bid": "b10",
+  "review1": {
+   "verdict": "ok",
+   "blocking": [],
+   "minor": [
+    "After year 1, the card's takeaway always says 'a small hospital has more lopsided days', whatever happened that year. With the sliders at 40 vs 45 (expected about 28 vs 25 days), the big hospital will often tie or win in a given year, and the card then states the opposite of the counts it just showed. The year-2+ message should use the same 'this year was unusual' branch (cmp) that year 1 uses.",
+    "The bar-detail note ('2 of the 300 days...') is not refreshed or hidden when more days are simulated, so after the year ends it can still say '300 days' while the readout says 365 (visible in the after screenshot).",
+    "The bar for exactly 60% (e.g. 9 of 15) is centred on the dashed 60% line and sits half inside the blue 'over 60%' zone while coloured grey. Correct, but it may confuse a reader who counts bars in the shaded area.",
+    "The 'why' note is long for the side column and, on a narrow layout, the explanation sits far below the charts. It is not broken, but it is wordy.",
+    "The guess row stays on screen (locked) under the stage after the year is done. It takes space but is harmless."
+   ],
+   "math_errors": [],
+   "shows_why": 4,
+   "fidelity": 5,
+   "clarity": 4,
+   "summary": "The visitor picks small, big or about the same, then simulates a year of births one day at a time or all at once in a 15-baby and a 45-baby hospital. Each day shows blue and pink babies and adds to a histogram of the daily share of boys, with over-60% days shaded and counted. After the year, a note explains the result using the gap from half, the observed range and the exact long-run averages (55 vs 25 days, checked), and sliders let the visitor compare other hospital sizes."
+  },
+  "repaired": false
+ },
+ {
+  "dir": "/home/claude/pme/val1/b11",
+  "bid": "b11",
+  "review1": {
+   "verdict": "ok",
+   "blocking": [],
+   "minor": [
+    "Ages from about 31.7 to 32.2 produce 'A billion seconds ago, you were about 0 years old' (e.g. age 32). True, but it reads oddly. Use one decimal place or different wording when the gap is under 1 year.",
+    "The takeaway only appears in the card after the visitor moves the 'Count to' slider. A visitor who stops after entering their age never sees the one- or two-sentence takeaway (the card does tell them to use the slider, so this is low risk).",
+    "The million sliver on the billion timeline has a minimum width of 1 SVG unit, about twice its true width of roughly 0.5 units, even though the code comment says it is drawn at true width. The difference is negligible but not literally true scale.",
+    "At phone width the SVG labels render at roughly 9-10 px (for example '1,000,000 reached (11.6 days)' and the tick numbers). They are readable but small.",
+    "The guess asks only about the billion. The brief asks about both a million and a billion, but the million is then counted first, so the design is still covered.",
+    "In the explore phase the readout labels change ('Count to a thousand' / 'Time it takes') but the side column still reads top to bottom as before. Fine, but the table already repeats the same information."
+   ],
+   "math_errors": [],
+   "shows_why": 4,
+   "fidelity": 5,
+   "clarity": 4,
+   "summary": "The visitor guesses how long counting to a billion takes (one of five options), presses 'Count one more day' to fill day boxes until passing 1,000,000 (computed at 11 days 13 h 46 min 40 s), then counts years until passing 1,000,000,000 (31.7 years). They then type their age to see their life on the same year scale. I checked every number by hand and by playing the page to the end at desktop and 390 px (ages 20, 32 and 110, all guesses, slider at both extremes): the guess feedback ratios (827x, 127x, 11x, 9x too long), the 1,000 \u00d7 11.57 days = 11,574 days \u00f7 365\u00bc = 31.7 years explanation, and the powers-of-ten table are all correct, with no errors, overflow or overlapping labels. This is the student's calm, minimal million-vs-billion timeline with their life for comparison."
+  },
+  "repaired": false
+ },
+ {
+  "dir": "/home/claude/pme/val1/b12",
+  "bid": "b12",
+  "review1": {
+   "verdict": "ok",
+   "blocking": [],
+   "minor": [
+    "The 'sin = height \u00f7 spoke' readout and the why-note divide the rounded height but show the unrounded result. With some spoke lengths the line doesn't check out. Example: 13 m spoke at 60\u00b0 shows '11.3 \u00f7 13 = 0.866', but 11.3/13 = 0.869.",
+    "Dragging the car into the lower-left quarter (atan2 below -90\u00b0) snaps it to 90\u00b0 (the top), which feels like a jump. The lower-left should clamp to 0\u00b0 or be ignored.",
+    "Angles only count as visited if the visitor lands exactly on 30\u00b0, 60\u00b0 or 90\u00b0. A fast slider move or drag can skip 60\u00b0. In the checker run the car went from 30\u00b0 to 90\u00b0 and was sitting at 71\u00b0 while the card still said 'keep turning to 60\u00b0'. Drag snapping (\u00b13\u00b0) helps, but the slider has no snap.",
+    "At 390 px wide, the SVG labels ('hub level', pole ticks, 'Height above hub') are very small (about 6\u20137 px).",
+    "After the guess is resolved, the card says 'Read why on the right'. On a phone the side column sits below the stage, so 'on the right' is wrong there.",
+    "The mirror-car proof (equilateral triangle at 30\u00b0) is an extra explanation the student didn't ask for. It's a reasonable gap-fill, but it adds a second interaction to the page."
+   ],
+   "math_errors": [],
+   "shows_why": 5,
+   "fidelity": 5,
+   "clarity": 4,
+   "summary": "A sunset fairground Ferris wheel: the visitor first guesses whether a 60\u00b0 turn lifts them twice as high as a 30\u00b0 turn. They then drag their car or slide the turn angle and read measured heights (10 m vs 17.3 m on a 20 m spoke), pinned on a height pole and in a table, with a right triangle showing sin = height \u00f7 spoke. The page then explains the shrinking climbs (mostly sideways near the top), lets them vary the spoke length to show sine depends only on the angle, offers a mirror-car equilateral argument for exactly 1/2, and ends with a computed takeaway."
+  },
+  "repaired": false
+ }
+]

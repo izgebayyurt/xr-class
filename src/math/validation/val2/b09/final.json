@@ -1,0 +1,121 @@
+{
+ "file": "b09/page.html",
+ "lines": 141,
+ "usesKit": true,
+ "problems": [],
+ "warnings": [],
+ "desktop": {
+  "errors": [],
+  "kit": true,
+  "start": {
+   "card": "Class A has 10 students, and their average test score is 70 points. Class B has 30 students, and their average is 90 points.\nWhat is the average score of all 40 students together? Type your guess.",
+   "title": "Two classes, one average",
+   "overflowX": false,
+   "height": 800,
+   "shownErr": [],
+   "svgTextOverlaps": [],
+   "offscreenSvgText": [],
+   "guessBelowFold": -183,
+   "longText": [],
+   "guessOpen": true,
+   "visibleButtons": [
+    "Lock in my guess",
+    "Start over"
+   ]
+  },
+  "guessKind": "input",
+  "guessLogged": true,
+  "afterGuess": {
+   "card": "You guessed 5 points. Now put all the students into one big group.\nClick each student to add their score, or press \"Add everyone left\".",
+   "title": "Two classes, one average",
+   "overflowX": false,
+   "height": 800,
+   "shownErr": [],
+   "svgTextOverlaps": [],
+   "offscreenSvgText": [],
+   "guessBelowFold": null,
+   "longText": [],
+   "guessOpen": false,
+   "visibleButtons": [
+    "Add everyone left",
+    "Start over"
+   ]
+  },
+  "after": {
+   "card": "Class A now has 25 students and class B has 40.\nClick each student, or press \"Add everyone left\", to find the average of all 65.",
+   "title": "Two classes, one average",
+   "overflowX": false,
+   "height": 856,
+   "shownErr": [],
+   "svgTextOverlaps": [],
+   "offscreenSvgText": [],
+   "guessBelowFold": -67,
+   "longText": [],
+   "guessOpen": true,
+   "visibleButtons": [
+    "Add everyone left",
+    "Start over"
+   ]
+  },
+  "eventsAfter": [
+   "ready",
+   "enter",
+   "guess",
+   "say",
+   "click",
+   "pooled",
+   "say",
+   "click",
+   "say",
+   "reached",
+   "say",
+   "say",
+   "slide",
+   "slide",
+   "click",
+   "say",
+   "say",
+   "slide",
+   "slide"
+  ],
+  "restart": {
+   "card": "Class A has 10 students, and their average test score is 70 points. Class B has 30 students, and their average is 90 points.\nWhat is the average score of all 40 students together? Type your guess.",
+   "title": "Two classes, one average",
+   "overflowX": false,
+   "height": 800,
+   "shownErr": [],
+   "svgTextOverlaps": [],
+   "offscreenSvgText": [],
+   "guessBelowFold": -183,
+   "longText": [],
+   "guessOpen": true,
+   "visibleButtons": [
+    "Lock in my guess",
+    "Start over"
+   ]
+  },
+  "firstGuessBeforeVisitor": false
+ },
+ "phone": {
+  "errors": [],
+  "kit": true,
+  "start": {
+   "card": "Class A has 10 students, and their average test score is 70 points. Class B has 30 students, and their average is 90 points.\nWhat is the average score of all 40 students together? Type your guess.",
+   "title": "Two classes, one average",
+   "overflowX": false,
+   "height": 844,
+   "shownErr": [],
+   "svgTextOverlaps": [],
+   "offscreenSvgText": [],
+   "guessBelowFold": -205,
+   "longText": [],
+   "guessOpen": true,
+   "visibleButtons": [
+    "Lock in my guess",
+    "Start over"
+   ]
+  },
+  "events": 1
+ },
+ "pass": true
+}

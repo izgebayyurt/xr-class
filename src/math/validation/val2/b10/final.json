@@ -1,0 +1,124 @@
+{
+ "file": "b10/page.html",
+ "lines": 153,
+ "usesKit": true,
+ "problems": [],
+ "warnings": [],
+ "desktop": {
+  "errors": [],
+  "kit": true,
+  "start": {
+   "card": "Two hospitals: a big one where 45 babies are born each day, and a small one with 15.\nOver one year, which has more days when over 60% of the babies (more than 6 in every 10) are boys?\nMake a guess first.",
+   "title": "Big and Small Hospitals",
+   "overflowX": false,
+   "height": 800,
+   "shownErr": [],
+   "svgTextOverlaps": [],
+   "offscreenSvgText": [],
+   "guessBelowFold": -112,
+   "longText": [],
+   "guessOpen": true,
+   "visibleButtons": [
+    "The big hospital",
+    "The small hospital",
+    "About the same",
+    "Start over"
+   ]
+  },
+  "guessKind": "choice",
+  "guessLogged": true,
+  "afterGuess": {
+   "card": "You guessed: the big hospital. Let's test it.\nPress \"Run 1 day\" to see one day of births in each hospital.",
+   "title": "Big and Small Hospitals",
+   "overflowX": false,
+   "height": 800,
+   "shownErr": [],
+   "svgTextOverlaps": [],
+   "offscreenSvgText": [],
+   "guessBelowFold": null,
+   "longText": [],
+   "guessOpen": false,
+   "visibleButtons": [
+    "Run 1 day",
+    "Start over"
+   ]
+  },
+  "after": {
+   "card": "The small hospital now has 45 babies a day.\nPress \"Run a new year\" to count the days again.",
+   "title": "Big and Small Hospitals",
+   "overflowX": false,
+   "height": 1297,
+   "shownErr": [],
+   "svgTextOverlaps": [],
+   "offscreenSvgText": [],
+   "guessBelowFold": 407,
+   "longText": [],
+   "guessOpen": true,
+   "visibleButtons": [
+    "Run a new year",
+    "Start over"
+   ]
+  },
+  "eventsAfter": [
+   "ready",
+   "pick",
+   "guess",
+   "say",
+   "click",
+   "say",
+   "look",
+   "look",
+   "click",
+   "click",
+   "year",
+   "say",
+   "click",
+   "say",
+   "say",
+   "slide"
+  ],
+  "restart": {
+   "card": "Two hospitals: a big one where 45 babies are born each day, and a small one with 15.\nOver one year, which has more days when over 60% of the babies (more than 6 in every 10) are boys?\nMake a guess first.",
+   "title": "Big and Small Hospitals",
+   "overflowX": false,
+   "height": 800,
+   "shownErr": [],
+   "svgTextOverlaps": [],
+   "offscreenSvgText": [],
+   "guessBelowFold": -112,
+   "longText": [],
+   "guessOpen": true,
+   "visibleButtons": [
+    "The big hospital",
+    "The small hospital",
+    "About the same",
+    "Start over"
+   ]
+  },
+  "firstGuessBeforeVisitor": false
+ },
+ "phone": {
+  "errors": [],
+  "kit": true,
+  "start": {
+   "card": "Two hospitals: a big one where 45 babies are born each day, and a small one with 15.\nOver one year, which has more days when over 60% of the babies (more than 6 in every 10) are boys?\nMake a guess first.",
+   "title": "Big and Small Hospitals",
+   "overflowX": false,
+   "height": 1281,
+   "shownErr": [],
+   "svgTextOverlaps": [],
+   "offscreenSvgText": [],
+   "guessBelowFold": 318,
+   "longText": [],
+   "guessOpen": true,
+   "visibleButtons": [
+    "The big hospital",
+    "The small hospital",
+    "About the same",
+    "Start over"
+   ]
+  },
+  "events": 1
+ },
+ "pass": true
+}

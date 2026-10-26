@@ -1,0 +1,24 @@
+{
+  "title": "Up 25%, Down 25%: the shirt price",
+  "concept": "Successive percent changes: going up by a percent and then down by the same percent does not cancel, because the second percent is taken from a different price. $100 up 25% is $125; 25% off $125 is $93.75.",
+  "kept": [
+    "The question: a price goes up 25% on Monday and down 25% on Tuesday; is it back where it started?",
+    "The $100 shirt as the starting example",
+    "Bars showing the price at the start, after Monday and after Tuesday",
+    "The explanation that the 25% down is taken from a bigger number",
+    "The friend's likely mistake (+25 and -25 cancel) offered as a guess option",
+    "Store look: price tags under each bar and a red sale sign for the 25% off day",
+    "Flat 2D"
+  ],
+  "filled_in": [
+    "Order of events (design left it blank): guess where the price ends, press Monday, press Tuesday, read why, explore, takeaway",
+    "Multiple-choice guess: back to $100 / less / more, marked right or wrong against the computed final price",
+    "Each bar is cut into white dashed slices of 25% of the price before that day's change, so the added (green) and cut (red, dashed) pieces can be compared to the slices",
+    "Plain-words definition of percent in the opening card",
+    "Readouts for the current price and the gap from the start (in dollars and percent)",
+    "Exploration: percent slider (5% to 90%), start price slider ($20 to $200 in $20 steps) and an order switch (up then down, or down then up)",
+    "Takeaway sentence in the card once the visitor explores"
+  ],
+  "changed": [],
+  "math_check": "All prices are exact fractions (MK.frac): Monday = start x (100 +/- p)/100, Tuesday = Monday x (100 -/+ p)/100. Checked by hand: 100 -> 125 -> 93.75, loss 6.25 = 25% of 25 (6.25% less); down first 100 -> 75 -> 93.75; 200 down 90% -> 20, up 90% -> 38, loss 162 = 90% of 180 (81% less). Start prices are multiples of $20 and percents multiples of 5, so every result is a whole number of cents and the 2-decimal display is exact. The student's math was correct, so nothing was changed. check-page.mjs: no problems, no warnings; screenshots reviewed at laptop and phone width."
+}

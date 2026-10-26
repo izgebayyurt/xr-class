@@ -1,0 +1,155 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Interest on Interest</title>
+<script src="mathkit.js"></script>
+</head>
+<body>
+<script>
+// $1,000 at 7% a year for 30 years: a compound-interest coin stack next to a simple-interest coin stack, grown one year at a time.
+// Every amount on screen is computed here, year by year, from the stacks being drawn.
+MK.start({ title: 'Interest on interest', build,
+  css: `:root{--accent:#1f7a4d;--soft:#e3f2e8;--bg:#f1f6f2;--line:#cfdcd2}` });
+
+function build(){
+  const W = 560, H = 474, BASE = 420, CH = 4.25, MAXC = 80, P0 = 1000;
+  const XC = 175, XS = 385, HW = 50;                                // stack centres and half-width
+  const ORIG = '#235c3c', CGREEN = '#4cb874', SGOLD = '#d7a93a', EDGE = '#123a24';
+  const money = x => MK.fmt(x, { money: true, dp: 2, fixed: true });
+  const COINS = [100, 200, 500, 1000, 2000, 5000, 10000, 20000, 50000];
+
+  let rate = 7, years = 30, year = 0, guessed = null, playing = null, done = false;
+  let h = grow(rate, years), coin = pickCoin(h);
+
+  MK.say('You put $1,000 in a savings account that pays 7% interest a year.\nInterest is money the bank pays you for keeping your money there. 7% means $7 for every $100 you have, each year.\nYou leave it alone for 30 years. Roughly how much is there at the end? Make a guess first.');
+  MK.model('interest is added once at the end of each year; no deposits, withdrawals, fees or taxes.');
+  const S = MK.svg(W, H, { maxHeight: '64vh', fontSize: 15 });
+
+  MK.guess({ ask: 'Your guess: about how many dollars after 30 years?', unit: 'dollars', placeholder: 'amount' }, v => {
+    guessed = v;
+    MK.say(`You guessed ${money(v)}. Now let's grow the money one year at a time. Each coin is $100.\nCompound stack (left): every year it earns 7% of everything in it, old interest included.\nSimple stack (right): every year it earns 7% of the first $1,000 only.\nPress "Next year".`);
+    MK.show(next, play, rYear, rC, rS, rGap, why); update();
+  });
+  const next = MK.button('Next year', () => step()).hide();
+  const play = MK.button('Play to year 30', api => {
+    api.enable(false); next.enable(false);
+    playing = MK.every(220, () => { step(); if (done){ MK.stop(playing); playing = null; } });
+  }, { alt: true }).hide();
+  const rateS = MK.slider({ label: 'Interest rate', min: 1, max: 12, step: 1, value: 7, format: v => v + '% a year', onInput: v => { rate = v; explore(); } }).hide();
+  const yearsS = MK.slider({ label: 'Years', min: 1, max: 50, step: 1, value: 30, format: v => v + ' years', onInput: v => { years = v; explore(); } }).hide();
+
+  const rYear = MK.readout('Year', '0 of 30').hide();
+  const rC = MK.readout('Compound stack', '').hide();
+  const rS = MK.readout('Simple stack', '').hide();
+  const rGap = MK.readout('Gap between the stacks', '').hide();
+  const why = MK.note('').hide();
+  const r72 = MK.note('').hide();
+  const table = MK.table(['Year', 'Compound earned', 'Simple earned'], []).hide();
+
+  // year-by-year growth: each year's interest is computed from the stack as it stands
+  function grow(r, Y){
+    const c = [P0], s = [P0], ci = [0], si = [0];
+    for (let y = 1; y <= Y; y++){
+      const a = c[y - 1] * r / 100, b = P0 * r / 100;
+      c.push(c[y - 1] + a); ci.push(a); s.push(s[y - 1] + b); si.push(b);
+    }
+    return { c, s, ci, si };
+  }
+  function pickCoin(hh){ const top = hh.c[hh.c.length - 1]; return COINS.find(v => top / v <= MAXC) || COINS[COINS.length - 1]; }
+  const yOf = v => BASE - v / coin * CH;
+
+  function stack(cx, value, color){
+    const n = value / coin, full = Math.floor(n + 1e-9), part = n - full;
+    for (let k = 0; k < full; k++){
+      const isOrig = (k + 1) * coin <= P0 + 1e-9;
+      S.rect(cx - HW, BASE - (k + 1) * CH, HW * 2, CH, { fill: isOrig ? ORIG : color, stroke: EDGE, 'stroke-width': 0.6, rx: 1.5 });
+    }
+    if (part > 0.02) S.rect(cx - HW, BASE - n * CH, HW * 2, part * CH, { fill: color, stroke: EDGE, 'stroke-width': 0.6, rx: 1 });
+  }
+  function bracket(cx, value, add, y, left){
+    if (!(add > 0)) return;
+    const y1 = yOf(value), y2 = yOf(value - add), x = left ? cx - HW - 6 : cx + HW + 6, d = left ? -6 : 6, ym = (y1 + y2) / 2;
+    S.path(`M${x - d} ${y1} H${x} V${y2} H${x - d}`, { stroke: '#1d2330', 'stroke-width': 1.5 });
+    const tx = left ? x - 8 : x + 8, a = left ? 'end' : 'start';
+    S.text(tx, ym - 9, '+' + money(add), { size: 14, weight: 650, anchor: a });
+    S.text(tx, ym + 9, 'in year ' + y, { size: 13, anchor: a, fill: '#5d6676' });
+  }
+  function draw(){
+    S.clear();
+    const c = h.c[year], s = h.s[year];
+    S.text(W / 2, 20, `Year ${year}  ·  each coin = $${coin.toLocaleString('en-US')}`, { size: 18, weight: 700 });
+    [[40, ORIG, `your first $1,000`], [215, CGREEN, 'compound interest'], [390, SGOLD, 'simple interest']].forEach(([x, f, t]) => {
+      S.rect(x, 40, 14, 12, { fill: f, stroke: EDGE, 'stroke-width': 0.6, rx: 2 }); S.text(x + 20, 46, t, { size: 13, anchor: 'start', fill: '#3d4a42' });
+    });
+    S.line(40, BASE, W - 40, BASE, { stroke: '#1d2330', 'stroke-width': 2 });
+    stack(XC, c, CGREEN); stack(XS, s, SGOLD);
+    S.text(XC, yOf(c) - 13, money(c), { size: 15, weight: 700, fill: '#1f7a4d' });
+    S.text(XS, yOf(s) - 13, money(s), { size: 15, weight: 700, fill: '#8a6a16' });
+    bracket(XC, c, h.ci[year], year, true); bracket(XS, s, h.si[year], year, false);
+    const yc = yOf(c), ys = yOf(s);
+    if (ys - yc > 6){                                                  // the gap, measured between the two stack tops
+      S.line(XC - HW, ys, XS - HW, ys, { stroke: '#5d6676', 'stroke-width': 1.2, 'stroke-dasharray': '5 4' });
+      S.path(`M280 ${ys} V${yc} M274 ${yc + 7} L280 ${yc} L286 ${yc + 7}`, { stroke: '#5d6676', 'stroke-width': 1.5 });
+      if (ys - yc > 44){ const m = (ys + yc) / 2; const halo = { stroke: '#fff', 'stroke-width': 5, 'paint-order': 'stroke' };
+        S.text(280, m - 9, 'gap', { size: 13, fill: '#5d6676', ...halo }); S.text(280, m + 9, money(c - s), { size: 14, weight: 650, ...halo }); }
+    }
+    S.text(XC, BASE + 20, 'Compound stack', { size: 15, weight: 700 });
+    S.text(XC, BASE + 40, `earns ${rate}% of the whole stack`, { size: 13, fill: '#5d6676' });
+    S.text(XS, BASE + 20, 'Simple stack', { size: 15, weight: 700 });
+    S.text(XS, BASE + 40, `earns ${rate}% of $1,000 only`, { size: 13, fill: '#5d6676' });
+  }
+  function update(){
+    draw();
+    const c = h.c[year], s = h.s[year];
+    rYear.set(`${year} of ${years}`); rC.set(money(c)); rS.set(money(s)); rGap.set(money(c - s));
+    if (year === 0) why.set('Nothing yet: both stacks start as the same 10 coins ($1,000).');
+    else why.set(`Year ${year}: the compound stack earned ${rate}% of ${money(h.c[year - 1])} = ${money(h.ci[year])}.\nThe simple stack earned ${rate}% of $1,000 = ${money(h.si[year])}, the same as every year.`);
+  }
+  function step(){
+    if (guessed === null || year >= years) return;
+    year++; update();
+    if (year < years){
+      MK.say(`Year ${year} of ${years}. This year the compound stack earned ${money(h.ci[year])}; the simple stack earned ${money(h.si[year])}.\nWatch the brackets: the compound stack's yearly growth keeps getting bigger. ${playing ? 'Playing one year at a time…' : 'Press "Next year" again, or "Play to year 30".'}`);
+    } else finish();
+  }
+  function rows(){
+    const ys = [...new Set([1, 5, 10, 15, 20, 25, 30, 40, 50].filter(y => y <= years).concat(years))].sort((a, b) => a - b);
+    return ys.map(y => [y, money(h.ci[y]), money(h.si[y])]);
+  }
+  function explainEnd(){
+    const Y = years, c = h.c[Y], s = h.s[Y];
+    why.set(`Why the compound stack wins: each year it earns ${rate}% of everything in it, including the interest from earlier years. So its yearly interest grew from ${money(h.ci[1])} in year 1 to ${money(h.ci[Y])} in year ${Y} (see the table).\nThe simple stack earns ${money(h.si[1])} every year: ${money(P0)} + ${Y} × ${money(h.si[1])} = ${money(s)}.`);
+    const dbl = 72 / rate, d = Math.round(Y / dbl), chain = Array.from({ length: d + 1 }, (_, k) => '$' + (P0 * 2 ** k).toLocaleString('en-US'));
+    const passed = [];
+    for (let k = 1; P0 * 2 ** k <= c; k++){ const y = h.c.findIndex(v => v >= P0 * 2 ** k); passed.push(`$${(P0 * 2 ** k).toLocaleString('en-US')} in year ${y}`); }
+    r72.set(`Rule of 72 (a shortcut): 72 ÷ the interest rate ≈ the years it takes money to double. 72 ÷ ${rate} ≈ ${MK.fmt(dbl, { dp: 1 })} years.\n` +
+      (d > 0 ? `${Y} years is about ${d} doubling${d > 1 ? 's' : ''}: ${chain.join(' → ')}. That's a rough estimate; the exact stack is ${money(c)}.`
+             : `${Y} years is not enough time to double, so expect less than $2,000. The exact stack is ${money(c)}.`) +
+      (passed.length ? `\nIn the stacks, the compound stack passed ${passed.join(', ')}.` : ''));
+    table.set(rows(), rows().length - 1);
+    return { c, s, ratio: c / s };
+  }
+  const TAKE = 'Takeaway: with compound interest your interest earns interest too, so the stack grows faster every year. The longer you wait, the bigger the gap.';
+  function finish(){
+    done = true; MK.hide(next, play); MK.show(r72, table, rateS, yearsS);
+    const { c, s, ratio } = explainEnd();
+    const off = guessed - c, nearSimple = Math.abs(guessed - s) < Math.abs(guessed - c);
+    let fb = `You guessed ${money(guessed)}, which is ${money(Math.abs(off))} ${off < 0 ? 'below' : 'above'} the compound stack.`;
+    if (Math.abs(off) <= 0.1 * c) fb = `You guessed ${money(guessed)}: close! Only ${money(Math.abs(off))} ${off < 0 ? 'below' : 'above'} the compound stack.`;
+    else if (nearSimple) fb += ' Your guess is nearer the simple stack: that answer forgets the interest earns interest.';
+    MK.log('reached', { year: years, compound: +c.toFixed(2), simple: s, guess: guessed });
+    MK.say(`Year 30. Compound stack: ${money(c)}. Simple stack: ${money(s)}. The compound stack is ${MK.fmt(ratio, { dp: 1 })} times as big.\n${fb}\nNow try other interest rates and numbers of years with the sliders.\n${TAKE}`);
+  }
+  function explore(){
+    if (playing) MK.stop(playing), playing = null;
+    h = grow(rate, years); coin = pickCoin(h); year = years; update();
+    const { c, s, ratio } = explainEnd();
+    MK.say(`At ${rate}% a year for ${years} year${years > 1 ? 's' : ''}: compound stack ${money(c)}, simple stack ${money(s)} (${MK.fmt(ratio, { dp: 1 })} times as big). Try more combinations.\n${TAKE}`);
+  }
+  draw();
+}
+</script>
+</body>
+</html>

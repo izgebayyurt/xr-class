@@ -1,0 +1,108 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Students and Professors</title>
+<script src="mathkit.js"></script>
+</head>
+<body>
+<script>
+// Student design: "There are six times as many students as professors." Is it S = 6P or 6S = P?
+// Put in numbers (2 professors, 12 students) and see which equation works.
+MK.start({ title: 'Six times as many students', build, css: `
+  .eqs{display:flex;gap:10px;flex-wrap:wrap}
+` });
+
+function build(){
+  const W = 560, H = 380, ROW = 50, PER = 6;          // PER: the "six" from the sentence
+  let P = 2, picked = null, tested = new Set(), explored = false;
+  let profs = [], studs = [];                         // the drawn objects; every count comes from these
+
+  MK.say('At a college, there are six times as many students as professors.\nLet S be the number of students and P the number of professors. Which equation says the same thing? Pick one first.');
+  MK.model('each professor is drawn with a group of 6 students, so the picture always matches the sentence.');
+  const S = MK.svg(W, H, { maxHeight: '52vh' });
+
+  const EQS = [
+    { name: 'S = 6P', left: () => ({ txt: `S = ${studs.length}`, v: studs.length }),
+                      right: () => ({ txt: `6P = 6 × ${profs.length} = ${6 * profs.length}`, v: 6 * profs.length }) },
+    { name: '6S = P', left: () => ({ txt: `6S = 6 × ${studs.length} = ${6 * studs.length}`, v: 6 * studs.length }),
+                      right: () => ({ txt: `P = ${profs.length}`, v: profs.length }) },
+  ];
+
+  MK.guess({ ask: 'Your pick: which equation matches the sentence?', options: EQS.map(e => e.name) }, (v, i) => {
+    picked = i; draw();
+    MK.say(`You picked ${v}. Now check it by putting in numbers.\nHere is a small college: count ${profs.length} professors and ${studs.length} students. Then press each equation to plug the numbers in.`);
+    MK.show(pCount, sCount, testBtns, table);
+  });
+
+  const testBtns = MK.choices(EQS.map(e => 'Test ' + e.name), i => test(i), { ask: 'Plug the numbers into each equation' }).hide();
+  const slider = MK.slider({ label: 'Professors', min: 1, max: 6, value: 2, format: v => `${v}`, onInput: v => {
+    P = v; draw(); refresh();
+    if (!explored){ explored = true; MK.log('explored', { P: v }); }
+    MK.say(`Now there are ${profs.length} professors and ${studs.length} students. Look at the table: which equation still works?\n` +
+      'Takeaway: "six times as many students as professors" is S = 6P. The 6 goes with the smaller group (professors) to make it as big as the bigger group (students). When unsure, put in numbers.');
+  } }).hide();
+
+  const pCount = MK.readout('Professors (P), counted', '').hide();
+  const sCount = MK.readout('Students (S), counted', '').hide();
+  const table = MK.table(['Equation', 'Left side', 'Right side', 'True?'], [], { where: 'stage' }).hide();
+  const why = MK.note('').hide();
+  const words = MK.note('Words: an equation says two amounts are equal. A letter like S stands for a number (how many students). 6P means 6 × P.').hide();
+
+  function draw(){
+    S.clear(); profs = []; studs = [];
+    const h = picked === null ? 140 : 50 + P * ROW + 10;
+    S.node.setAttribute('viewBox', `0 0 ${W} ${h}`);    // picture height follows the number of rows
+    if (picked === null){ S.text(W / 2, h / 2, 'Pick an equation first.', { size: 30, fill: '#5d6676' }); return; }
+    const top = 50;
+    // legend
+    S.circle(30, 18, 11, { fill: '#e8912d' }); S.text(48, 18, 'professor', { anchor: 'start', size: 15 });
+    S.circle(160, 18, 9, { fill: '#2f6fde' }); S.text(176, 18, 'student', { anchor: 'start', size: 15 });
+    for (let r = 0; r < P; r++){
+      const y = top + r * ROW + ROW / 2;
+      S.rect(14, y - 21, W - 28, 42, { fill: '#eef3fc', rx: 10 });
+      profs.push(S.circle(50, y, 15, { fill: '#e8912d', stroke: '#1d2330', 'stroke-width': 1.5 }));
+      S.line(74, y, 104, y, { stroke: '#9aa3b2', 'stroke-width': 1.5, 'stroke-dasharray': '4 4' });
+      for (let k = 0; k < PER; k++) studs.push(S.circle(134 + k * 62, y, 12, { fill: '#2f6fde' }));
+    }
+    pCount.set(`${profs.length}`);
+    sCount.set(`${studs.length}`);
+  }
+
+  function row(i){
+    const e = EQS[i], L = e.left(), R = e.right();
+    return [e.name, L.txt, R.txt, L.v === R.v ? 'Yes ✓' : `No: ${L.v} ≠ ${R.v}`];
+  }
+
+  function test(i){
+    if (picked === null) return;
+    tested.add(i);
+    const L = EQS[i].left(), R = EQS[i].right();
+    testBtns.mark(i, L.v === R.v ? 'right' : 'wrong');
+    MK.log('tested', { eq: EQS[i].name, P: profs.length, S: studs.length, works: L.v === R.v });
+    refresh();
+    if (tested.size < 2){
+      MK.say(`${EQS[i].name}: left side ${L.v}, right side ${R.v}. ${L.v === R.v ? 'They match.' : 'They don\'t match.'}\nNow press the other equation to test it too.`);
+      return;
+    }
+    testBtns.lock();
+    const ok = EQS[picked].left().v === EQS[picked].right().v;
+    MK.say((ok ? `Your pick, ${EQS[picked].name}, is the one that works.`
+                : `Your pick, ${EQS[picked].name}, did not work. That is the most common mix-up: the words go "six ... students", so it feels like 6S.`) +
+      '\nRead the Why box, then move the Professors slider to test other numbers.');
+    MK.show(why, words, slider);
+  }
+
+  function refresh(){
+    table.set([...tested].sort().map(row), -1);
+    const p = profs.length, s = studs.length;
+    why.set(`Why: every professor comes with ${PER} students, so the students are ${PER} × the professors: S = ${PER} × ${p} = ${s}.\n` +
+      `6S = P would say the professors are 6 × the students: P = 6 × ${s} = ${6 * s} professors for ${s} students. That is six times as many professors, the opposite of the sentence.`);
+  }
+
+  draw();
+}
+</script>
+</body>
+</html>

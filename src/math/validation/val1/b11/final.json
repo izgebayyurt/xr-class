@@ -1,0 +1,111 @@
+{
+ "file": "b11/page.html",
+ "lines": 166,
+ "usesKit": true,
+ "problems": [],
+ "warnings": [],
+ "desktop": {
+  "errors": [],
+  "kit": true,
+  "start": {
+   "card": "Imagine counting out loud, one number every second, without stopping.\nA million is 1,000,000. A billion is 1,000,000,000.\nHow long would it take to count to a billion? Pick your guess below.",
+   "title": "Counting to a billion",
+   "overflowX": false,
+   "height": 819,
+   "shownErr": [],
+   "svgTextOverlaps": [],
+   "offscreenSvgText": [],
+   "guessOpen": true,
+   "visibleButtons": [
+    "About 2 weeks",
+    "About 3 months",
+    "About 3 years",
+    "About 30 years",
+    "About 300 years",
+    "Start over"
+   ]
+  },
+  "guessKind": "choice",
+  "guessLogged": true,
+  "afterGuess": {
+   "card": "You guessed \"About 2 weeks\". Let's find out by counting.\nFirst, a million. Each box on the top timeline is one day of counting (86,400 numbers). Press \"Count one more day\" until you pass 1,000,000.",
+   "title": "Counting to a billion",
+   "overflowX": false,
+   "height": 870,
+   "shownErr": [],
+   "svgTextOverlaps": [],
+   "offscreenSvgText": [],
+   "guessOpen": false,
+   "visibleButtons": [
+    "Count one more day",
+    "Start over"
+   ]
+  },
+  "after": {
+   "card": "You guessed \"About 2 weeks\". Let's find out by counting.\nFirst, a million. Each box on the top timeline is one day of counting (86,400 numbers). Press \"Count one more day\" until you pass 1,000,000.",
+   "title": "Counting to a billion",
+   "overflowX": false,
+   "height": 870,
+   "shownErr": [],
+   "svgTextOverlaps": [],
+   "offscreenSvgText": [],
+   "guessOpen": false,
+   "visibleButtons": [
+    "Count one more day",
+    "Start over"
+   ]
+  },
+  "eventsAfter": [
+   "ready",
+   "pick",
+   "guess",
+   "say",
+   "click",
+   "click",
+   "click"
+  ],
+  "restart": {
+   "card": "Imagine counting out loud, one number every second, without stopping.\nA million is 1,000,000. A billion is 1,000,000,000.\nHow long would it take to count to a billion? Pick your guess below.",
+   "title": "Counting to a billion",
+   "overflowX": false,
+   "height": 819,
+   "shownErr": [],
+   "svgTextOverlaps": [],
+   "offscreenSvgText": [],
+   "guessOpen": true,
+   "visibleButtons": [
+    "About 2 weeks",
+    "About 3 months",
+    "About 3 years",
+    "About 30 years",
+    "About 300 years",
+    "Start over"
+   ]
+  },
+  "firstGuessBeforeVisitor": false
+ },
+ "phone": {
+  "errors": [],
+  "kit": true,
+  "start": {
+   "card": "Imagine counting out loud, one number every second, without stopping.\nA million is 1,000,000. A billion is 1,000,000,000.\nHow long would it take to count to a billion? Pick your guess below.",
+   "title": "Counting to a billion",
+   "overflowX": false,
+   "height": 919,
+   "shownErr": [],
+   "svgTextOverlaps": [],
+   "offscreenSvgText": [],
+   "guessOpen": true,
+   "visibleButtons": [
+    "About 2 weeks",
+    "About 3 months",
+    "About 3 years",
+    "About 30 years",
+    "About 300 years",
+    "Start over"
+   ]
+  },
+  "events": 1
+ },
+ "pass": true
+}

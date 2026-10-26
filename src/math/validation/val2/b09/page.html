@@ -1,0 +1,140 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Two Classes, One Average</title>
+<script src="mathkit.js"></script>
+</head>
+<body>
+<script>
+// Class A: 10 students averaging 70. Class B: 30 students averaging 90. Average of all 40?
+// Visitor guesses, then pools every student into one group and watches the running total and average.
+MK.start({ title: 'Two classes, one average', build });
+
+function build(){
+  const W = 560, H = 320, SA = 70, SB = 90, LY = 268;
+  const COL = { A: '#e8912d', B: '#2f6fde' };
+  const X = MK.scale(60, 100, 40, 500);
+  let nA = 10, nB = 30, desks = [], guessed = null, phase = 'guess', auto = null, tries = [];
+
+  MK.say('Class A has 10 students, and their average test score is 70 points. Class B has 30 students, and their average is 90 points.\nWhat is the average score of all 40 students together? Type your guess.');
+  MK.model('each student is shown with their class average. Real scores vary, but a class total (average × students) stays the same.');
+  const S = MK.svg(W, H, { maxHeight: '44vh' });
+
+  MK.guess({ ask: 'Your guess: the average of all 40 students', unit: 'points', placeholder: 'e.g. 75' }, v => {
+    guessed = v; phase = 'count';
+    MK.say(`You guessed ${v} points. Now put all the students into one big group.\nClick each student to add their score, or press "Add everyone left".`);
+    MK.show(cnt, tot, avg, addRest); draw(); report();
+  });
+  const addRest = MK.button('Add everyone left', () => {
+    if (auto) return;
+    addRest.enable(false);
+    auto = MK.every(50, () => {
+      const d = desks.find(x => !x.counted);
+      if (!d){ MK.stop(auto); auto = null; return; }
+      d.counted = true; draw(); report();
+    });
+  }).hide();
+  const whyBtn = MK.button("Why isn't it 80?", () => {
+    const k = nB / nA;
+    why.set(`(70 + 90) ÷ 2 = 80 treats the two classes as if they were the same size.\nBut class B has ${nB} students and class A has ${nA}${Number.isInteger(k) ? `, ${k} times as many` : ''}. Each class B student pulled the dot toward 90.`).show();
+    whyBtn.hide(); phase = 'explore'; MK.show(sa, sb);
+    MK.say('Now change the class sizes with the sliders, then add everyone again.\nCan you find sizes that give exactly 80?');
+    MK.log('reached', { step: 'why' });
+  }).hide();
+  const sa = MK.slider({ label: 'Class A students', min: 1, max: 25, step: 1, value: nA, onInput: v => { nA = v; resize(); } }).hide();
+  const sb = MK.slider({ label: 'Class B students', min: 1, max: 40, step: 1, value: nB, onInput: v => { nB = v; resize(); } }).hide();
+
+  MK.note("Average: add up everyone's points, then divide by the number of students.");
+  const cnt = MK.readout('Students added', '').hide();
+  const tot = MK.readout('Total points', '').hide();
+  const avg = MK.readout('Average so far', '').hide();
+  const sums = MK.note('').hide();
+  const why = MK.note('').hide();
+  const table = MK.table(['Class A', 'Class B', 'Average'], []).hide();
+
+  const avgText = (T, n) => T % n === 0 ? String(T / n) : MK.fmt(T / n, { dp: 2 });
+
+  function makeDesks(){
+    desks = [];
+    for (let i = 0; i < nA; i++) desks.push({ cls: 'A', score: SA, counted: false, x: 36 + (i % 5) * 34, y: 78 + Math.floor(i / 5) * 30 });
+    for (let i = 0; i < nB; i++) desks.push({ cls: 'B', score: SB, counted: false, x: 222 + (i % 10) * 34, y: 78 + Math.floor(i / 10) * 30 });
+  }
+  function resize(){
+    if (auto){ MK.stop(auto); auto = null; }
+    makeDesks(); addRest.enable(true); sums.hide(); draw(); report();
+    MK.say(`Class A now has ${nA} students and class B has ${nB}.\nClick each student, or press "Add everyone left", to find the average of all ${nA + nB}.`);
+  }
+
+  function draw(){
+    S.clear();
+    S.text(104, 26, `Class A: ${nA} student${nA > 1 ? 's' : ''}`, { size: 14, weight: 650 });
+    S.text(104, 46, `average ${SA} points`, { size: 12, fill: COL.A });
+    S.text(375, 26, `Class B: ${nB} student${nB > 1 ? 's' : ''}`, { size: 14, weight: 650 });
+    S.text(375, 46, `average ${SB} points`, { size: 12, fill: COL.B });
+    for (const d of desks){
+      const c = COL[d.cls];
+      S.circle(d.x, d.y, 13, { fill: d.counted ? c : '#fff', stroke: c, 'stroke-width': 2 }).on('click', () => tap(d));
+      S.text(d.x, d.y + 1, d.score, { size: 11, weight: 600, fill: d.counted ? '#fff' : c, 'pointer-events': 'none' });
+    }
+    // number line of scores
+    S.line(X(60), LY, X(100), LY, { stroke: '#1d2330', 'stroke-width': 1.5 });
+    S.text(X(100) + 8, LY, 'points', { size: 12, anchor: 'start', fill: '#5d6676' });
+    for (const t of MK.ticks(60, 100, 8)){
+      S.line(X(t), LY - 4, X(t), LY + 4, { stroke: t === SA ? COL.A : t === SB ? COL.B : '#1d2330', 'stroke-width': t === SA || t === SB ? 3 : 1.5 });
+      S.text(X(t), LY + 16, t, { size: 12, fill: t === SA ? COL.A : t === SB ? COL.B : '#5d6676', weight: t === SA || t === SB ? 650 : null });
+    }
+    S.line(X(80), LY - 12, X(80), LY + 6, { stroke: '#8a8f99', 'stroke-dasharray': '3 3' });
+    S.text(X(80), LY - 20, 'halfway', { size: 11, fill: '#5d6676' });
+    if (guessed !== null){
+      const gx = X(Math.max(60, Math.min(100, guessed)));
+      S.line(gx, LY - 7, gx, LY + 7, { stroke: '#c2412d', 'stroke-width': 3 });
+      S.text(Math.max(70, Math.min(490, gx)), LY + 36, `your guess (${guessed})`, { size: 11, fill: '#c2412d' });
+    }
+    const on = desks.filter(d => d.counted), n = on.length, T = MK.sum(on.map(d => d.score));
+    if (n){
+      const ax = X(T / n);
+      S.circle(ax, LY, 7, { fill: '#1d2330' });
+      S.text(Math.max(100, Math.min(460, ax)), LY - 38, `average so far: ${avgText(T, n)}`, { size: 13, weight: 650 });
+    }
+  }
+
+  function tap(d){
+    if (phase === 'guess' || d.counted) return;
+    d.counted = true; draw(); report();
+  }
+
+  function report(){
+    const on = desks.filter(d => d.counted), n = on.length, T = MK.sum(on.map(d => d.score));
+    cnt.set(`${n} of ${desks.length}`);
+    tot.set(`${T} points`);
+    avg.set(n ? `${avgText(T, n)} points` : '–');
+    if (n === desks.length && n > 0) finish(T, n);
+  }
+
+  function finish(T, n){
+    if (auto){ MK.stop(auto); auto = null; }
+    addRest.enable(false);
+    const TA = MK.sum(desks.filter(d => d.cls === 'A').map(d => d.score)), TB = MK.sum(desks.filter(d => d.cls === 'B').map(d => d.score));
+    const a = avgText(T, n), exact = T % n === 0;
+    sums.set(`Class A: ${nA} × ${SA} = ${TA} points.\nClass B: ${nB} × ${SB} = ${TB} points.\nTogether: ${TA} + ${TB} = ${T} points.\n${T} ÷ ${n} students = ${a} points.`).show();
+    MK.log('pooled', { nA, nB, total: T, average: T / n });
+    if (phase === 'count'){
+      const diff = Math.abs(guessed - T / n);
+      const cmp = diff < 1e-9 ? `Your guess of ${guessed} was exactly right.` : `Your guess of ${guessed} was ${MK.fmt(diff, { dp: 2 })} points too ${guessed < T / n ? 'low' : 'high'}.`;
+      MK.say(`All ${n} students: ${T} points ÷ ${n} students = ${a} points. ${cmp}\nPress "Why isn't it 80?" to see where the halfway answer goes wrong.`);
+      whyBtn.show();
+      phase = 'done';
+    } else if (phase === 'explore'){
+      tries.push([nA, nB, a]); if (tries.length > 6) tries.shift();
+      table.set(tries, tries.length - 1).show();
+      MK.say(`${nA} + ${nB} students: ${T} points ÷ ${n} = ${exact ? '' : 'about '}${a} points${nA === nB ? '. Equal classes, so halfway works here' : ''}.\nTakeaway: add all the points and divide by all the students, so the bigger class pulls the average toward its score.\nTry other sizes, or Start over.`);
+    }
+  }
+
+  makeDesks(); draw();
+}
+</script>
+</body>
+</html>

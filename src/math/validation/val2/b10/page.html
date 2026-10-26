@@ -1,0 +1,152 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Big and Small Hospitals</title>
+<script src="mathkit.js"></script>
+</head>
+<body>
+<script>
+// Student design: a big and a small hospital; which has more days with over 60% boys? Simulate a year and count the days.
+// Every number on screen is counted from the simulated babies.
+const css = `:root{--bg:#f1f7fd;--accent:#3b82c4;--line:#cfe0ef;--soft:#fde8f0;--warm:#e2669a}
+  #mk-card{border-top:5px solid #f4a7c4} #mk-card h1{color:#2c5f8f}`;
+MK.start({ title: 'Big and Small Hospitals', build, css });
+
+const BIG = 45, DAYS = 365, BOY = '#5aa9e6', GIRL = '#f28bb3';
+const OPTIONS = ['The big hospital', 'The small hospital', 'About the same'];
+
+function build(){
+  const narrow = innerWidth < 640;
+  const PW = 380, W = narrow ? 400 : 800, H = narrow ? 756 : 378;
+  let nSmall = 15, guessed = null, guessIdx = -1, sel = -1, runner = null, phase = 'guess';
+  let year = { big: [], small: [] };          // each day = list of babies, true = boy
+  const r = MK.rng();
+  const hosp = [
+    { key: 'big', name: 'Big hospital', n: () => BIG, x: 10, y: 0 },
+    { key: 'small', name: 'Small hospital', n: () => nSmall, x: narrow ? 10 : 410, y: narrow ? 378 : 0 },
+  ];
+
+  MK.say('Two hospitals: a big one where 45 babies are born each day, and a small one with 15.\nOver one year, which has more days when over 60% of the babies (more than 6 in every 10) are boys?\nMake a guess first.');
+  MK.model('each baby is a boy or a girl, 50/50, by chance, separate from every other baby. Each hospital has the same number of births every day.');
+  const S = MK.svg(W, H, { maxHeight: narrow ? 'none' : '56vh' });
+
+  MK.guess({ ask: 'Which hospital has more days with over 60% boys?', options: OPTIONS }, (v, i) => {
+    guessed = v; guessIdx = i; phase = 'days';
+    MK.say(`You guessed: ${v.toLowerCase()}. Let's test it.\nPress "Run 1 day" to see one day of births in each hospital.`);
+    MK.show(btnDay, rDays, rBig, rSmall); report();
+  });
+  const btnDay = MK.button('Run 1 day', () => {
+    addDay(); sel = -1; draw(); report(); MK.show(btnYear);
+    if (year.big.length === 1) MK.say('Blue dots are boys, pink dots are girls, and a dark square in the year chart is a day with over 60% boys.\nCount today\'s dots and check the percentage.\nThen run more days, or the rest of the year.');
+    if (year.big.length >= DAYS) yearDone();
+  }).hide();
+  const btnYear = MK.button('Run the rest of the year', () => runYear(yearDone), { alt: true }).hide();
+  const btnWhy = MK.button('Why?', () => {
+    btnWhy.hide(); phase = 'why'; setWhy(); MK.show(why2, rRange, slider, btnNew, table);
+    MK.say(`Small groups swing further from half, just by luck. Compare each hospital's lowest and highest day this year.\nThen change the small hospital's size with the slider and run a new year.`);
+  }).hide();
+  const slider = MK.slider({ label: 'Small hospital: babies a day', min: 5, max: 45, step: 5, value: 15, onInput: v => {
+    nSmall = v; if (runner) { MK.stop(runner); runner = null; }
+    year = { big: [], small: [] }; sel = -1; draw(); report(); setWhy(); btnNew.enable(true);
+    MK.say(`The small hospital now has ${v} babies a day.\nPress "Run a new year" to count the days again.`);
+  } }).hide();
+  const btnNew = MK.button('Run a new year', () => {
+    year = { big: [], small: [] };
+    runYear(() => {
+      const [s, b] = [countOver(year.small), countOver(year.big)];
+      rows.push([nSmall, s, b]); table.set(rows, rows.length - 1); setWhy();
+      MK.log('explore', { n: nSmall, small: s, big: b });
+      MK.say(`With ${nSmall} babies a day: ${s} days over 60% boys, versus ${b} at the big hospital (45 a day).\nTakeaway: the fewer babies, the further the share of boys swings from half by luck, so a small hospital gets more lopsided days.\nTry another size, or Start over.`);
+    });
+  }).hide();
+
+  const rDays = MK.readout('Days run', '0').hide();
+  const rBig = MK.readout('', '').hide();
+  const rSmall = MK.readout('', '').hide();
+  const rRange = MK.readout('Lowest and highest % boys in one day', '').hide();
+  const why1 = MK.note('').hide();
+  const why2 = MK.note('').hide();
+  const rows = [];
+  const table = MK.table(['Small: babies a day', 'Small: days', 'Big: days'], []).hide();
+
+  const newDay = n => Array.from({ length: n }, () => r() < 0.5);
+  const boys = d => d.filter(Boolean).length;
+  const isOver = d => boys(d) * 5 > d.length * 3;            // boys / babies > 60%, in whole numbers
+  const countOver = days => days.filter(isOver).length;
+  const pct = d => 100 * boys(d) / d.length;
+  const need = n => Math.floor(3 * n / 5) + 1;                // fewest boys that make it over 60%
+  function addDay(){ year.big.push(newDay(BIG)); year.small.push(newDay(nSmall)); }
+
+  function runYear(done){
+    MK.hide(btnDay, btnYear); btnNew.enable(false); slider.enable(false);
+    runner = MK.every(30, () => {
+      for (let k = 0; k < 12 && year.big.length < DAYS; k++) addDay();
+      const end = year.big.length >= DAYS;
+      if (end){ MK.stop(runner); runner = null; btnNew.enable(true); slider.enable(true); }
+      sel = -1; draw(); report();
+      if (end) done();
+    });
+  }
+
+  function yearDone(){
+    MK.hide(btnDay, btnYear); phase = 'year';
+    const s = countOver(year.small), b = countOver(year.big);
+    MK.log('year', { small: s, big: b, guess: guessed });
+    const close = Math.abs(s - b) <= 0.15 * Math.max(s, b);
+    const actual = close ? 2 : s > b ? 1 : 0;
+    let fb;
+    if (actual === guessIdx) fb = 'That matches your guess.';
+    else if (actual === 2) fb = `That is about the same, not what you guessed.`;
+    else {
+      const [hi, lo, name] = actual === 1 ? [s, b, 'small'] : [b, s, 'big'];
+      fb = `You guessed ${guessed.toLowerCase()}, but the ${name} one had ${hi - lo} more days${lo ? ` (about ${MK.fmt(hi / lo, { dp: 1 })} times as many)` : ''}.`;
+    }
+    MK.say(`In one year: small hospital ${s} days with over 60% boys, big hospital ${b}.\n${fb}\nClick any square to look inside that day, or press "Why?".`);
+    rows.push([nSmall, s, b]); table.set(rows, 0);
+    setWhy(); MK.show(why1, btnWhy);
+  }
+
+  function setWhy(){
+    const tS = need(nSmall), tB = need(BIG);
+    why1.set(`Every baby is 50/50 in both hospitals. "Over 60% boys" means at least ${tS} boys of ${nSmall} in the small one, and at least ${tB} of ${BIG} in the big one.`);
+    why2.set(`Half of ${nSmall} is ${nSmall / 2}, so the small one needs only ${tS - nSmall / 2} boys above half. Half of ${BIG} is ${BIG / 2}, so the big one needs ${tB - BIG / 2} above half. A few extra boys by luck is common. Many extra on the same day is rare.`);
+    const rng = days => { const p = days.map(pct); return p.length ? `${MK.fmt(Math.min(...p), { dp: 1 })}% to ${MK.fmt(Math.max(...p), { dp: 1 })}%` : '—'; };
+    rRange.set(`Big: ${rng(year.big)}\nSmall: ${rng(year.small)}`);
+  }
+
+  function report(){
+    rDays.set(`${year.big.length} of ${DAYS}`);
+    rBig.label(`Big hospital (${BIG} a day): days over 60% boys`).set(String(countOver(year.big)));
+    rSmall.label(`Small hospital (${nSmall} a day): days over 60% boys`).set(String(countOver(year.small)));
+  }
+
+  function draw(){
+    S.clear();
+    for (const h of hosp){
+      const x0 = h.x, y0 = h.y, n = h.n(), days = year[h.key];
+      S.rect(x0, y0 + 2, PW, 370, { fill: '#fff', stroke: '#cfe0ef', 'stroke-width': 1.5, rx: 12 });
+      S.rect(x0 + 14, y0 + 14, 30, 30, { fill: '#fde8f0', rx: 6 });
+      S.rect(x0 + 26, y0 + 19, 6, 20, { fill: '#e2669a' }); S.rect(x0 + 19, y0 + 26, 20, 6, { fill: '#e2669a' });
+      S.text(x0 + 54, y0 + 22, h.name, { anchor: 'start', size: 17, weight: 700, fill: '#2c5f8f' });
+      S.text(x0 + 54, y0 + 41, `${n} babies born each day`, { anchor: 'start', size: 13, fill: '#5d6676' });
+      const di = sel >= 0 && sel < days.length ? sel : days.length - 1, d = days[di];
+      for (let i = 0; i < n; i++)
+        S.circle(x0 + 22 + (i % 15) * 24, y0 + 68 + Math.floor(i / 15) * 24, 9, { fill: d ? (d[i] ? BOY : GIRL) : '#e9eef3' });
+      const line = d ? `Day ${di + 1}: ${boys(d)} boys of ${n} = ${MK.fmt(pct(d), { dp: 1 })}%${isOver(d) ? ' · over 60%' : ''}` : 'No days run yet';
+      S.text(x0 + 16, y0 + 150, line, { anchor: 'start', size: 14, weight: d && isOver(d) ? 700 : 400 });
+      S.text(x0 + 16, y0 + 178, `Year: ${countOver(days)} of ${days.length} days over 60% boys (dark squares)`, { anchor: 'start', size: 13, fill: '#5d6676' });
+      for (let k = 0; k < DAYS; k++){
+        const has = k < days.length, o = has && isOver(days[k]);
+        const c = S.rect(x0 + 16 + (k % 30) * 11.8, y0 + 192 + Math.floor(k / 30) * 12.4, 10, 10.5,
+          { fill: !has ? '#f1f4f7' : o ? '#3b82c4' : '#d6e6f4', rx: 2, stroke: has && k === di ? '#e2669a' : 'none', 'stroke-width': 2 });
+        if (has && !runner) c.on('click', () => { sel = k; draw(); MK.log('look', { day: k + 1 }); });
+      }
+    }
+  }
+  draw();
+}
+</script>
+</body>
+</html>

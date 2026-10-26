@@ -1,0 +1,28 @@
+{
+  "title": "A 5 and a 6, or two 6s?",
+  "concept": "With two dice, 'a 5 and a 6' can happen two ways (red 5 + blue 6, or red 6 + blue 5) while 'two 6s' can happen only one way, so a 5 and a 6 has a chance of 2 in 36 and two 6s has 1 in 36: the mixed pair is twice as likely.",
+  "kept": [
+    "The student's exact question: is a 5 and a 6 more likely than two 6s, or equally likely?",
+    "Their three possible answers as the guess options (5 and 6 more likely / equally likely / two 6s more likely)",
+    "Their method of showing why: roll the two dice a lot (Roll once, 10, 100, 1,000) and compare the counts",
+    "Their intuition 'each number is 1/6' is acknowledged in the takeaway as true for one die",
+    "Flat 2D, since they had no preference"
+  ],
+  "filled_in": [
+    "One red and one blue die so the visitor can tell the two orders apart",
+    "A 6 x 6 grid that tallies every exact landing (red number, blue number) as the rolls happen; the 5-and-6 boxes are orange and the two-6s box is blue",
+    "Side readouts: rolls so far, count and percent for each outcome, and how many times as often one came up as the other",
+    "A 200-roll threshold before the explanation, with a warning that small numbers of rolls can be fooled by luck",
+    "A 'Why' note that counts the boxes (2 vs 1 out of 36) and quotes the visitor's own counts for each box",
+    "Variation: two sliders to compare any 'an A and a B' with 'two Bs' using the same rolls",
+    "A 'Sum it up' button that puts the takeaway in the card",
+    "Plain-word explanations of the grid, '%' (out of every 100 rolls), and 'chance' (2 in 36)"
+  ],
+  "changed": [
+    {
+      "what": "The design expects 'a 5 and a 6' and 'two 6s' to be equally likely (each number is 1/6).",
+      "why": "That is incorrect: each specific ordered landing has chance 1/6 x 1/6 = 1/36, but 'a 5 and a 6' covers two landings (5,6) and (6,5), so it is 2/36, while 'two 6s' is only (6,6), 1/36. The page builds the correct math and lets the rolls show the 2-to-1 gap; the 'equally likely' guess gets honest feedback."
+    }
+  ],
+  "math_check": "Box counts (36 total, 2 for the mixed pair, 1 for the double) are counted in code by looping over all 36 (red, blue) cells, and the 'right' guess is decided from those counts, not hardcoded. Roll counts and percents are tallied from MK.rng() rolls stored per cell. Walked through in a headless browser: at 1,210 rolls the 5-and-6 boxes held 72 and the 6-6 box 27 (ratio about 2.7, near the expected 2); at 210 rolls a tie (10 vs 10) occurred and the card correctly said luck still matters instead of claiming a result. Checked the A = B slider case (both mean two Bs; mixed readout hidden). 5.6 and 2.8 per 100 are 100 x 2/36 and 100 x 1/36. check-page.mjs: no problems, no warnings, desktop and 390 px phone."
+}

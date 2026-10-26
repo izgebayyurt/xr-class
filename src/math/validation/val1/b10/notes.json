@@ -1,0 +1,22 @@
+{
+  "title": "Small hospital, big hospital",
+  "concept": "Small samples vary more than big ones (the law of large numbers / sample-size effect): with 50/50 births, a hospital with fewer babies a day has more days when over 60% of the babies are boys.",
+  "kept": [
+    "The big hospital vs small hospital question about days with over 60% boys",
+    "The friend's expected answer 'about the same' as a guess option",
+    "Simulating a year of births in both hospitals and counting the days",
+    "Hospital theme with baby blue (boys) and pink (girls); flat 2D"
+  ],
+  "filled_in": [
+    "Hospital sizes from the classic version of the problem: 15 and 45 babies a day",
+    "Order: guess (small / big / about the same), then Next day to watch and count individual babies, then run the rest of the 365-day year",
+    "A bar chart per hospital of how many days had each share of boys, with the over-60% zone shaded; bars can be clicked to read their counts",
+    "Side explanation computed from the run: boys needed to be over 60% vs half, the range of daily shares seen, and the exact long-run average (binomial) as a check on the simulation",
+    "Variation: sliders for each hospital's babies a day and a table of days over 60% for each year run",
+    "Plain-language explanation of 60% as 'more than 6 out of every 10'"
+  ],
+  "changed": [
+    { "what": "Each baby is modelled as exactly 50% boy, with the same number of births every day", "why": "The design assumes 50%; the real rate is about 51% boys and births vary, so the page labels this as a model" }
+  ],
+  "math_check": "Over 60% is tested exactly with integers (5k > 3n), so 9 of 15 and 27 of 45 (exactly 60%) do not count; thresholds 10 of 15 and 28 of 45. All counts, percentages, ranges and the readout are computed from the simulated babies. The exact long-run figures were checked independently in Python: P(X>=10 | n=15, p=1/2) = 0.1509 -> 55.1 days a year; P(X>=28 | n=45) = 0.0676 -> 24.7 days a year, matching the page's 55 and 25. Checker runs gave simulated years of 47-55 vs 12-29 days, consistent with these."
+}

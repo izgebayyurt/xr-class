@@ -1,0 +1,131 @@
+{
+ "file": "b08/page.html",
+ "lines": 171,
+ "usesKit": true,
+ "problems": [],
+ "warnings": [],
+ "desktop": {
+  "errors": [],
+  "kit": true,
+  "start": {
+   "card": "Roll two dice. Which is more likely: a 5 and a 6 (any order), or two 6s?\nPick your guess first.",
+   "title": "A 5 and a 6, or two 6s?",
+   "overflowX": false,
+   "height": 800,
+   "shownErr": [],
+   "svgTextOverlaps": [],
+   "offscreenSvgText": [],
+   "guessBelowFold": -119,
+   "longText": [],
+   "guessOpen": true,
+   "visibleButtons": [
+    "A 5 and a 6",
+    "Two 6s",
+    "Equally likely",
+    "Start over"
+   ]
+  },
+  "guessKind": "choice",
+  "guessLogged": true,
+  "afterGuess": {
+   "card": "You picked \"A 5 and a 6\". Now test it: roll the dice a lot and watch the two counts.\nTry for at least 300 rolls.",
+   "title": "A 5 and a 6, or two 6s?",
+   "overflowX": false,
+   "height": 801,
+   "shownErr": [],
+   "svgTextOverlaps": [],
+   "offscreenSvgText": [],
+   "guessBelowFold": null,
+   "longText": [],
+   "guessOpen": false,
+   "visibleButtons": [
+    "Roll once",
+    "Roll 100 times",
+    "Roll 1,000 times",
+    "Start over"
+   ]
+  },
+  "after": {
+   "card": "Count the orange squares and the green squares.\nThen click an orange square to see which roll it is.",
+   "title": "A 5 and a 6, or two 6s?",
+   "overflowX": false,
+   "height": 1084,
+   "shownErr": [],
+   "svgTextOverlaps": [],
+   "offscreenSvgText": [],
+   "guessBelowFold": null,
+   "longText": [],
+   "guessOpen": false,
+   "visibleButtons": [
+    "Roll once",
+    "Roll 100 times",
+    "Roll 1,000 times",
+    "Start over"
+   ]
+  },
+  "eventsAfter": [
+   "ready",
+   "pick",
+   "guess",
+   "say",
+   "click",
+   "say",
+   "click",
+   "say",
+   "click",
+   "say",
+   "click",
+   "click",
+   "click",
+   "click",
+   "say",
+   "reached",
+   "click",
+   "click",
+   "click"
+  ],
+  "restart": {
+   "card": "Roll two dice. Which is more likely: a 5 and a 6 (any order), or two 6s?\nPick your guess first.",
+   "title": "A 5 and a 6, or two 6s?",
+   "overflowX": false,
+   "height": 800,
+   "shownErr": [],
+   "svgTextOverlaps": [],
+   "offscreenSvgText": [],
+   "guessBelowFold": -119,
+   "longText": [],
+   "guessOpen": true,
+   "visibleButtons": [
+    "A 5 and a 6",
+    "Two 6s",
+    "Equally likely",
+    "Start over"
+   ]
+  },
+  "firstGuessBeforeVisitor": false
+ },
+ "phone": {
+  "errors": [],
+  "kit": true,
+  "start": {
+   "card": "Roll two dice. Which is more likely: a 5 and a 6 (any order), or two 6s?\nPick your guess first.",
+   "title": "A 5 and a 6, or two 6s?",
+   "overflowX": false,
+   "height": 844,
+   "shownErr": [],
+   "svgTextOverlaps": [],
+   "offscreenSvgText": [],
+   "guessBelowFold": -170,
+   "longText": [],
+   "guessOpen": true,
+   "visibleButtons": [
+    "A 5 and a 6",
+    "Two 6s",
+    "Equally likely",
+    "Start over"
+   ]
+  },
+  "events": 1
+ },
+ "pass": true
+}

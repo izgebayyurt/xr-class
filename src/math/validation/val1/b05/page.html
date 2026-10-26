@@ -1,0 +1,200 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Double the Box</title>
+<script src="mathkit.js"></script>
+<script type="importmap">{ "imports": { "three": "https://cdn.jsdelivr.net/npm/three@0.185.1/build/three.module.js" } }</script>
+</head>
+<body>
+<script type="module">
+// Student design: a box made twice as long, wide and tall. How much more paint (outside) and water (inside)?
+// Build a small box, then the big box, from little Lego-like cubes. Every number is counted from the cubes on screen.
+import * as THREE from 'three';
+
+const L = 3, W = 2, H = 1;                       // small box: 3 cubes long (x), 2 wide (z), 1 tall (y)
+const COLORS = ['#0055bf', '#f2cd37', '#237841', '#c91a09', '#fe8a18', '#f4f4f4'];
+const NAMES = ['blue', 'yellow', 'green', 'red', 'orange', 'white'];
+const OPTIONS = [[2, 2], [4, 4], [4, 8], [8, 8]];
+const DIRS = [[1, 0, 0], [-1, 0, 0], [0, 1, 0], [0, -1, 0], [0, 0, 1], [0, 0, -1]];
+const key = c => c.join(',');
+let gl = null;                                   // the WebGL renderer from the last run, freed on Start over
+
+MK.start({ title: 'Double the box', build, css: `
+  .mk3d{width:100%;aspect-ratio:1.6;max-height:55vh;border-radius:8px;overflow:hidden;touch-action:none;cursor:grab}
+  .mk3d:active{cursor:grabbing}
+  .mk3d canvas{display:block;width:100%;height:100%}` });
+
+// every cell of a solid box, layer by layer (bottom first), row by row
+function boxCells(l, w, h){ const out = []; for (let y = 0; y < h; y++) for (let z = 0; z < w; z++) for (let x = 0; x < l; x++) out.push([x, y, z]); return out; }
+// which small cube a big-box cube "came from" when every side is k times longer
+const parentOf = ([x, y, z], k) => (Math.floor(y / k) * W + Math.floor(z / k)) * L + Math.floor(x / k);
+// count cubes and the outside squares (cube faces with no cube next to them)
+function count(cells){
+  const s = new Set(cells.map(key)); let squares = 0;
+  for (const [x, y, z] of cells) for (const [dx, dy, dz] of DIRS) if (!s.has(key([x + dx, y + dy, z + dz]))) squares++;
+  return { cubes: cells.length, squares };
+}
+const sizeOf = cells => [0, 2, 1].map(a => cells.length ? Math.max(...cells.map(c => c[a])) + 1 : 0);   // long, wide, tall
+const fmt = x => MK.fmt(x, { dp: 2 });
+
+function build(){
+  if (gl){ gl.ro.disconnect(); gl.renderer.dispose(); gl.renderer.forceContextLoss(); gl = null; }
+  let phase = 'guess', guessed = null, k = 2, explored = false, first = null;
+  const smallCells = boxCells(L, W, H);
+  let bigTarget = boxCells(L * 2, W * 2, H * 2);
+  const built = { small: [], big: [] };
+
+  MK.say(`We will build a small box from little 1 cm cubes, like Lego: ${L} cubes long, ${W} wide, ${H} tall.\nThen a big box that is twice as long, twice as wide and twice as tall.\nHow much more paint covers the big box's outside, and how much more water fits inside? Pick your guess first.`);
+  MK.model('a solid box of 1 cm cubes. Each cube stands for 1 mL of water space; each outside square needs 1 cm² of paint (all 6 sides, bottom too).');
+
+  // ---------- 3D scene ----------
+  const host = document.createElement('div'); host.className = 'mk3d';
+  document.getElementById('mk-stage').appendChild(host);
+  const renderer = new THREE.WebGLRenderer({ antialias: true });
+  renderer.setPixelRatio(Math.min(2, devicePixelRatio || 1)); host.appendChild(renderer.domElement);
+  const scene = new THREE.Scene(); scene.background = new THREE.Color('#eef3fc');
+  const camera = new THREE.PerspectiveCamera(35, 1.6, 0.1, 500);
+  scene.add(new THREE.HemisphereLight('#ffffff', '#7d8494', 1.7));
+  const sun = new THREE.DirectionalLight('#ffffff', 2.0); sun.position.set(-8, 16, 12); scene.add(sun);
+  const back = new THREE.DirectionalLight('#ffffff', 0.6); back.position.set(10, -6, -8); scene.add(back);
+  const ro = new ResizeObserver(fit); ro.observe(host); gl = { renderer, ro };
+
+  const cubeGeo = new THREE.BoxGeometry(0.96, 0.96, 0.96), edgeGeo = new THREE.EdgesGeometry(cubeGeo);
+  const studGeo = new THREE.CylinderGeometry(0.27, 0.27, 0.18, 20);
+  const mats = COLORS.map(c => new THREE.MeshStandardMaterial({ color: c, roughness: 0.42 }));
+  const edgeMat = new THREE.LineBasicMaterial({ color: '#1d2330', transparent: true, opacity: 0.35 });
+  const smallG = new THREE.Group(), bigG = new THREE.Group(), plateG = new THREE.Group(), outline = new THREE.Group();
+  scene.add(smallG, bigG, plateG, outline);
+
+  let theta = -0.55, phi = 1.0, dist = 20; const target = new THREE.Vector3();
+  function fit(){
+    const w = host.clientWidth || 600, h = host.clientHeight || 375;
+    renderer.setSize(w, h, false); camera.aspect = w / h; camera.updateProjectionMatrix(); frame();
+  }
+  // where things sit: small box on the left, big box on the right, fronts lined up
+  function layout(){
+    const bl = L * k, bw = W * k, bh = H * k, total = L + 2 + bl;
+    smallG.position.set(0, 0, bw - W); bigG.position.set(L + 2, 0, 0);
+    target.set(total / 2, bh * 0.35, bw / 2);
+    plateG.clear();
+    const pl = Math.ceil(total) + 2, pw = bw + 2;
+    const plate = new THREE.Mesh(new THREE.BoxGeometry(pl, 0.3, pw), new THREE.MeshStandardMaterial({ color: '#4b9f4a', roughness: 0.6 }));
+    plate.position.set(total / 2, -0.17, bw / 2); plateG.add(plate);
+    const studs = new THREE.InstancedMesh(studGeo, plate.material, pl * pw); const m = new THREE.Matrix4(); let i = 0;
+    for (let a = 0; a < pl; a++) for (let b = 0; b < pw; b++) m.makeTranslation(total / 2 - pl / 2 + a + 0.5, 0.06, bw / 2 - pw / 2 + b + 0.5), studs.setMatrixAt(i++, m);
+    plateG.add(studs);
+    frame();
+  }
+  function frame(){
+    const bl = L * k, bw = W * k, bh = H * k, total = L + 2 + bl;
+    const r = 0.5 * Math.hypot(total + 2, bw + 2, bh + 1), v = camera.fov * Math.PI / 360, hz = Math.atan(Math.tan(v) * camera.aspect);
+    dist = r / Math.sin(Math.min(v, hz)) * 0.72;
+  }
+  function showOutline(l, w, h, g){
+    outline.clear(); if (!l) return;
+    const e = new THREE.LineSegments(new THREE.EdgesGeometry(new THREE.BoxGeometry(l, h, w)), new THREE.LineBasicMaterial({ color: '#2f6fde' }));
+    e.position.set(g.position.x + l / 2, h / 2 + 0.01, g.position.z + w / 2); outline.add(e);
+  }
+  function drawBox(group, cells, kk){
+    group.clear(); const s = new Set(cells.map(key));
+    for (const c of cells){
+      const [x, y, z] = c, mat = mats[parentOf(c, kk) % mats.length];
+      const cube = new THREE.Mesh(cubeGeo, mat); cube.position.set(x + 0.5, y + 0.5, z + 0.5); group.add(cube);
+      const ed = new THREE.LineSegments(edgeGeo, edgeMat); ed.position.copy(cube.position); group.add(ed);
+      if (!s.has(key([x, y + 1, z]))){ const st = new THREE.Mesh(studGeo, mat); st.position.set(x + 0.5, y + 1.05, z + 0.5); group.add(st); }
+    }
+  }
+  // drag to turn the view
+  let down = null;
+  host.addEventListener('pointerdown', e => { down = [e.clientX, e.clientY]; host.setPointerCapture(e.pointerId); });
+  host.addEventListener('pointermove', e => { if (!down) return;
+    theta -= (e.clientX - down[0]) * 0.008; phi = Math.min(2.7, Math.max(0.12, phi - (e.clientY - down[1]) * 0.008)); down = [e.clientX, e.clientY]; });
+  host.addEventListener('pointerup', () => { if (down) MK.log('turn', { theta: +theta.toFixed(2), phi: +phi.toFixed(2) }); down = null; });
+  MK.loop(() => {
+    camera.position.set(target.x + dist * Math.sin(phi) * Math.sin(theta), target.y + dist * Math.cos(phi), target.z + dist * Math.sin(phi) * Math.cos(theta));
+    camera.lookAt(target); plateG.visible = camera.position.y > 0;     // look from underneath to see the bottom
+    renderer.render(scene, camera);
+  });
+
+  // ---------- controls ----------
+  MK.guess({ ask: 'Your guess: the big box needs…', options: OPTIONS.map(([p, w]) => `${p} times the paint, ${w} times the water`) }, (t, i) => {
+    guessed = OPTIONS[i]; phase = 'small';
+    showOutline(L, W, H, smallG);
+    MK.say(`You guessed ${guessed[0]} times the paint and ${guessed[1]} times the water. Let's count.\nBuild the small box inside the blue outline: press "Add 1 cube" (or "Finish this layer"). Drag the picture to turn it.`);
+    MK.show(addOne, addLayer, cubesR, paintR); report();
+  });
+  const addOne = MK.button('Add 1 cube', () => add(false)).hide();
+  const addLayer = MK.button('Finish this layer', () => add(true), { alt: true }).hide();
+  const slider = MK.slider({ label: 'Big box: every side ×', min: 1, max: 4, step: 1, value: 2, format: v => '×' + v, onInput: v => {
+    k = v; explored = true; bigTarget = boxCells(L * k, W * k, H * k); built.big = bigTarget.slice();
+    layout(); drawBox(smallG, built.small, 1); drawBox(bigG, built.big, k); report();
+  } }).hide();
+  const cubesR = MK.readout('Cubes = water', '').hide();
+  const paintR = MK.readout('Outside squares = paint', '').hide();
+  const table = MK.table(['Box', 'Size', 'Water (mL)', 'Paint (cm²)'], []).hide();
+  const why = MK.note('').hide();
+
+  function add(layer){
+    if (phase !== 'small' && phase !== 'big') return;
+    const list = built[phase], goal = phase === 'small' ? smallCells : bigTarget;
+    if (list.length >= goal.length) return;
+    const y = goal[list.length][1];
+    do list.push(goal[list.length]); while (layer && list.length < goal.length && goal[list.length][1] === y);
+    if (phase === 'small') drawBox(smallG, list, 1); else drawBox(bigG, list, 2);
+    if (phase === 'small' && list.length === goal.length){
+      phase = 'big'; showOutline(L * 2, W * 2, H * 2, bigG);
+      const s = count(built.small), [l, w, h] = sizeOf(built.small);
+      MK.say(`Small box done: ${s.cubes} cubes and ${s.squares} outside squares (the readouts count every face that touches air, bottom included).\nNow build the big box in the outline on the right: twice as long, twice as wide, twice as tall, so ${l * 2} × ${w * 2} × ${h * 2} cubes.`);
+      MK.log('reached', { step: 'small box', cubes: s.cubes, squares: s.squares });
+      table.set([['Small', `${l}×${w}×${h}`, s.cubes, s.squares]]).show();
+    } else if (phase === 'big' && list.length === goal.length){
+      phase = 'done'; showOutline(0); MK.hide(addOne, addLayer); MK.show(slider, why);
+      MK.log('reached', { step: 'big box' });
+    }
+    report();
+  }
+
+  function report(){
+    const cur = phase === 'small' ? built.small : built.big, c = count(cur);
+    cubesR.set(`${c.cubes} cubes = ${c.cubes} mL`); paintR.set(`${c.squares} squares = ${c.squares} cm²`);
+    if (phase === 'small' || phase === 'big'){
+      cubesR.label(phase === 'small' ? 'Small box: cubes = water' : 'Big box: cubes = water');
+      paintR.label(phase === 'small' ? 'Small box: outside squares = paint' : 'Big box: outside squares = paint');
+      return;
+    }
+    if (phase === 'guess') return;
+    cubesR.label(`Big box (×${k}): cubes = water`); paintR.label(`Big box (×${k}): outside squares = paint`);
+    const s = count(built.small), b = c, [sl, sw, sh] = sizeOf(built.small), [bl, bw, bh] = sizeOf(built.big);
+    const P = b.squares / s.squares, V = b.cubes / s.cubes;
+    table.set([['Small', `${sl}×${sw}×${sh}`, s.cubes, s.squares], [`Big (×${k})`, `${bl}×${bw}×${bh}`, b.cubes, b.squares],
+      ['Big ÷ small', '', `×${fmt(V)}`, `×${fmt(P)}`]], 2);
+    // look at one small cube (front-left-bottom) and count what it turned into
+    const pi = (W - 1) * L, bigSet = new Set(built.big.map(key));
+    const perCube = built.big.filter(c2 => parentOf(c2, k) === pi).length;
+    const perSq = built.big.filter(c2 => parentOf(c2, k) === pi && !bigSet.has(key([c2[0], c2[1], c2[2] + 1]))).length;
+    why.set(`Why: paint covers the area: the flat outside surface. Water fills the volume: the space inside.\n` +
+      `Look at the ${NAMES[pi]} block on the big box. One small cube turned into ${perCube} cubes (${k} × ${k} × ${k}). So ${s.cubes} cubes × ${perCube} = ${s.cubes * perCube} cubes of water space.\n` +
+      `One outside square turned into a patch of ${perSq} squares (${k} × ${k}, see the ${NAMES[pi]} front). So ${s.squares} squares × ${perSq} = ${s.squares * perSq} squares of paint.\n` +
+      `Paint is flat, so it grows in 2 directions: long and wide. Water grows in all 3: long, wide and tall.`);
+    if (k === 2 && !first) first = { P, V };
+    if (!explored){
+      const [gp, gw] = guessed, okP = gp === P, okV = gw === V;
+      const res = `${fmt(P)} times the paint (${b.squares} ÷ ${s.squares}) and ${fmt(V)} times the water (${b.cubes} ÷ ${s.cubes}).`;
+      const fb = okP && okV ? `You guessed ${gp} times the paint and ${gw} times the water, and the count agrees: ${res}`
+        : `You guessed ${gp} times the paint and ${gw} times the water. The count says ${res}` +
+          (gp === 2 && gw === 2 ? ' Guessing "double" is very common. It feels right, but the box grows in several directions at once.'
+            : okP ? ' Your paint part was right.' : okV ? ' Your water part was right.' : '');
+      MK.say(`${fb}\nRead "Why" on the side and turn the big box to check it. Then move the slider to make the big box other sizes.`);
+    } else {
+      MK.say(`Every side ×${k}: ${fmt(P)} times the paint and ${fmt(V)} times the water, counted from the cubes.\n` +
+        `Takeaway: double every side and the paint goes 2 × 2 = ${fmt(first.P)} times, but the water goes 2 × 2 × 2 = ${fmt(first.V)} times. Double is not double.\nTry another size, or press Start over.`);
+    }
+  }
+
+  layout(); fit();
+}
+</script>
+</body>
+</html>

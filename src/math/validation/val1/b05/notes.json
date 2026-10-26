@@ -1,0 +1,26 @@
+{
+  "title": "Double the box",
+  "concept": "Scaling a box by 2 in every direction multiplies its surface area (paint) by 2 x 2 = 4 and its volume (water) by 2 x 2 x 2 = 8; in general by k squared and k cubed.",
+  "kept": [
+    "The question exactly as posed: a box made twice as long, wide and tall; how much more paint and how much more water",
+    "The student's answer (area x4, volume x8, because 2x2 and 2x2x2), used as the explanation",
+    "The misconception 'double is double' as a guess option and in the feedback",
+    "Building the box from little cubes you can count, and counting the little squares on the outside",
+    "Order: guess first, then build the small box, then the big box",
+    "Lego-like look: studded cubes in Lego colors on a green studded baseplate",
+    "3D (three.js), as the design asked"
+  ],
+  "filled_in": [
+    "Small box size 3 x 2 x 1 cubes (a 2x3 Lego brick), so the big box is 6 x 4 x 2",
+    "Units: each cube is 1 cm, so 1 cube = 1 mL of water space and 1 outside square = 1 cm2 of paint; paint covers all 6 sides including the bottom",
+    "A single multiple-choice guess that covers both paint and water",
+    "Build controls: 'Add 1 cube' and 'Finish this layer', with a blue outline showing where to build",
+    "Each big-box cube is colored like the small cube it grew from, so one small cube visibly becomes a same-color block of 8 and one outside square a 2 x 2 patch",
+    "Readouts that count cubes and exposed faces live, a small/big/ratio table, and a 'Why' note that counts the cubes and front squares of one block",
+    "Explore step: a slider for the scale factor (x1 to x4) that rebuilds the big box and recounts",
+    "Drag to turn the 3D view (look from below to see the bottom)",
+    "Plain-word definitions of area and volume"
+  ],
+  "changed": [],
+  "math_check": "Paint is counted as cube faces with no neighbouring cube; water as the number of cubes. Small 3x2x1: 6 cubes, 2(6+3+2)=22 squares. Big 6x4x2: 48 cubes, 2(24+12+8)=88 squares; 88/22=4, 48/6=8. Partial big box after one layer (6x4x1): 24 cubes, 68 squares = 2(24)+2(6+4), matches the readout. x3: 162 cubes (x27), 198 squares (x9). x4: 12x8x4 = 384 cubes (x64), 2(96+48+32)=352 squares (x16). The 'Why' note counts the cubes of one block (k^3) and its exposed front faces (k^2) from the scene and checks the products against the totals. The student's math needed no correction."
+}

@@ -1,0 +1,25 @@
+{
+  "title": "Sunset Ferris Wheel",
+  "concept": "Sine of an angle as height ÷ spoke on a Ferris wheel: sin 30° = 1/2 exactly, but sin 60° ≈ 0.866, not 1, because sine does not grow evenly with the angle.",
+  "kept": [
+    "The idea: why sin 30 is 1/2 and sin 60 isn't 1",
+    "Ferris wheel: you turn the wheel and see how high you are",
+    "Compare 30° and 60° directly (the card asks for 30° first, then 60°)",
+    "The friend's misconception that sine goes up evenly, so doubling 30° to 60° doubles the height (sin 60 = 1); it is the first guess option",
+    "Sine as opposite over hypotenuse and SOH CAH TOA: opposite = height, hypotenuse = spoke",
+    "Fair at sunset look: sunset sky gradient, sun on the horizon, fair tents, colourful cars"
+  ],
+  "filled_in": [
+    "Flat 2D SVG (no preference given)",
+    "Rider starts level with the hub and height is measured above hub level, so height ÷ spoke is exactly sin of the angle turned; turning is limited to a quarter turn (0–90°)",
+    "Spoke length 20 m by default, with plain-word definitions of hub, spoke, degrees, sine, opposite and hypotenuse",
+    "Guess first: is the 60° height twice, less than twice, or more than twice the 30° height",
+    "Visitor turns the wheel by dragging the car or using a Turn slider (snaps to 0/30/60/90 when close); a height pole pins each stop",
+    "Explanation note and a table of stops with height, climb per 30°, and sin; each 30° turn moves the car the same distance along the rim, but the climbs shrink",
+    "'Show mirror car' overlay for why 30° is exactly half: car, its mirror 30° below, and the hub form a triangle with all sides equal to the spoke",
+    "Explore: turn to 90° and change the spoke length (10–24 m) to see the ratio stays the same",
+    "Takeaway sentence in the card once both variations are tried"
+  ],
+  "changed": [],
+  "math_check": "Every height is computed from the car's drawn position (hub y minus car y, divided by 7 px per metre); sin is that height ÷ spoke. Walked the full flow with a headless browser at 1280 px and 390 px: 30° → 10.0 m, 10.0 ÷ 20 = 0.5; 60° → 17.3 m, 0.866; 90° → 20.0 m, 1; ratio 60°/30° = 1.73; climbs +10.0, +7.3, +2.7 m; rim distance per 30° = π·20/6 ≈ 10.5 m; mirror chord at 30° = 20.0 m = spoke. With a 13 m spoke: 6.5, 11.3, 13.0 m, same sin values. check-page.mjs: no problems, no warnings."
+}

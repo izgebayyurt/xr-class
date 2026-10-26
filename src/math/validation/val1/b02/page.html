@@ -1,0 +1,187 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Chocolate bar fractions</title>
+<script src="mathkit.js"></script>
+</head>
+<body>
+<script>
+// Student design: two same-size chocolate bars, one cut into 9 pieces and one into 7. Take 5 and 4 pieces,
+// put them next to each other, compare. Then try other fractions. Every number on screen is counted or computed here.
+const COZY = `
+  :root{--bg:#f6ede1;--card:#fffaf3;--ink:#3b2618;--mute:#7a6452;--line:#e6d3bd;--accent:#7a4a2a;--soft:#f3e2cc;--warm:#d98b3a}
+  #mk-card h1{font-family:Georgia,"Times New Roman",serif;color:#5a3520}
+  #mk-card{background:linear-gradient(#fffaf3,#fbf1e4)}
+`;
+MK.start({ title: 'Chocolate bar fractions', build, css: COZY });
+
+function build(){
+  const W = 440, H = 384, X0 = 20, BW = 400;
+  const DARK = '#5a3520', MILK = '#9a6235', EDGE = '#3a2213';
+  const BAR = { A: { y: 30, h: 64, ly: 16, color: DARK }, B: { y: 132, h: 64, ly: 118, color: MILK } };
+  const ROW = { A: { y: 246, h: 44, ly: 232 }, B: { y: 326, h: 44, ly: 312 } };
+  const st = { A: { d: 9, n: 5, cut: false, taken: new Set() }, B: { d: 7, n: 4, cut: false, taken: new Set() } };
+  let phase = 'guess', guessI = null, guessText = '', fine = false;
+
+  MK.model('a bar is 1 whole, and every cut makes exactly equal pieces (real chocolate is never that neat).');
+  MK.say('Here are two chocolate bars, exactly the same size.\nYou can have 5/9 of Bar A or 4/7 of Bar B. A fraction like 5/9 means: cut the bar into 9 equal pieces and take 5 of them.\nWhich gives you more chocolate? Pick your guess below.');
+  const S = MK.svg(W, H, { maxHeight: '62vh', fontSize: 18 });
+
+  MK.guess({ ask: 'Your guess: which is more chocolate?', options: ['5/9 of Bar A', '4/7 of Bar B', 'The same amount'] }, (t, i) => {
+    guessI = i; guessText = t.replace(/ of Bar .$/, ''); phase = 'cut';
+    MK.show(cutA, cutB, rA, rB);
+    MK.say(`You guessed: ${t}. Let's check with the chocolate.\nPress the buttons to cut Bar A into 9 equal pieces and Bar B into 7 equal pieces.`);
+    draw(); report();
+  });
+  const cutA = MK.button('Cut Bar A into 9 pieces', b => { st.A.cut = true; b.hide(); afterCut(); }).hide();
+  const cutB = MK.button('Cut Bar B into 7 pieces', b => { st.B.cut = true; b.hide(); afterCut(); }).hide();
+  const fineBtn = MK.button('Cut into tiny matching pieces', b => {
+    fine = !fine; b.label = fine ? 'Hide the tiny pieces' : 'Show the tiny pieces';
+    MK.show(tinyR, tinyN);
+    if (phase === 'compare'){
+      phase = 'explore0'; MK.show(sAd, sAn, sBd, sBn);
+      const { a, b: bb, L } = tiny();
+      MK.say(`Count the tiny pieces in each row: ${a} from Bar A and ${bb} from Bar B. Every tiny piece is 1/${L} of a bar, so the row with more tiny pieces has more chocolate.\nNow try other fractions with the sliders below.`);
+    }
+    draw(); report();
+  }, { alt: true }).hide();
+  const mkSlider = (bar, key, label, min) => MK.slider({ label, min, max: 12, step: 1, value: st[bar][key], onInput: v => explore(bar, key, v) }).hide();
+  const sAd = mkSlider('A', 'd', 'Bar A: cut into', 2), sAn = mkSlider('A', 'n', 'Bar A: pieces taken', 1);
+  const sBd = mkSlider('B', 'd', 'Bar B: cut into', 2), sBn = mkSlider('B', 'n', 'Bar B: pieces taken', 1);
+
+  const rA = MK.readout('From Bar A', '').hide();
+  const rB = MK.readout('From Bar B', '').hide();
+  const rDiff = MK.readout('Which is more?', '').hide();
+  const tinyR = MK.readout('Tiny pieces', '').hide();
+  const why = MK.note('').hide();
+  const tinyN = MK.note('').hide();
+
+  const fs = k => `${st[k].n}/${st[k].d}`;
+  const gcd = (a, b) => b ? gcd(b, a % b) : a;
+  function tiny(){ const L = st.A.d * st.B.d / gcd(st.A.d, st.B.d);
+    return { L, fa: L / st.A.d, fb: L / st.B.d, a: st.A.taken.size * L / st.A.d, b: st.B.taken.size * L / st.B.d }; }
+  function result(){
+    const a = MK.frac(st.A.taken.size, st.A.d), b = MK.frac(st.B.taken.size, st.B.d), c = a.cmp(b);
+    const diff = c > 0 ? a.sub(b) : b.sub(a);
+    return { c, diff, winner: c > 0 ? fs('A') : fs('B'), loser: c > 0 ? fs('B') : fs('A'), whole: a.eq(1) ? 'a whole bar' : `${a} of a bar` };
+  }
+  const done = () => ['A', 'B'].every(k => st[k].cut && st[k].taken.size === st[k].n);
+
+  function afterCut(){
+    if (!(st.A.cut && st.B.cut)){
+      const k = st.A.cut ? 'B' : 'A';
+      MK.say(`Bar ${k === 'A' ? 'B' : 'A'} is cut. Now cut Bar ${k} into ${st[k].d} pieces.`);
+    } else {
+      phase = 'take';
+      MK.say('Both bars are cut. Notice the pieces of Bar A are smaller than the pieces of Bar B.\nNow tap pieces to take them: 5 from Bar A and 4 from Bar B. They line up underneath so you can compare.');
+    }
+    draw(); report();
+  }
+
+  function tap(k, i){
+    if (phase !== 'take') return;
+    const s = st[k];
+    if (s.taken.has(i)) s.taken.delete(i);
+    else if (s.taken.size < s.n) s.taken.add(i);
+    MK.log('take', { bar: k, pieces: s.taken.size });
+    if (done()){
+      phase = 'compare'; MK.show(rDiff, why, fineBtn);
+      const r = result(), right = r.c > 0 ? 0 : r.c < 0 ? 1 : 2;
+      let fb = guessI === right ? `You guessed ${guessText}, and the chocolate agrees.` : `You guessed ${guessText === 'The same amount' ? 'they were the same' : guessText}, but the rows show ${r.winner} is more.`;
+      if (guessI === 0 && right !== 0) fb += ' Lots of people pick 5/9 because 5 and 9 are bigger numbers. But Bar A\'s pieces are smaller.';
+      MK.say(`Look at the two rows underneath: ${r.winner} is a little longer, by just ${r.diff} of a bar. ${fb}\nThe gap is tiny. To measure it exactly, press "Cut into tiny matching pieces".`);
+    } else {
+      const left = k2 => st[k2].n - st[k2].taken.size;
+      MK.say(`Keep tapping pieces. Still to take: ${left('A')} from Bar A and ${left('B')} from Bar B.\nYour pieces line up underneath so you can compare.`);
+    }
+    draw(); report();
+  }
+
+  function explore(k, key, v){
+    const s = st[k];
+    s[key] = v;
+    if (s.n > s.d){ s.n = s.d; (k === 'A' ? sAn : sBn).value = s.n; }
+    for (const q of ['A', 'B']){ st[q].cut = true; st[q].taken = new Set([...Array(st[q].n).keys()]); }
+    phase = 'explore';
+    const r = result();
+    const line = r.c === 0 ? `${fs('A')} and ${fs('B')} are the same amount: ${r.whole}.` : `${fs('A')} vs ${fs('B')}: ${r.winner} is more, by ${r.diff} of a bar.`;
+    MK.say(`${line} Move the sliders to try more.\nTakeaway: bigger numbers don't mean more chocolate. The bottom number sets the piece size, so cut both bars into the same tiny pieces and count.`);
+    draw(); report();
+  }
+
+  function piece(x, y, w, h, color, label, onTap){
+    const g = S.g();
+    const r = S.rect(x + 1, y, w - 2, h, { fill: color, stroke: EDGE, 'stroke-width': 1.5, rx: 4, parent: g });
+    S.rect(x + 4, y + 3, Math.max(0, w - 8), h * 0.3, { fill: '#fff', opacity: 0.12, rx: 3, parent: g, 'pointer-events': 'none' });
+    if (label && !fine) S.text(x + w / 2, y + h * 0.6, label, { size: w < 34 ? 11 : 14, fill: '#f6e3c8', parent: g, 'pointer-events': 'none' });
+    if (onTap) r.on('click', onTap);
+    return g;
+  }
+  function gridLines(y, h, len){
+    if (!fine) return;
+    const { L } = tiny();
+    for (let j = 1; j < L; j++){ const x = X0 + j * BW / L; if (x >= X0 + len - 0.5) break;
+      S.line(x, y + 2, x, y + h - 2, { stroke: '#f7dcb4', 'stroke-width': 0.8, opacity: 0.7, 'pointer-events': 'none' }); }
+  }
+
+  function draw(){
+    S.clear();
+    for (const k of ['A', 'B']){
+      const s = st[k], b = BAR[k], pw = BW / s.d;
+      S.text(X0, b.ly, s.cut ? `Bar ${k}: ${s.d} equal pieces, each 1/${s.d}` : `Bar ${k}: a whole bar`, { anchor: 'start', weight: 600, fill: '#3b2618' });
+      if (!s.cut){
+        piece(X0, b.y, BW, b.h, b.color, '');
+        continue;
+      }
+      for (let i = 0; i < s.d; i++){
+        const x = X0 + i * pw;
+        if (s.taken.has(i)){ const slot = S.rect(x + 1, b.y, pw - 2, b.h, { fill: '#efe2d0', stroke: '#b89a7e', 'stroke-dasharray': '4 3', rx: 4 });
+          if (phase === 'take') slot.on('click', () => tap(k, i)); }
+        else piece(x, b.y, pw, b.h, b.color, `1/${s.d}`, phase === 'take' ? () => tap(k, i) : null);
+      }
+      gridLines(b.y, b.h, BW);
+    }
+    if (phase === 'guess') return;
+    for (const k of ['A', 'B']){
+      const s = st[k], rw = ROW[k], pw = BW / s.d, m = s.taken.size;
+      if (!s.cut){ S.text(X0, rw.ly, `From Bar ${k}: cut it first`, { anchor: 'start', fill: '#7a6452', size: 15 }); continue; }
+      const total = m === s.n ? ` = ${m}/${s.d} of a bar` : '';
+      S.text(X0, rw.ly, `From Bar ${k}: ${m} piece${m === 1 ? '' : 's'} of 1/${s.d}${total}`, { anchor: 'start', weight: 600, fill: '#3b2618', size: 15 });
+      S.rect(X0, rw.y, BW, rw.h, { fill: 'none', stroke: '#d7c2a8', 'stroke-dasharray': '3 4', rx: 4 });
+      for (let j = 0; j < m; j++) piece(X0 + j * pw, rw.y, pw, rw.h, BAR[k].color, `1/${s.d}`);
+      gridLines(rw.y, rw.h, m * pw);
+    }
+    if (done()){
+      for (const k of ['A', 'B']){ const x = X0 + st[k].n * BW / st[k].d;
+        for (const q of ['A', 'B']) S.line(x, ROW[q].y - 3, x, ROW[q].y + ROW[q].h + 3, { stroke: '#d98b3a', 'stroke-width': 2, 'stroke-dasharray': '5 4' }); }
+    }
+  }
+
+  function report(){
+    for (const k of ['A', 'B']){ const s = st[k], m = s.taken.size;
+      (k === 'A' ? rA : rB).set(!s.cut ? 'not cut yet' : `${m} of ${s.d} pieces${m === s.n ? `\n= ${m}/${s.d} of a bar` : ''}`); }
+    if (!done()) return;
+    const r = result(), t = tiny(), A = st.A, B = st.B;
+    rDiff.set(r.c === 0 ? `Same amount\n(${r.whole} each)` : `${r.winner}\nby ${r.diff} of a bar`);
+    const pa = A.d > B.d ? 'smaller than' : 'bigger than';
+    const dec = k => MK.fmt(st[k].n / st[k].d, { dp: 3, fixed: true });
+    const sizes = A.d === B.d ? `Both bars have pieces of 1/${A.d} of a bar, so the one with more pieces taken has more.` :
+      `Bar A's pieces (1/${A.d} of a bar each) are ${pa} Bar B's (1/${B.d} each). So the number of pieces alone doesn't tell you who has more: their size matters too.`;
+    why.set(`Bottom number (the denominator): how many pieces the bar is cut into. Top number (the numerator): how many you take.\n${sizes}\n` +
+      `As decimals (top ÷ bottom): ${A.n} ÷ ${A.d} = ${dec('A')} and ${B.n} ÷ ${B.d} = ${dec('B')}.`);
+    tinyR.set(`${t.a} vs ${t.b}\n(each 1/${t.L} of a bar)`);
+    if (A.d === B.d){ tinyN.set(`Both bars already have pieces of the same size, 1/${t.L} of a bar. A shared piece size like this is called a common denominator.\nSo just count: ${t.a} vs ${t.b}.`); return; }
+    const how = t.fa === 1 ? `Bar A's pieces are already small enough. Cut every Bar B piece into ${t.fb}` :
+      t.fb === 1 ? `Cut every Bar A piece into ${t.fa}. Bar B's pieces are already small enough` :
+      `Cut every Bar A piece into ${t.fa}, and every Bar B piece into ${t.fb}`;
+    tinyN.set(`${how}. Now both bars are in ${t.L} tiny pieces of the same size, 1/${t.L} of a bar each. A shared piece size like this is called a common denominator.\n` +
+      `From A: ${A.n} × ${t.fa} = ${t.a} tiny pieces, so ${A.n}/${A.d} = ${t.a}/${t.L}.\nFrom B: ${B.n} × ${t.fb} = ${t.b} tiny pieces, so ${B.n}/${B.d} = ${t.b}/${t.L}.`);
+  }
+
+  draw();
+}
+</script>
+</body>
+</html>

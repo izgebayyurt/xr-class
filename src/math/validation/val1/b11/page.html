@@ -1,0 +1,165 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Counting to a Billion</title>
+<script src="mathkit.js"></script>
+</head>
+<body>
+<script>
+// Student design: count one number every second. How long to reach a million? A billion?
+// Show both timelines next to your life. Guess first, then build both timelines by counting days and years.
+MK.start({ title: 'Counting to a billion', build, css: `
+  :root{--bg:#f6f5f1;--accent:#4a6fa5;--warm:#c98a4b}
+  #mk-card h1{font-weight:600;letter-spacing:.01em}` });
+
+const MILLION = 1e6, BILLION = 1e9;
+const DAY = 24 * 60 * 60;                // seconds in a day
+const YEAR = 365.25 * DAY;               // seconds in a year (365¼ days, counting leap years)
+const C = { box: '#ffffff', edge: '#cfd5df', fill: '#a9bfdc', million: '#4a6fa5', billion: '#2f4f7f', life: '#c98a4b', ink: '#1d2330', mute: '#6b7280' };
+const n0 = x => Math.round(x).toLocaleString('en-US');
+function dur(sec){                       // seconds → a friendly length of time
+  const one = (v, u) => `${MK.fmt(v, { dp: 1 })} ${u}${MK.fmt(v, { dp: 1 }) === '1' ? '' : 's'}`;
+  if (sec < 60) return one(sec, 'second');
+  if (sec < 3600) return one(sec / 60, 'minute');
+  if (sec < DAY) return one(sec / 3600, 'hour');
+  if (sec < YEAR) return one(sec / DAY, 'day');
+  return one(sec / YEAR, 'year');
+}
+function exact(sec){                     // seconds → "11 days, 13 hours, 46 minutes, 40 seconds"
+  const d = Math.floor(sec / DAY); let r = sec - d * DAY;
+  const h = Math.floor(r / 3600); r -= h * 3600; const m = Math.floor(r / 60); const s = Math.round(r - m * 60);
+  const p = (v, u) => `${v} ${u}${v === 1 ? '' : 's'}`;
+  return [p(d, 'day'), p(h, 'hour'), p(m, 'minute'), p(s, 'second')].join(', ');
+}
+
+function build(){
+  const narrow = window.innerWidth < 600;           // phones get a narrower drawing so labels stay readable
+  const W = narrow ? 400 : 600, H = 330, L = 14, R = W - 14;
+  const DAYS = 14;                        // boxes on the million timeline
+  let phase = 'guess', guessI = -1, days = 0, years = 0, age = null, pick = null, millionHit = false, billionHit = false;
+  const opts = [
+    { t: 'About 2 weeks', s: 14 * DAY }, { t: 'About 3 months', s: 0.25 * YEAR }, { t: 'About 3 years', s: 3 * YEAR },
+    { t: 'About 30 years', s: 30 * YEAR }, { t: 'About 300 years', s: 300 * YEAR }];
+  const tBillion = BILLION, tMillion = MILLION;   // one number per second → seconds = the number
+  const yearsMax = () => Math.max(35, age ? Math.ceil((age + 1) / 5) * 5 : 0);
+
+  MK.say('Imagine counting out loud, one number every second, without stopping.\nA million is 1,000,000. A billion is 1,000,000,000.\nHow long would it take to count to a billion? Pick your guess below.');
+  MK.model('one number every second, nonstop, no sleep or breaks. A year is 365¼ days. (Really, saying big numbers takes longer than a second.)');
+  const S = MK.svg(W, H, { maxHeight: '58vh' });
+
+  MK.guess({ ask: 'Counting one number a second, how long until you reach a billion?', options: opts.map(o => o.t) }, (v, i) => {
+    guessI = i; phase = 'million';
+    MK.say(`You guessed "${v}". Let's find out by counting.\nFirst, a million. Each box on the top timeline is one day of counting (${n0(DAY)} numbers). Press "Count one more day" until you pass 1,000,000.`);
+    MK.show(addDay, counted, spent); draw(); report();
+  });
+
+  const addDay = MK.button('Count one more day', () => {
+    if (days >= DAYS) return; days++;
+    if (!millionHit && days * DAY >= MILLION){
+      millionHit = true; phase = 'billion'; MK.hide(addDay); MK.show(addYear, add5);
+      MK.log('reached', { number: 'million', days });
+      MK.say(`You passed 1,000,000 during day ${days}. The exact moment: ${exact(tMillion)}.\nNow the billion. A day is too small, so each box on the second timeline is one year (${n0(YEAR)} numbers). Keep counting years until you pass 1,000,000,000.`);
+    }
+    draw(); report();
+  }).hide();
+  const addYear = MK.button('Count one more year', () => addYears(1)).hide();
+  const add5 = MK.button('Count 5 more years', () => addYears(5), { alt: true }).hide();
+  function addYears(k){
+    for (let j = 0; j < k && !billionHit; j++){
+      years++;
+      if (years * YEAR >= BILLION){
+        billionHit = true; phase = 'age'; MK.hide(addYear, add5); MK.show(ageIn);
+        MK.log('reached', { number: 'billion', years });
+        MK.say(`You passed 1,000,000,000 during year ${years}. The exact moment: after ${MK.fmt(tBillion / YEAR, { dp: 1 })} years.\nNow put your own life on the same timeline: type your age below.`);
+      }
+    }
+    draw(); report();
+  }
+
+  const ageIn = MK.input({ ask: 'How old are you?', unit: 'years', button: 'Show my life', onSubmit: (v, row) => {
+    if (!(v >= 1 && v <= 110)) { MK.say('Type an age between 1 and 110 years, then press "Show my life".'); return; }
+    age = v; row.lock(); phase = 'explore'; explain(); MK.show(why, pickN, table); draw(); report();
+  } }).hide();
+
+  const counted = MK.readout('Numbers counted so far', '0').hide();
+  const spent = MK.readout('Time spent counting', '0 days').hide();
+  const why = MK.note('').hide();
+  const names = ['a thousand', 'ten thousand', 'a hundred thousand', 'a million', 'ten million', 'a hundred million', 'a billion'];
+  const pickN = MK.slider({ label: 'Count to', min: 3, max: 9, step: 1, value: 9, format: k => names[k - 3], onInput: k => {
+    pick = k; draw(); report();
+    MK.say(`Takeaway: a billion is not a bit more than a million. It is a thousand millions, so it takes a thousand times as long: about ${dur(tMillion)} versus about ${dur(tBillion)}.\nKeep sliding to compare other numbers, or press Start over.`);
+  } }).hide();
+  const table = MK.table(['Count to', 'Time'], []).hide();
+
+  function explain(){
+    const g = opts[guessI], ratio = tBillion / g.s;
+    const honest = guessI === 3 ? `You guessed "${g.t}". That's right: it's ${MK.fmt(tBillion / YEAR, { dp: 1 })} years.`
+      : ratio > 1 ? `You guessed "${g.t}". The real time, ${MK.fmt(tBillion / YEAR, { dp: 1 })} years, is about ${n0(ratio)} times longer than your guess.`
+      : `You guessed "${g.t}". The real time, ${MK.fmt(tBillion / YEAR, { dp: 1 })} years, is shorter: your guess is about ${n0(1 / ratio)} times too long.`;
+    const ago = age > tBillion / YEAR ? `A billion seconds ago, you were about ${MK.fmt(age - tBillion / YEAR, { dp: 0 })} years old.`
+      : `That's longer than your whole life so far. If you had started counting the day you were born, you'd still have ${MK.fmt(tBillion / YEAR - age, { dp: 1 })} years to go.`;
+    MK.say(`${honest}\n${ago} A million seconds ago was just ${dur(tMillion)} ago.\nUse the "Count to" slider to try other numbers.`);
+    why.set(`Why so different?\nA billion is a thousand millions: 1,000 × 1,000,000 = ${n0(1000 * MILLION)}.\nSo it takes 1,000 times as long as a million: 1,000 × ${MK.fmt(tMillion / DAY, { dp: 2 })} days = ${n0(1000 * tMillion / DAY)} days.\n${n0(1000 * tMillion / DAY)} days ÷ 365¼ days in a year = ${MK.fmt(1000 * tMillion / YEAR, { dp: 1 })} years.\nOn the second timeline, the whole million is the thin dark sliver at the very start.`);
+  }
+
+  function report(){
+    const sec = phase === 'million' ? days * DAY : years * YEAR;
+    if (phase === 'million' || (phase === 'billion' && years === 0)){
+      counted.set(n0(days * DAY)); spent.set(`${days} day${days === 1 ? '' : 's'}`);
+    } else {
+      counted.set(n0(sec)); spent.set(`${years} year${years === 1 ? '' : 's'}`);
+    }
+    if (phase === 'explore'){
+      const k = pick ?? 9;
+      counted.label(`Count to ${names[k - 3]}`).set(n0(10 ** k)); spent.label('Time it takes').set(dur(10 ** k));
+      table.set(names.map((nm, j) => [nm, dur(10 ** (j + 3))]), k - 3);
+    }
+  }
+
+  function draw(){
+    S.clear();
+    // --- million timeline: one box per day ---
+    const bw = (R - L) / DAYS, xd = MK.scale(0, DAYS, L, R);
+    S.text(L, 18, narrow ? `A million: 1 box = 1 day (${n0(DAY)} s)` : `Counting to a million: each box is 1 day (${n0(DAY)} seconds)`, { anchor: 'start', size: 15, weight: 600 });
+    for (let d = 0; d < DAYS; d++){
+      S.rect(xd(d) + 1, 34, bw - 2, 40, { fill: d < days ? C.fill : C.box, stroke: C.edge, rx: 3 });
+      S.text(xd(d) + bw / 2, 88, d + 1, { size: 13, fill: C.mute });
+    }
+    if (millionHit){
+      const x = xd(tMillion / DAY);
+      S.rect(L + 1, 34, x - L - 1, 40, { fill: C.million, opacity: .55, rx: 3 });
+      S.line(x, 28, x, 80, { stroke: C.ink, 'stroke-width': 2 });
+      S.text(Math.min(x, R - 135), 106, `1,000,000 reached (${MK.fmt(tMillion / DAY, { dp: 1 })} days)`, { size: 13, weight: 600 });
+    }
+    // --- billion timeline: one box per year ---
+    const Y = yearsMax(), yw = (R - L) / Y, xy = MK.scale(0, Y, L, R);
+    S.text(L, 140, narrow ? `A billion: 1 box = 1 year (${n0(YEAR)} s)` : `Counting to a billion: each box is 1 year (${n0(YEAR)} seconds)`, { anchor: 'start', size: 15, weight: 600 });
+    for (let y = 0; y < Y; y++) S.rect(xy(y) + .5, 154, yw - 1, 40, { fill: y < years ? C.fill : C.box, stroke: C.edge, rx: 2 });
+    MK.ticks(0, Y, 7).forEach(t => S.text(xy(t), 208, t, { size: 13, fill: C.mute }));
+    if (billionHit){
+      const x = xy(tBillion / YEAR);
+      S.rect(L, 154, x - L, 40, { fill: C.billion, opacity: .45 });
+      S.line(x, 148, x, 200, { stroke: C.ink, 'stroke-width': 2 });
+      S.text(Math.max(L + 225, Math.min(x, R - 125)), 228, `1,000,000,000 reached (${MK.fmt(tBillion / YEAR, { dp: 1 })} years)`, { size: 13, weight: 600 });
+    }
+    if (millionHit && phase !== 'million'){            // the whole million, drawn at its true width
+      S.rect(L, 154, Math.max(1, xy(tMillion / YEAR) - L), 40, { fill: C.ink });
+      S.text(L, 228, '▲ a million', { anchor: 'start', size: 13, fill: C.mute });
+    }
+    if (pick != null){
+      const w = Math.max(.6, xy(Math.min(Y, 10 ** pick / YEAR)) - L);
+      S.rect(L, 150, w, 48, { fill: 'none', stroke: C.life, 'stroke-width': 3, rx: 2 });
+    }
+    // --- your life, on the same years ---
+    S.text(L, 262, age ? `Your life: ${MK.fmt(age, { dp: 1 })} years, on the same scale as the billion` : 'Your life (on the same scale as the billion)', { anchor: 'start', size: 15, weight: 600, fill: age ? C.ink : C.mute });
+    S.rect(L, 276, R - L, 22, { fill: C.box, stroke: C.edge, rx: 3 });
+    if (age) S.rect(L, 276, xy(age) - L, 22, { fill: C.life, opacity: .8, rx: 3 });
+    MK.ticks(0, Y, 7).forEach(t => S.text(xy(t), 314, t, { size: 13, fill: C.mute }));
+  }
+  draw();
+}
+</script>
+</body>
+</html>

@@ -1,0 +1,59 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Math experience</title>
+<!-- Opens one experience: x.html?e=<scene code>[&v=<participant id>&r=own|s1|s2]#k=<key>. The page is decrypted here and runs in a sandbox. -->
+<script src="shortlink-config.js"></script>
+<script src="xr-log.js"></script>
+<style>
+  html,body{margin:0;height:100%;background:#f7f6f2;font:15px system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;color:#1d2330}
+  iframe{border:0;width:100%;height:100%;display:block}
+  #msg{position:fixed;inset:0;display:flex;align-items:center;justify-content:center;text-align:center;padding:24px}
+  #tag{position:fixed;right:6px;top:4px;font-size:11px;opacity:.85;color:#5d6676;background:#fff;border:1px solid #d9d6cc;border-radius:10px;padding:2px 8px}
+</style>
+</head>
+<body>
+<div id="msg">Loading…</div>
+<iframe id="f" sandbox="allow-scripts" title="Math experience" hidden></iframe>
+<div id="tag" hidden></div>
+<script>
+(async () => {
+  const msg = document.getElementById('msg'), f = document.getElementById('f'), tag = document.getElementById('tag');
+  const q = new URLSearchParams(location.search), eid = q.get('e') || '', who = q.get('v') || '', role = q.get('r') || '';
+  const key = (location.hash.match(/k=([A-Za-z0-9_-]+)/) || [])[1];
+  const fail = t => { msg.textContent = t; };
+  if (!/^[a-z2-9]{6}$/.test(eid) || !key) return fail('This link is incomplete. Copy the whole link, including the part after #.');
+  const bytes = s => Uint8Array.from(atob(s.replace(/-/g, '+').replace(/_/g, '/')), c => c.charCodeAt(0));
+  let html;
+  try {
+    const r = await fetch('e/' + eid + '.txt'); if (!r.ok) return fail('This experience is not available.');
+    const all = bytes((await r.text()).trim());
+    const k = await crypto.subtle.importKey('raw', bytes(key), 'AES-GCM', false, ['decrypt']);
+    const plain = await crypto.subtle.decrypt({ name: 'AES-GCM', iv: all.slice(0, 12) }, k, all.slice(12));
+    html = await new Response(new Blob([plain]).stream().pipeThrough(new DecompressionStream('deflate-raw'))).text();
+  } catch (e) { return fail('This link does not open. Check that you copied all of it.'); }
+  f.srcdoc = html; f.hidden = false; msg.remove();
+  tag.textContent = 'Scene code: ' + eid; tag.hidden = false;
+  document.title = (html.match(/<title>([^<]*)<\/title>/i) || [])[1] || 'Math experience';
+
+  // Study logging: only when the link carries a participant ID. Events are batched (one write when the visitor leaves or switches tabs).
+  if (!/^[A-Za-z0-9_-]{2,32}$/.test(who) || !window.XRLOG) return;
+  window.XRLOG.pid = who;
+  const t0 = performance.now(), sec = () => Math.round((performance.now() - t0) / 100) / 10;
+  let buf = [], part = 0, lastDrag = -9;
+  window.XRLOG.send('x-open', { e: eid, role });
+  addEventListener('message', ev => {
+    if (ev.source !== f.contentWindow || !ev.data || ev.data.mk !== 1) return;
+    const { event, data } = ev.data; const t = sec();
+    if (event === 'drag' && t - lastDrag < 1) return; if (event === 'drag') lastDrag = t;   // drags come fast; keep about one a second
+    if (buf.length < 400) buf.push([t, String(event).slice(0, 24), data]);
+  });
+  const flush = () => { if (!buf.length && part) return; window.XRLOG.send('x-view', { e: eid, role, part: part++, secs: sec(), ev: buf.splice(0) }); };
+  addEventListener('visibilitychange', () => { if (document.visibilityState === 'hidden') flush(); });
+  addEventListener('pagehide', flush);
+})();
+</script>
+</body>
+</html>

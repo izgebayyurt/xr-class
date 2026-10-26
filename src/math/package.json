@@ -1,0 +1,2 @@
+{ "name": "pme-math-pipeline", "private": true, "type": "module",
+  "dependencies": { "playwright": "1.64.1", "three": "0.185.1" } }

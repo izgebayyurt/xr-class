@@ -1,0 +1,112 @@
+{
+ "file": "b06/page.html",
+ "lines": 109,
+ "usesKit": true,
+ "problems": [],
+ "warnings": [],
+ "desktop": {
+  "errors": [],
+  "kit": true,
+  "start": {
+   "card": "At a college, there are six times as many students as professors.\nLet S be the number of students and P the number of professors. Which equation says the same thing? Pick one first.",
+   "title": "Six times as many students",
+   "overflowX": false,
+   "height": 800,
+   "shownErr": [],
+   "svgTextOverlaps": [],
+   "offscreenSvgText": [],
+   "guessOpen": true,
+   "visibleButtons": [
+    "S = 6P",
+    "6S = P",
+    "Start over"
+   ]
+  },
+  "guessKind": "choice",
+  "guessLogged": true,
+  "afterGuess": {
+   "card": "You picked S = 6P. Now check it by putting in numbers.\nHere is a small college: count 2 professors and 12 students. Then press each equation to plug the numbers in.",
+   "title": "Six times as many students",
+   "overflowX": false,
+   "height": 800,
+   "shownErr": [],
+   "svgTextOverlaps": [],
+   "offscreenSvgText": [],
+   "guessOpen": true,
+   "visibleButtons": [
+    "Test S = 6P",
+    "Test 6S = P",
+    "Start over"
+   ]
+  },
+  "after": {
+   "card": "Now there are 6 professors and 36 students. Look at the table: which equation still works?\nTakeaway: \"six times as many students as professors\" is S = 6P. The 6 goes with the smaller group (professors) to make it as big as the bigger group (students). When unsure, put in numbers.",
+   "title": "Six times as many students",
+   "overflowX": false,
+   "height": 1007,
+   "shownErr": [],
+   "svgTextOverlaps": [],
+   "offscreenSvgText": [],
+   "guessOpen": true,
+   "visibleButtons": [
+    "Start over"
+   ]
+  },
+  "eventsAfter": [
+   "ready",
+   "pick",
+   "guess",
+   "say",
+   "pick",
+   "tested",
+   "say",
+   "pick",
+   "tested",
+   "say",
+   "explored",
+   "say",
+   "slide",
+   "say",
+   "slide",
+   "say",
+   "slide"
+  ],
+  "restart": {
+   "card": "At a college, there are six times as many students as professors.\nLet S be the number of students and P the number of professors. Which equation says the same thing? Pick one first.",
+   "title": "Six times as many students",
+   "overflowX": false,
+   "height": 800,
+   "shownErr": [],
+   "svgTextOverlaps": [],
+   "offscreenSvgText": [],
+   "guessOpen": true,
+   "visibleButtons": [
+    "S = 6P",
+    "6S = P",
+    "Start over"
+   ]
+  },
+  "firstGuessBeforeVisitor": false
+ },
+ "phone": {
+  "errors": [],
+  "kit": true,
+  "start": {
+   "card": "At a college, there are six times as many students as professors.\nLet S be the number of students and P the number of professors. Which equation says the same thing? Pick one first.",
+   "title": "Six times as many students",
+   "overflowX": false,
+   "height": 844,
+   "shownErr": [],
+   "svgTextOverlaps": [],
+   "offscreenSvgText": [],
+   "guessOpen": true,
+   "visibleButtons": [
+    "S = 6P",
+    "6S = P",
+    "Start over"
+   ]
+  },
+  "events": 1
+ },
+ "pass": true
+}

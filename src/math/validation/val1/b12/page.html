@@ -1,0 +1,208 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Sunset Ferris Wheel</title>
+<script src="mathkit.js"></script>
+</head>
+<body>
+<script>
+// Student design: "why sin 30 is 1/2 and sin 60 isn't 1", shown with a Ferris wheel at a fair at sunset.
+// You ride the wheel, starting level with the hub. Height above the hub ÷ spoke length = sin(angle turned).
+// Every height on screen is measured from where the car is drawn (hub y minus car y, in metres).
+const css = `
+  :root{--bg:#fbeee4;--accent:#b8336a;--warm:#ff8a3d;--soft:#fde3d3;--line:#ecc9b5;--good:#1f8a4c;--bad:#c2412d}
+  html,body{background:#fbeee4}
+  #mk-card{background:linear-gradient(90deg,#fff,#fff4ea);border-left:6px solid #ff8a3d}
+  #mk-card h1{color:#6b2147}
+  .mk-readout .v{color:#6b2147}
+`;
+MK.start({ title: 'Sunset Ferris Wheel', build, css });
+
+function build(){
+  const W = 650, H = 440, cx = 245, cy = 232, pxm = 7, poleX = 540, groundY = 420;
+  let logged = false, r = 20, ang = 0, phase = 'guess', guessI = -1, guessT = '', mirror = false, sizeChanged = false, lastSay = '';
+  const seen = new Set();
+  const OPTIONS = ['Twice as high', 'Higher, but less than twice as high', 'More than twice as high'];
+  const f1 = x => MK.fmt(x, { dp: 1, fixed: true });
+  const f3 = x => MK.fmt(x, { dp: 3 });
+  const card = t => { if (t !== lastSay){ lastSay = t; MK.say(t); } };
+
+  card(`You're riding a Ferris wheel at the fair. Its spokes (the bars from the hub, the wheel's centre, out to the rim) are ${r} m long.\n` +
+    `You get on level with the hub. A quarter turn, 90°, takes you to the very top.\n` +
+    `Guess first: compare a 30° turn with a 60° turn (twice as far). How high does 60° lift you, compared with 30°?`);
+  MK.model('a wheel turning around its hub. Height is measured straight up from hub level to the middle of your car.');
+
+  const S = MK.svg(W, H, { maxHeight: '62vh', fontSize: 15 });
+  drawBackground();
+  const G = S.g();                                     // everything that changes
+  const car = S.circle(0, 0, 13, { fill: '#ff8a3d', stroke: '#fff', 'stroke-width': 3 });
+  S.drag(car, (x, y) => {
+    if (phase === 'guess') return;
+    let a = Math.atan2(cy - y, x - cx) * 180 / Math.PI;
+    if (a > 90 || a < -90) a = 90; else if (a < 0) a = 0;
+    a = Math.round(a);
+    const near = Math.round(a / 30) * 30; if (Math.abs(a - near) <= 3) a = near;   // easy to stop on 0, 30, 60, 90
+    turn.value = a; setAngle(a);
+  });
+
+  const gRow = MK.guess({ ask: 'At 60°, your height is…', options: OPTIONS }, (t, i) => {
+    guessI = i; guessT = t; phase = 'turn';
+    MK.show(turn, angR, hR, sR);
+    update();
+  });
+  const turn = MK.slider({ label: 'Turn', min: 0, max: 90, step: 1, value: 0, format: v => v + '°', onInput: v => setAngle(v) }).hide();
+  const size = MK.slider({ label: 'Spoke length', min: 10, max: 24, step: 1, value: 20, format: v => v + ' m',
+    onInput: v => { r = v; sizeChanged = true; update(); } }).hide();
+  const mirrorBtn = MK.button('Show mirror car', b => { mirror = !mirror; b.label = mirror ? 'Hide mirror car' : 'Show mirror car'; MK.show(mirrorNote); if (!mirror) MK.hide(mirrorNote); update(); }, { alt: true }).hide();
+
+  const angR = MK.readout('Angle turned', '0°').hide();
+  const hR = MK.readout('Height above the hub', '').hide();
+  const sR = MK.readout('sin = height ÷ spoke', '').hide();
+  const why = MK.note('').hide();
+  const mirrorNote = MK.note('').hide();
+  const table = MK.table(['Turn', 'Height', 'Climb', 'sin'], []).hide();
+
+  // ---------- geometry (the drawing is the source of every number) ----------
+  const Rpx = () => r * pxm;
+  const carAt = a => [cx + Rpx() * Math.cos(a * Math.PI / 180), cy - Rpx() * Math.sin(a * Math.PI / 180)];
+  const heightAt = a => (cy - carAt(a)[1]) / pxm;          // metres above hub level, measured on the drawing
+  const clear = g => { while (g.node.firstChild) g.node.firstChild.remove(); };
+  const label = (x, y, t, o = {}) => S.text(x, y, t, { fill: '#fff', stroke: '#2b1838', 'stroke-width': 3.5, 'paint-order': 'stroke', size: 15, weight: 600, parent: G, ...o });
+
+  function setAngle(a){
+    ang = a;
+    if (phase !== 'guess' && a % 30 === 0 && a > 0) seen.add(a);
+    update();
+  }
+
+  function drawBackground(){
+    const defs = S.g();
+    const sky = defs.add('linearGradient', { id: 'sky', x1: 0, y1: 0, x2: 0, y2: 1 });
+    [['0', '#3a2160'], ['.45', '#a8396f'], ['.75', '#f07a4a'], ['1', '#fbc77a']].forEach(([o, c]) => sky.add('stop', { offset: o, 'stop-color': c }));
+    S.rect(0, 0, W, H, { fill: 'url(#sky)' });
+    S.circle(105, groundY - 6, 46, { fill: '#ffd88a', opacity: .9 });
+    [[420, 30], [470, 40], [620, 34]].forEach(([x, h]) => S.polygon([[x - 26, groundY], [x, groundY - h], [x + 26, groundY]], { fill: '#4a2140' }));
+    S.rect(0, groundY, W, H - groundY, { fill: '#2b1838' });
+  }
+
+  function draw(){
+    clear(G);
+    const R = Rpx(), [px, py] = carAt(ang), h = heightAt(ang), dark = '#2b1838';
+    // legs, rim, spokes
+    S.line(cx, cy, cx - R * 0.55 - 20, groundY, { stroke: dark, 'stroke-width': 7, parent: G });
+    S.line(cx, cy, cx + R * 0.55 + 20, groundY, { stroke: dark, 'stroke-width': 7, parent: G });
+    S.circle(cx, cy, R, { fill: 'none', stroke: dark, 'stroke-width': 4, parent: G });
+    S.circle(cx, cy, R - 9, { fill: 'none', stroke: dark, 'stroke-width': 1.5, opacity: .6, parent: G });
+    for (let k = 1; k < 12; k++){ const [x, y] = carAt(ang + 30 * k); S.line(cx, cy, x, y, { stroke: dark, 'stroke-width': 1.5, opacity: .8, parent: G }); }
+    // hub level
+    S.line(cx - R - 10, cy, poleX, cy, { stroke: '#fff', 'stroke-dasharray': '5 6', opacity: .75, 'stroke-width': 1.5, parent: G });
+    label(cx - R - 14, cy, 'hub level', { anchor: 'end', size: 14, weight: 400 });
+    // the right triangle: spoke (hypotenuse) and height (opposite)
+    if (ang > 0 && phase !== 'guess'){
+      S.polygon([[cx, cy], [px, py], [px, cy]], { fill: '#ffd36b', opacity: .28, parent: G });
+      S.line(px, cy, px, py, { stroke: '#ffd36b', 'stroke-width': 4, parent: G });
+    }
+    S.line(cx, cy, px, py, { stroke: '#ff6fa8', 'stroke-width': 4, parent: G });
+    // mirror car: the same turn, below hub level
+    let chord = 0;
+    if (mirror){
+      const [mx, my] = carAt(-ang);
+      chord = Math.hypot(px - mx, py - my) / pxm;
+      S.line(cx, cy, mx, my, { stroke: '#ff6fa8', 'stroke-width': 3, 'stroke-dasharray': '6 5', parent: G });
+      S.line(px, py, mx, my, { stroke: '#ffd36b', 'stroke-width': 3, 'stroke-dasharray': '6 5', parent: G });
+      S.circle(mx, my, 12, { fill: 'none', stroke: '#ff8a3d', 'stroke-width': 3, 'stroke-dasharray': '4 3', parent: G });
+      if (ang >= 8) label(mx + 18, my + 14, 'mirror car', { anchor: 'start', size: 13 });
+    }
+    // other cars and hub
+    const colors = ['#ffd36b', '#7fd1c7', '#ff6fa8'];
+    for (let k = 1; k < 12; k++){ const [x, y] = carAt(ang + 30 * k); S.circle(x, y, 8, { fill: colors[k % 3], stroke: dark, 'stroke-width': 1.5, parent: G }); }
+    S.circle(cx, cy, 8, { fill: dark, parent: G });
+    // angle mark
+    if (ang >= 1){
+      const ar = Math.min(36, R * 0.3), t = ang * Math.PI / 180;
+      S.path(`M ${cx + ar} ${cy} A ${ar} ${ar} 0 0 0 ${cx + ar * Math.cos(t)} ${cy - ar * Math.sin(t)}`, { stroke: '#fff', 'stroke-width': 2, parent: G });
+      if (ang >= 12) label(cx + (ar + 18) * Math.cos(t / 2), cy - (ar + 18) * Math.sin(t / 2), ang + '°', { size: 14 });
+    }
+    if (phase !== 'guess'){
+      if (h >= 1.5) label(px + 9, (cy + py) / 2, f1(h) + ' m', { anchor: 'start', fill: '#ffe39a', size: 17 });
+      const t = ang * Math.PI / 180, mx = (cx + px) / 2 - 22 * Math.sin(t), my = (cy + py) / 2 - 22 * Math.cos(t);
+      if (ang >= 8) label(mx, my, r + ' m', { fill: '#ffc2db', size: 16 });
+    }
+    // height pole on the right, with pins where you stopped
+    const top = cy - R;
+    S.line(poleX, cy, poleX, top, { stroke: '#fff', 'stroke-width': 3, parent: G });
+    label(poleX, top - 20, 'Height above hub', { size: 14 });
+    const tk = MK.ticks(0, r, 4).filter(v => r - v > 2.5);
+    tk.concat([r]).forEach(v => { const y = cy - v * pxm;
+      S.line(poleX - 6, y, poleX, y, { stroke: '#fff', 'stroke-width': 2, parent: G });
+      label(poleX - 10, y, v + ' m', { anchor: 'end', size: 14, weight: 400 }); });
+    let prevY = -Infinity;
+    [90, 60, 30].filter(a => seen.has(a)).forEach(a => {
+      const y = carAt(a)[1], ly = Math.max(y, prevY + 18); prevY = ly;
+      S.line(poleX, y, poleX + 12, y, { stroke: '#ff8a3d', 'stroke-width': 4, parent: G });
+      label(poleX + 16, ly, `${a}°: ${f1(heightAt(a))} m`, { anchor: 'start', size: 14 });
+    });
+    car.attr({ cx: px, cy: py });
+    return chord;
+  }
+
+  function update(){
+    const chord = draw(), h = heightAt(ang);
+    angR.set(ang + '°');
+    hR.set(f1(h) + ' m');
+    sR.set(`${f1(h)} ÷ ${r} = ${f3(h / r)}`);
+    if (phase === 'guess') return;
+    const h30 = heightAt(30), h60 = heightAt(60), h90 = heightAt(90);
+    const s30 = h30 / r, s60 = h60 / r;
+    // table of the stops you made, measured on the wheel as it is now
+    const stops = [0, 30, 60, 90].filter(a => a === 0 || seen.has(a));
+    table.set(stops.map((a, i) => {
+      const prev = stops[i - 1], climb = i > 0 && prev === a - 30 ? '+' + f1(heightAt(a) - heightAt(prev)) + ' m' : '';
+      return [a + '°', f1(heightAt(a)) + ' m', climb, f3(heightAt(a) / r)];
+    }), stops.indexOf(ang));
+    if (mirror) mirrorNote.set(`The mirror car is turned ${ang}° below hub level. Car to mirror car: ${f1(chord)} m, which is 2 × your height. Spoke: ${r} m.\n` +
+      (ang === 30 ? `At 30°, the two spokes meet at 30° + 30° = 60°. Two equal sides with 60° between them make all three sides equal. So your height is half of a spoke: exactly 1/2.`
+                  : `Turn to 30° and compare car-to-mirror with the spoke.`));
+    if (phase === 'turn'){
+      if (seen.has(30) && seen.has(60)){
+        phase = 'explain'; MK.log('reached', { step: 'compared 30 and 60' });
+        const ratio = h60 / h30, right = ratio === 2 ? 0 : ratio < 2 ? 1 : 2;
+        gRow.mark(right, 'right'); if (guessI !== right) gRow.mark(guessI, 'wrong');
+        MK.show(size, mirrorBtn, why, table);
+        card(`You guessed "${guessT}". ${guessI === right ? 'Right!' : 'Not quite.'} At 30° you were ${f1(h30)} m up. At 60°, ${f1(h60)} m.\n` +
+          `That's ${MK.fmt(ratio, { dp: 2 })} times as high, not 2 times. Read why on the right.\nThen turn all the way to 90° (the top), and try another spoke length.`);
+      } else if (seen.has(30)){
+        card(`At 30° you are ${f1(h30)} m up: half of the ${r} m spoke.\nNow keep turning to 60°. Will you be twice as high?`);
+      } else if (seen.has(60)){
+        card(`At 60° you are ${f1(h60)} m up.\nNow turn back to 30° and compare the two heights.`);
+      } else {
+        card(`You picked "${guessT}". Let's find out.\nDrag your orange car up the wheel, or use the Turn slider. Stop at 30° first and read your height.`);
+      }
+    }
+    if (phase !== 'explain') return;
+    const arc = Math.PI * r / 6;                         // rim distance for each 30° of turning
+    why.set(`Sine = opposite ÷ hypotenuse (the SOH in SOH CAH TOA). Here: opposite = your height, hypotenuse = the spoke.\n` +
+      `30°: ${f1(h30)} ÷ ${r} = ${f3(s30)}, exactly 1/2.\n60°: ${f1(h60)} ÷ ${r} = ${f3(s60)}, not 1.\n` +
+      `Every 30° turn moves your car ${f1(arc)} m along the rim. Low down, that move is mostly upward. Near the top, it's mostly sideways. ` +
+      `So each climb is smaller: +${f1(h30)} m, +${f1(h60 - h30)} m${seen.has(90) ? `, then only +${f1(h90 - h60)} m` : ''}.\n` +
+      `Why exactly half at 30°? Turn to 30° and press "Show mirror car".`);
+    const atTop = seen.has(90);
+    if (atTop && sizeChanged){
+      card(`Takeaway: sine is your height ÷ the spoke. A 30° turn lifts you exactly half a spoke, but 60° lifts you only about ${MK.fmt(s60, { dp: 2 })} of a spoke, not a whole one, because near the top the wheel carries you mostly sideways.\n` +
+        `Keep playing with the angle and spoke length, or press Start over.`);
+      if (!logged){ logged = true; MK.log('reached', { step: 'takeaway' }); }
+    } else if (atTop){
+      card(`At 90° you're at the very top: ${f1(h90)} m up, so sin 90° = ${f3(h90 / r)}. The last 30° lifted you only +${f1(h90 - h60)} m.\n` +
+        `Now change the spoke length with the slider. Does height ÷ spoke at 30° and 60° change?`);
+    } else if (sizeChanged){
+      card(`With a ${r} m spoke, 30° gives ${f1(h30)} m and 60° gives ${f1(h60)} m. Height ÷ spoke is still ${f3(s30)} and ${f3(s60)}: sine depends only on the angle.\n` +
+        `Now turn all the way to 90°, the top.`);
+    }
+  }
+  update();
+}
+</script>
+</body>
+</html>

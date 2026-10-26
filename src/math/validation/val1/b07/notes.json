@@ -1,0 +1,29 @@
+{
+  "title": "Stay or Switch?",
+  "concept": "Monty Hall problem: after you pick 1 of 3 doors and the host (who knows where the car is) opens a goat door, switching wins about 2 out of 3 games, because your first pick is the car only 1 time in 3 and switching wins every time it was a goat.",
+  "kept": [
+    "Monty Hall with 3 doors, one car and two goats; the host opens another door showing a goat",
+    "The friend's likely belief (50/50 because two doors are left) as one of the guess options",
+    "The sequence: you pick a door, host opens one, you choose stay or switch, then the computer plays many games automatically",
+    "Play 100 games and count how many times switching wins, shown on a chart (bar chart of stay wins vs switch wins)",
+    "Game show look with bright lights: marquee bulbs around the stage, gold and magenta colours, red doors",
+    "Flat 2D"
+  ],
+  "filled_in": [
+    "An up-front guess (stay / switch / 50/50) before any games are played, with honest feedback compared to the counted results",
+    "A grid with one square per simulated game, coloured by whether the first pick was the car; clicking a square shows that game's car door, first pick, opened door and both outcomes",
+    "A 'Why?' explanation built from the counted squares: first pick was the car (staying wins) vs first pick was a goat (host must leave the car closed, so switching wins)",
+    "A dashed 'half' line on the chart so the 50/50 belief can be compared to the bars",
+    "Explore sliders: number of games (10-300) and number of doors (3-10; 3-7 on phones), where the host opens all goat doors but one; the doors-variation is the standard generalisation of the same game",
+    "Rule for the host when your first pick is the car: he picks which goat door to open at random",
+    "A 'Play one more round' button and a takeaway in the card after exploring",
+    "Model label stating the assumptions: random car and pick, host always opens only goat doors and always offers the switch"
+  ],
+  "changed": [
+    {
+      "what": "The student's design said 'it is 2/3' without the conditions under which this holds",
+      "why": "The 2/3 answer depends on the host knowing where the car is, always opening a goat door and always offering the switch; these assumptions are stated in the card and the model label so the math is correct"
+    }
+  ],
+  "math_check": "Every count is computed from recorded game objects (stay wins = games where first pick equals car door; switch wins = games where the other closed door equals the car door), and the code throws if the host ever opens the car door. Ran 300,000 simulated 3-door games with the same rule and MK.rng: stay 0.334, switch 0.666. In the walkthrough checked that stay + switch wins = games played (e.g. 25 + 75 = 100, 35 + 265 = 300), percentages match counts, the 'half' line sits at games/2, the clicked game detail matches its square colour, and for n doors the theoretical 1 in n / (n-1) in n matches the simulated rates (e.g. 10 doors: 92%, 7 doors: 88%). check-page.mjs reports no problems and no warnings."
+}

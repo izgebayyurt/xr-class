@@ -1,0 +1,143 @@
+{
+ "file": "b02/page.html",
+ "lines": 188,
+ "usesKit": true,
+ "problems": [],
+ "warnings": [],
+ "desktop": {
+  "errors": [],
+  "kit": true,
+  "start": {
+   "card": "Here are two chocolate bars, exactly the same size.\nYou can have 5/9 of Bar A or 4/7 of Bar B. A fraction like 5/9 means: cut the bar into 9 equal pieces and take 5 of them.\nWhich gives you more chocolate? Pick your guess below.",
+   "title": "Chocolate bar fractions",
+   "overflowX": false,
+   "height": 856,
+   "shownErr": [],
+   "svgTextOverlaps": [],
+   "offscreenSvgText": [],
+   "guessOpen": true,
+   "visibleButtons": [
+    "5/9 of Bar A",
+    "4/7 of Bar B",
+    "The same amount",
+    "Start over"
+   ]
+  },
+  "guessKind": "choice",
+  "guessLogged": true,
+  "afterGuess": {
+   "card": "You guessed: 5/9 of Bar A. Let's check with the chocolate.\nPress the buttons to cut Bar A into 9 equal pieces and Bar B into 7 equal pieces.",
+   "title": "Chocolate bar fractions",
+   "overflowX": false,
+   "height": 881,
+   "shownErr": [],
+   "svgTextOverlaps": [],
+   "offscreenSvgText": [],
+   "guessOpen": false,
+   "visibleButtons": [
+    "Cut Bar A into 9 pieces",
+    "Cut Bar B into 7 pieces",
+    "Start over"
+   ]
+  },
+  "after": {
+   "card": "12/12 and 12/12 are the same amount: a whole bar. Move the sliders to try more.\nTakeaway: bigger numbers don't mean more chocolate. The bottom number sets the piece size, so cut both bars into the same tiny pieces and count.",
+   "title": "Chocolate bar fractions",
+   "overflowX": false,
+   "height": 1307,
+   "shownErr": [],
+   "svgTextOverlaps": [],
+   "offscreenSvgText": [],
+   "guessOpen": true,
+   "visibleButtons": [
+    "Hide the tiny pieces",
+    "Start over"
+   ]
+  },
+  "eventsAfter": [
+   "ready",
+   "pick",
+   "guess",
+   "say",
+   "click",
+   "say",
+   "click",
+   "say",
+   "take",
+   "say",
+   "take",
+   "say",
+   "take",
+   "say",
+   "take",
+   "say",
+   "take",
+   "say",
+   "take",
+   "say",
+   "take",
+   "say",
+   "take",
+   "say",
+   "take",
+   "say",
+   "take",
+   "say",
+   "take",
+   "say",
+   "take",
+   "say",
+   "take",
+   "say",
+   "click",
+   "say",
+   "say",
+   "say",
+   "say",
+   "say",
+   "slide",
+   "slide",
+   "slide",
+   "slide"
+  ],
+  "restart": {
+   "card": "Here are two chocolate bars, exactly the same size.\nYou can have 5/9 of Bar A or 4/7 of Bar B. A fraction like 5/9 means: cut the bar into 9 equal pieces and take 5 of them.\nWhich gives you more chocolate? Pick your guess below.",
+   "title": "Chocolate bar fractions",
+   "overflowX": false,
+   "height": 856,
+   "shownErr": [],
+   "svgTextOverlaps": [],
+   "offscreenSvgText": [],
+   "guessOpen": true,
+   "visibleButtons": [
+    "5/9 of Bar A",
+    "4/7 of Bar B",
+    "The same amount",
+    "Start over"
+   ]
+  },
+  "firstGuessBeforeVisitor": false
+ },
+ "phone": {
+  "errors": [],
+  "kit": true,
+  "start": {
+   "card": "Here are two chocolate bars, exactly the same size.\nYou can have 5/9 of Bar A or 4/7 of Bar B. A fraction like 5/9 means: cut the bar into 9 equal pieces and take 5 of them.\nWhich gives you more chocolate? Pick your guess below.",
+   "title": "Chocolate bar fractions",
+   "overflowX": false,
+   "height": 867,
+   "shownErr": [],
+   "svgTextOverlaps": [],
+   "offscreenSvgText": [],
+   "guessOpen": true,
+   "visibleButtons": [
+    "5/9 of Bar A",
+    "4/7 of Bar B",
+    "The same amount",
+    "Start over"
+   ]
+  },
+  "events": 1
+ },
+ "pass": true
+}

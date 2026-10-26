@@ -1,0 +1,188 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Small Hospital, Big Hospital</title>
+<script src="mathkit.js"></script>
+</head>
+<body>
+<script>
+// Student design: a big and a small hospital; which has more days with over 60% boys? Simulate a year and count the days.
+// Every number shown is counted from the simulated babies, or computed from them (and the exact binomial check).
+const BOY = '#86c8f2', BOY_INK = '#2f7fbf', GIRL = '#f7aecb', GIRL_INK = '#cf5f8c', MUTE = '#6b6470';
+MK.start({ title: 'Small hospital, big hospital', build, css: `
+  :root{--bg:#fdf5f8;--accent:#2f7fbf;--soft:#e4f1fb;--line:#ecd9e2}
+  #mk-card{border-top:6px solid ${GIRL}}
+  #mk-card h1{color:${BOY_INK}}
+` });
+
+function build(){
+  const narrow = innerWidth < 640;
+  const PW = 300, PH = 420, W = narrow ? PW + 20 : PW * 2 + 40, H = narrow ? PH * 2 + 10 : PH;
+  const YEAR = 365, r = MK.rng();
+  const hosp = [
+    { name: 'Small hospital', n: 15, days: [], today: null, ox: 10, oy: 0 },
+    { name: 'Big hospital', n: 45, days: [], today: null, ox: narrow ? 10 : PW + 30, oy: narrow ? PH + 10 : 0 },
+  ];
+  let guessed = null, years = 0, auto = null;
+  const runs = [];
+  const over = (k, n) => 5 * k > 3 * n;              // k boys out of n is more than 60% (exact, no rounding)
+  const need = n => Math.floor(3 * n / 5) + 1;        // fewest boys that is more than 60%
+  const pct = (k, n) => MK.fmt(100 * k / n, { dp: 1 }) + '%';
+  const overDays = h => h.days.filter(k => over(k, h.n)).length;
+  const dayNo = () => hosp[0].days.length;
+
+  MK.model('each baby is a boy or a girl with a 50% chance, like a coin flip, and each hospital has exactly the same number of births every day. In real life about 51% of babies are boys and births vary from day to day.');
+  MK.say('Two hospitals. The small one has 15 babies born every day. The big one has 45.\nEvery baby has the same 50/50 chance of being a boy or a girl. But some days, more than 60% of the babies are boys (that means more than 6 out of every 10).\nOver one year, which hospital has more of those days? Make your guess below.');
+
+  const S = MK.svg(W, H, { maxHeight: narrow ? 'none' : '62vh' });
+
+  MK.guess({ ask: 'Your guess: which hospital has more days with over 60% boys?', options: ['The small hospital', 'The big hospital', 'About the same'] }, (t, i) => {
+    guessed = i;
+    MK.say(`You guessed: ${t.toLowerCase()}. Now let's live through a year.\nPress Next day to see one day of births in both hospitals: blue is a boy, pink is a girl.`);
+    MK.show(nextBtn, yearBtn, result); update();
+  });
+  const nextBtn = MK.button('Next day', () => {
+    hosp.forEach(oneDay); update();
+    const [a, b] = hosp, ka = a.days.at(-1), kb = b.days.at(-1);
+    MK.say(`Day ${dayNo()}. Small hospital: ${ka} boys out of ${a.n} (${pct(ka, a.n)}). Big hospital: ${kb} boys out of ${b.n} (${pct(kb, b.n)}).\nCount the blue babies to check. Press Next day again, or run the rest of the year.`);
+    if (dayNo() >= YEAR) yearDone();
+  }).hide();
+  const yearBtn = MK.button('Run the rest of the year', () => {
+    if (dayNo() >= YEAR) reset();
+    busy(true);
+    auto = MK.every(25, () => {
+      for (let i = 0; i < 5 && dayNo() < YEAR; i++) hosp.forEach(oneDay);
+      update();
+      if (dayNo() >= YEAR){ MK.stop(auto); auto = null; busy(false); yearDone(); }
+    });
+  }, { alt: true }).hide();
+  const smallS = MK.slider({ label: 'Small hospital: babies a day', min: 5, max: 40, step: 1, value: 15, onInput: v => resize(0, v) }).hide();
+  const bigS = MK.slider({ label: 'Big hospital: babies a day', min: 45, max: 200, step: 5, value: 45, onInput: v => resize(1, v) }).hide();
+
+  const result = MK.readout('Days over 60% boys', '').hide();
+  const why = MK.note('').hide();
+  const peek = MK.note('').hide();
+  const table = MK.table(['Babies a day', 'Days over 60% boys (1 year)'], []).hide();
+
+  function oneDay(h){
+    h.today = Array.from({ length: h.n }, () => r.chance(0.5));   // true = boy
+    h.days.push(h.today.filter(Boolean).length);
+  }
+  function reset(){ hosp.forEach(h => { h.days = []; h.today = null; }); MK.hide(peek); }
+  function busy(on){ nextBtn.enable(!on && dayNo() < YEAR); yearBtn.enable(!on); smallS.enable(!on); bigS.enable(!on); }
+  function resize(i, v){
+    if (auto) return;
+    hosp[i].n = v; reset(); update();
+    nextBtn.enable(true); yearBtn.label = 'Run a whole year';
+    MK.say(`Now the small hospital has ${hosp[0].n} babies a day and the big one has ${hosp[1].n}.\nPress Run a whole year to compare them.`);
+  }
+
+  // exact long-run chance that a day is over 60% boys (binomial, p = 1/2)
+  function exactChance(n){
+    let p = Math.pow(0.5, n), tot = 0;
+    for (let k = 0; k <= n; k++){ if (over(k, n)) tot += p; p = p * (n - k) / (k + 1); }
+    return tot;
+  }
+
+  function yearDone(){
+    years++;
+    const [a, b] = hosp, oa = overDays(a), ob = overDays(b);
+    hosp.forEach((h, i) => runs.push([`${h.n} (${i ? 'big' : 'small'})`, overDays(h), h.n]));
+    const rows = runs.slice(-12).sort((x, y) => x[2] - y[2]).map(x => x.slice(0, 2));
+    table.set(rows).show();
+    nextBtn.enable(false); yearBtn.label = 'Run a new year';
+    const lo = h => Math.min(...h.days), hi = h => Math.max(...h.days);
+    const ea = exactChance(a.n) * YEAR, eb = exactChance(b.n) * YEAR;
+    why.set(`Why? Each baby is like a coin flip.\n` +
+      `Small (${a.n} a day): half would be ${MK.fmt(a.n / 2)} boys. Over 60% needs ${need(a.n)} boys, only ${MK.fmt(need(a.n) - a.n / 2)} more than half.\n` +
+      `Big (${b.n} a day): half is ${MK.fmt(b.n / 2)}. Over 60% needs ${need(b.n)} boys, ${MK.fmt(need(b.n) - b.n / 2)} more than half.\n` +
+      `A few extra boys happen often. Many extra boys is rare. So the small hospital's bars spread wider: this year its days went from ${pct(lo(a), a.n)} to ${pct(hi(a), a.n)} boys. The big one's went from ${pct(lo(b), b.n)} to ${pct(hi(b), b.n)}.\n` +
+      `Exact math: over many, many years the average would be about ${Math.round(ea)} days a year for the small hospital and ${Math.round(eb)} for the big one.\n` +
+      `Click any bar to see its days.`).show();
+    let cmp;
+    if (oa > ob){
+      const times = ob > 0 ? `about ${MK.fmt(oa / ob, { dp: 1 })} times as many` : 'and the big one had none';
+      cmp = guessed === 0 ? `You guessed the small hospital, and that's what happened (${times}).`
+          : guessed === 1 ? `You guessed the big hospital, but the small one had more of those days, ${times}.`
+          : `You guessed about the same, but the small one had ${times}.`;
+    } else cmp = `This year the big hospital had as many or more. That is rare: the exact math says ${Math.round(ea)} vs ${Math.round(eb)} on average. Try another year.`;
+    if (years === 1){
+      MK.say(`A whole year is done. Small hospital: ${oa} days over 60% boys. Big hospital: ${ob} days.\n${cmp}\nRead why on the side. Then move the sliders to try other hospital sizes.`);
+      MK.show(smallS, bigS);
+    } else {
+      MK.say(`Year done. ${a.n} babies a day: ${oa} days over 60% boys. ${b.n} babies a day: ${ob} days.\nTakeaway: the fewer babies a day, the further a day can swing from half boys. So a small hospital has more lopsided days, even though every baby is still 50/50.`);
+    }
+    MK.log('year', { small: a.n, big: b.n, oa, ob });
+  }
+
+  function update(){
+    const d = dayNo();
+    result.label(`Days over 60% boys, out of ${d} day${d === 1 ? '' : 's'}`);
+    result.set(hosp.map(h => `${h.name.split(' ')[0]}: ${overDays(h)}`).join('\n'));
+    draw();
+  }
+
+  function draw(){
+    S.clear();
+    const counts = hosp.map(h => { const c = Array(h.n + 1).fill(0); h.days.forEach(k => c[k]++); return c; });
+    const ymax = Math.max(5, ...counts.flat()) * 1.1;
+    hosp.forEach((h, i) => panel(h, counts[i], ymax, i === 1));
+  }
+
+  function panel(h, cnt, ymax, big){
+    const g = S.g({ transform: `translate(${h.ox},${h.oy})` }), P = { parent: g };
+    // building with a cross
+    const bw = big ? 46 : 32, bh = big ? 42 : 28, bx = 6, by = 52 - bh;
+    S.rect(bx, by, bw, bh, { ...P, fill: '#fff', stroke: BOY_INK, 'stroke-width': 2, rx: 3 });
+    S.rect(bx + bw / 2 - 3, by + 5, 6, 16, { ...P, fill: GIRL_INK });
+    S.rect(bx + bw / 2 - 8, by + 10, 16, 6, { ...P, fill: GIRL_INK });
+    S.text(62, 22, h.name, { ...P, anchor: 'start', size: 18, weight: 700, fill: BOY_INK });
+    S.text(62, 44, `${h.n} babies born every day`, { ...P, anchor: 'start', size: 14, fill: MUTE });
+    // nursery: today's babies
+    S.rect(4, 62, PW - 8, 110, { ...P, fill: '#fff', stroke: '#ecd9e2', 'stroke-width': 1.5, rx: 10 });
+    if (!h.today) S.text(PW / 2, 117, 'No babies yet', { ...P, size: 14, fill: '#a99aa3' });
+    else {
+      const bxw = PW - 24, bxh = 94, n = h.n;
+      const cols = Math.ceil(Math.sqrt(n * bxw / bxh)), rows = Math.ceil(n / cols), cell = Math.min(bxw / cols, bxh / rows);
+      const gx = 12 + (bxw - cols * cell) / 2, gy = 70 + (bxh - rows * cell) / 2;
+      h.today.forEach((boy, j) => {
+        const cx = gx + (j % cols + 0.5) * cell, cy = gy + (Math.floor(j / cols) + 0.5) * cell;
+        S.circle(cx, cy, cell * 0.38, { ...P, fill: boy ? BOY : GIRL, stroke: boy ? BOY_INK : GIRL_INK, 'stroke-width': 1.2 });
+      });
+      const k = h.days.at(-1), o = over(k, h.n);
+      S.text(PW / 2, 188, `Day ${h.days.length}: ${k} boys out of ${h.n} (${pct(k, h.n)})${o ? ', over 60%' : ''}`,
+        { ...P, size: 14, weight: o ? 700 : 400, fill: o ? BOY_INK : '#1d2330' });
+    }
+    // chart: how many days had each share of boys
+    const x0 = 40, x1 = PW - 12, y0 = 222, y1 = 360;
+    const x = MK.scale(0, 100, x0, x1), y = MK.scale(0, ymax, y1, y0);
+    S.rect(x(60), y0, x1 - x(60), y1 - y0, { ...P, fill: '#e4f1fb' });
+    S.text((x(60) + x1) / 2, y0 + 10, 'over 60% boys', { ...P, size: 12, weight: 600, fill: BOY_INK });
+    S.text(x0 - 30, y0 - 14, 'number of days', { ...P, anchor: 'start', size: 12, fill: MUTE });
+    MK.ticks(0, ymax, 4).forEach(t => {
+      S.line(x0, y(t), x1, y(t), { ...P, stroke: '#eee4e8', 'stroke-width': 1 });
+      S.text(x0 - 6, y(t), t, { ...P, anchor: 'end', size: 12, fill: MUTE });
+    });
+    const step = (x1 - x0) / h.n, bwid = Math.max(1.2, Math.min(14, step * 0.8));
+    cnt.forEach((c, k) => {
+      if (!c) return;
+      const o = over(k, h.n), cx = x(100 * k / h.n);
+      S.rect(cx - bwid / 2, y(c), bwid, y1 - y(c), { ...P, fill: o ? BOY_INK : '#c9b7c2', rx: 1 });
+      S.rect(cx - step / 2, y0, step, y1 - y0, { ...P, fill: 'transparent' }).on('click', () => {
+        peek.set(`${h.name}: ${c} of the ${h.days.length} days had exactly ${k} boys out of ${h.n} (${pct(k, h.n)} boys).${o ? ' Those days count as over 60%.' : ''}`).show();
+        MK.log('bar', { hospital: h.name, k, days: c });
+      });
+    });
+    S.line(x(60), y0, x(60), y1, { ...P, stroke: BOY_INK, 'stroke-dasharray': '4 3', 'stroke-width': 1.5 });
+    S.line(x0, y1, x1, y1, { ...P, stroke: '#1d2330', 'stroke-width': 1.5 });
+    [0, 20, 40, 60, 80, 100].forEach(t => S.text(x(t), y1 + 14, t + '%', { ...P, size: 12, fill: MUTE }));
+    S.text((x0 + x1) / 2, y1 + 36, 'share of the babies that were boys, each day', { ...P, size: 12, fill: MUTE });
+  }
+
+  update(); MK.hide(result);
+}
+</script>
+</body>
+</html>

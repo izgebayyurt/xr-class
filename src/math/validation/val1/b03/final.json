@@ -1,0 +1,120 @@
+{
+ "file": "b03/page.html",
+ "lines": 129,
+ "usesKit": true,
+ "problems": [],
+ "warnings": [],
+ "desktop": {
+  "errors": [],
+  "kit": true,
+  "start": {
+   "card": "A shirt costs $100. On Monday the store raises the price by 25%. On Tuesday the shirt goes on sale: 25% off.\n\"25%\" (say \"25 percent\") means 25 out of every 100. So 25% of $100 is $25.\nWhere does the price end up after Tuesday? Pick a guess below.",
+   "title": "Up 25%, Down 25%: the shirt price",
+   "overflowX": false,
+   "height": 840,
+   "shownErr": [],
+   "svgTextOverlaps": [],
+   "offscreenSvgText": [],
+   "guessOpen": true,
+   "visibleButtons": [
+    "Back to $100",
+    "Less than $100",
+    "More than $100",
+    "Start over"
+   ]
+  },
+  "guessKind": "choice",
+  "guessLogged": true,
+  "afterGuess": {
+   "card": "You picked \"Back to $100\". Now find out.\nPress \"Monday: raise the price 25%\" and watch the bar.",
+   "title": "Up 25%, Down 25%: the shirt price",
+   "overflowX": false,
+   "height": 865,
+   "shownErr": [],
+   "svgTextOverlaps": [],
+   "offscreenSvgText": [],
+   "guessOpen": false,
+   "visibleButtons": [
+    "Monday: raise the price 25%",
+    "Start over"
+   ]
+  },
+  "after": {
+   "card": "Now: $200.00, down 90% then up 90%, ends at $38.00.\nTakeaway: a percent is always a piece of the price it is taken from. Going up and down by the same percent never cancels out: you always end lower.",
+   "title": "Up 25%, Down 25%: the shirt price",
+   "overflowX": false,
+   "height": 1181,
+   "shownErr": [],
+   "svgTextOverlaps": [],
+   "offscreenSvgText": [],
+   "guessOpen": true,
+   "visibleButtons": [
+    "Up first, then down",
+    "Down first, then up",
+    "Start over"
+   ]
+  },
+  "eventsAfter": [
+   "ready",
+   "pick",
+   "guess",
+   "say",
+   "click",
+   "say",
+   "click",
+   "say",
+   "explored",
+   "say",
+   "say",
+   "slide",
+   "slide",
+   "pick",
+   "say",
+   "pick",
+   "say",
+   "say",
+   "say",
+   "slide",
+   "slide"
+  ],
+  "restart": {
+   "card": "A shirt costs $100. On Monday the store raises the price by 25%. On Tuesday the shirt goes on sale: 25% off.\n\"25%\" (say \"25 percent\") means 25 out of every 100. So 25% of $100 is $25.\nWhere does the price end up after Tuesday? Pick a guess below.",
+   "title": "Up 25%, Down 25%: the shirt price",
+   "overflowX": false,
+   "height": 840,
+   "shownErr": [],
+   "svgTextOverlaps": [],
+   "offscreenSvgText": [],
+   "guessOpen": true,
+   "visibleButtons": [
+    "Back to $100",
+    "Less than $100",
+    "More than $100",
+    "Start over"
+   ]
+  },
+  "firstGuessBeforeVisitor": false
+ },
+ "phone": {
+  "errors": [],
+  "kit": true,
+  "start": {
+   "card": "A shirt costs $100. On Monday the store raises the price by 25%. On Tuesday the shirt goes on sale: 25% off.\n\"25%\" (say \"25 percent\") means 25 out of every 100. So 25% of $100 is $25.\nWhere does the price end up after Tuesday? Pick a guess below.",
+   "title": "Up 25%, Down 25%: the shirt price",
+   "overflowX": false,
+   "height": 861,
+   "shownErr": [],
+   "svgTextOverlaps": [],
+   "offscreenSvgText": [],
+   "guessOpen": true,
+   "visibleButtons": [
+    "Back to $100",
+    "Less than $100",
+    "More than $100",
+    "Start over"
+   ]
+  },
+  "events": 1
+ },
+ "pass": true
+}

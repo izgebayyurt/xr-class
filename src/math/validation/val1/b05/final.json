@@ -1,0 +1,117 @@
+{
+ "file": "b05/page.html",
+ "lines": 201,
+ "usesKit": true,
+ "problems": [],
+ "warnings": [],
+ "desktop": {
+  "errors": [],
+  "kit": true,
+  "start": {
+   "card": "We will build a small box from little 1 cm cubes, like Lego: 3 cubes long, 2 wide, 1 tall.\nThen a big box that is twice as long, twice as wide and twice as tall.\nHow much more paint covers the big box's outside, and how much more water fits inside? Pick your guess first.",
+   "title": "Double the box",
+   "overflowX": false,
+   "height": 869,
+   "shownErr": [],
+   "svgTextOverlaps": [],
+   "offscreenSvgText": [],
+   "guessOpen": true,
+   "visibleButtons": [
+    "2 times the paint, 2 times the water",
+    "4 times the paint, 4 times the water",
+    "4 times the paint, 8 times the water",
+    "8 times the paint, 8 times the water",
+    "Start over"
+   ]
+  },
+  "guessKind": "choice",
+  "guessLogged": true,
+  "afterGuess": {
+   "card": "You guessed 2 times the paint and 2 times the water. Let's count.\nBuild the small box inside the blue outline: press \"Add 1 cube\" (or \"Finish this layer\"). Drag the picture to turn it.",
+   "title": "Double the box",
+   "overflowX": false,
+   "height": 894,
+   "shownErr": [],
+   "svgTextOverlaps": [],
+   "offscreenSvgText": [],
+   "guessOpen": false,
+   "visibleButtons": [
+    "Add 1 cube",
+    "Finish this layer",
+    "Start over"
+   ]
+  },
+  "after": {
+   "card": "Every side ×4: 16 times the paint and 64 times the water, counted from the cubes.\nTakeaway: double every side and the paint goes 2 × 2 = 4 times, but the water goes 2 × 2 × 2 = 8 times. Double is not double.\nTry another size, or press Start over.",
+   "title": "Double the box",
+   "overflowX": false,
+   "height": 1233,
+   "shownErr": [],
+   "svgTextOverlaps": [],
+   "offscreenSvgText": [],
+   "guessOpen": true,
+   "visibleButtons": [
+    "Start over"
+   ]
+  },
+  "eventsAfter": [
+   "ready",
+   "pick",
+   "guess",
+   "say",
+   "click",
+   "click",
+   "say",
+   "reached",
+   "click",
+   "click",
+   "click",
+   "click",
+   "reached",
+   "say",
+   "say",
+   "slide"
+  ],
+  "restart": {
+   "card": "We will build a small box from little 1 cm cubes, like Lego: 3 cubes long, 2 wide, 1 tall.\nThen a big box that is twice as long, twice as wide and twice as tall.\nHow much more paint covers the big box's outside, and how much more water fits inside? Pick your guess first.",
+   "title": "Double the box",
+   "overflowX": false,
+   "height": 869,
+   "shownErr": [],
+   "svgTextOverlaps": [],
+   "offscreenSvgText": [],
+   "guessOpen": true,
+   "visibleButtons": [
+    "2 times the paint, 2 times the water",
+    "4 times the paint, 4 times the water",
+    "4 times the paint, 8 times the water",
+    "8 times the paint, 8 times the water",
+    "Start over"
+   ]
+  },
+  "firstGuessBeforeVisitor": false
+ },
+ "phone": {
+  "errors": [],
+  "kit": true,
+  "start": {
+   "card": "We will build a small box from little 1 cm cubes, like Lego: 3 cubes long, 2 wide, 1 tall.\nThen a big box that is twice as long, twice as wide and twice as tall.\nHow much more paint covers the big box's outside, and how much more water fits inside? Pick your guess first.",
+   "title": "Double the box",
+   "overflowX": false,
+   "height": 928,
+   "shownErr": [],
+   "svgTextOverlaps": [],
+   "offscreenSvgText": [],
+   "guessOpen": true,
+   "visibleButtons": [
+    "2 times the paint, 2 times the water",
+    "4 times the paint, 4 times the water",
+    "4 times the paint, 8 times the water",
+    "8 times the paint, 8 times the water",
+    "Start over"
+   ]
+  },
+  "events": 1
+ },
+ "pass": true
+}

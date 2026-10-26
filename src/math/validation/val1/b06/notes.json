@@ -1,0 +1,20 @@
+{
+  "title": "Six times as many students",
+  "concept": "Translating 'There are six times as many students as professors' into an equation: S = 6P (not 6S = P), checked by putting in numbers.",
+  "kept": [
+    "The exact sentence 'six times as many students as professors' with S and P",
+    "The two candidate equations S = 6P and 6S = P as the guess options",
+    "The predicted mix-up (6S = P because the words go in that order), named in the feedback when the visitor picks it",
+    "The check method: put in numbers, starting with 2 professors and 12 students, and see which equation works"
+  ],
+  "filled_in": [
+    "Sequence: pick an equation, then see a picture of 2 professors with 12 students, press each equation to plug the counted numbers in, read why, then change the number of professors (1 to 6) with a slider",
+    "Picture: each professor (orange) drawn in a row with a group of 6 students (blue); P and S readouts are counted from the drawn circles",
+    "A table showing left side, right side and whether they are equal for each tested equation, recomputed when the slider moves",
+    "Plain-word definitions: equation, a letter standing for a number, 6P meaning 6 × P",
+    "Why box: 6S = P would mean 6 × 12 = 72 professors for 12 students, six times as many professors, the opposite of the sentence",
+    "Takeaway in the card after exploring; simple clean 2D look"
+  ],
+  "changed": [],
+  "math_check": "The design's math is correct (S = 6P; 2 professors gives 12 students). Every number shown is computed from the arrays of drawn circles. Recomputed by hand: P=2, S=12: S=6P gives 12 = 6×2 = 12 (true); 6S=P gives 6×12 = 72 vs 2 (false). P=6, S=36: 36 = 36 (true); 216 vs 6 (false). For every P from 1 to 6, S = 6P holds and 6S = P fails (36P ≠ P for P ≥ 1). check-page.mjs passed with no problems or warnings; desktop and 390 px phone screenshots reviewed, no horizontal overflow."
+}

@@ -1,0 +1,29 @@
+{
+  "title": "Big and Small Hospitals",
+  "concept": "Small samples vary more: a hospital with 15 births a day has more days with over 60% boys than one with 45 births a day, even though every baby is a 50/50 chance.",
+  "kept": [
+    "The big hospital vs small hospital question about days with over 60% boys",
+    "The 'about the same' answer the friend is expected to give, offered as one of the guess options",
+    "Simulating a year of births in both hospitals and counting the days",
+    "Hospital theme with baby blue (boys) and pink (girls) colors, flat 2D"
+  ],
+  "filled_in": [
+    "Hospital sizes: 45 and 15 births a day (the standard classroom version of this problem)",
+    "Order: guess, run 1 day and count the dots, run the rest of the year, see the counts, press Why?, then explore",
+    "A 365-square year chart per hospital; dark squares mark days over 60% boys, and clicking a square shows that day's babies",
+    "Two-step explanation: the boys needed to pass 60% in each hospital, then how many above half that is, plus each hospital's lowest and highest day",
+    "Explore: a slider for the small hospital's size (5 to 45, steps of 5) and a 'Run a new year' button that adds a row to a results table",
+    "Model label: each baby is 50/50 and independent; same number of births every day"
+  ],
+  "changed": [
+    {
+      "what": "The student's own belief that the answer is 'probably the same' is not used as the answer; the page shows the small hospital has more such days",
+      "why": "With fewer babies, the share of boys swings further from half, so passing 60% is more common (about 15% of days with 15 births vs about 7% with 45)."
+    },
+    {
+      "what": "Slider moves in steps of 5 babies",
+      "why": "With other sizes the '60%' cut-off falls between whole numbers and the chance zig-zags (e.g. 6 babies beats 5), which would muddy the trend."
+    }
+  ],
+  "math_check": "Exact binomial: P(at least 10 boys of 15) = 0.151 (about 55 days/year); P(at least 28 of 45) = 0.068 (about 25 days). Simulated runs gave 52 vs 29 and 59 vs 26. For sizes 5 to 45 in steps of 5 the expected days fall steadily (68, 63, 55, 48, 42, 37, 32, 28, 25). In a walkthrough the dark squares counted from the SVG equalled the readouts (61+28=89, 62+17=79). The over-60% test uses whole numbers (boys*5 > babies*3)."
+}

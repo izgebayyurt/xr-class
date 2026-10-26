@@ -1,0 +1,128 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Up 25%, Down 25%</title>
+<script src="mathkit.js"></script>
+</head>
+<body>
+<script>
+// A $100 shirt goes up 25% on Monday and down 25% on Tuesday. Is it back to $100?
+// Card → guess → visitor applies each day's change → why (slices of the price before each change) → explore → takeaway.
+// Every price is computed exactly with MK.frac from the start price and the percent.
+MK.start({ title: 'Up 25%, Down 25%: the shirt price', build });
+
+function build(){
+  const W = 600, H = 465, BASE = 380, TOP = 80, BW = 90, XS = [110, 300, 490];
+  const NAVY = '#33415c', GREEN = '#1f8a4c', RED = '#d62828';
+  let start = 100, pct = 25, upFirst = true, phase = 0, picked = null, explored = false;
+  const money = f => MK.fmt(+f, { money: true, dp: 2, fixed: true });
+
+  MK.say('A shirt costs $100. On Monday the store raises the price by 25%. On Tuesday the shirt goes on sale: 25% off.\n"25%" (say "25 percent") means 25 out of every 100. So 25% of $100 is $25.\nWhere does the price end up after Tuesday? Pick a guess below.');
+  const S = MK.svg(W, H, { maxHeight: '60vh' });
+
+  const g = MK.guess({ ask: 'Your guess: after Tuesday, the shirt costs…', options: ['Back to $100', 'Less than $100', 'More than $100'] }, (t, i) => {
+    picked = i; phase = 1;
+    MK.say(`You picked "${t}". Now find out.\nPress "Monday: raise the price 25%" and watch the bar.`);
+    MK.show(monBtn, tueBtn, now, diff); tueBtn.enable(false); draw(); report();
+  });
+  const monBtn = MK.button('Monday: raise the price 25%', () => {
+    phase = 2; monBtn.enable(false); tueBtn.enable(true);
+    const { s, mon } = prices();
+    MK.say(`Monday: 25% of ${money(s)} is ${money(mon.sub(s))}, so the shirt now costs ${money(mon)}.\nNow press "Tuesday: 25% off". Will the cut be the same size?`);
+    draw(); report();
+  }).hide();
+  const tueBtn = MK.button('Tuesday: 25% off', () => {
+    phase = 3; MK.hide(monBtn, tueBtn);
+    const { s, tue } = prices(); const c = tue.cmp(s), right = c === 0 ? 0 : c < 0 ? 1 : 2;
+    g.mark(right, 'right'); if (picked !== right) g.mark(picked, 'wrong');
+    const ans = ['back to $100', 'less than $100', 'more than $100'][right];
+    MK.say(`After Tuesday the shirt costs ${money(tue)}. That is ${ans}. ${picked === right ? 'Your guess was right.' : `You guessed "${g.buttons[picked].textContent}", so the guess was off by ${money(s.sub(tue))}.`}\nRead why in the explanation box. Then change the percent, the start price or the order below and watch the prices.`);
+    MK.show(why, pctS, startS, order); draw(); report();
+  }).hide();
+
+  const pctS = MK.slider({ label: 'Percent up and down', min: 5, max: 90, step: 5, value: 25, format: v => v + '%', onInput: v => { pct = v; explore(); } }).hide();
+  const startS = MK.slider({ label: 'Start price', min: 20, max: 200, step: 20, value: 100, format: v => '$' + v, onInput: v => { start = v; explore(); } }).hide();
+  const order = MK.choices(['Up first, then down', 'Down first, then up'], i => { upFirst = i === 0; order.reset(); order.mark(i, 'right'); explore(); }, { ask: 'Order' }).hide();
+  order.mark(0, 'right');
+
+  const now = MK.readout('Shirt price now', '').hide();
+  const diff = MK.readout('Compared with the start', '').hide();
+  const why = MK.note('').hide();
+
+  function prices(){
+    const s = MK.frac(start), d = upFirst ? 1 : -1;
+    const mon = s.mul(MK.frac(100 + d * pct, 100));
+    const tue = mon.mul(MK.frac(100 - d * pct, 100));
+    return { s, mon, tue };
+  }
+  function explore(){
+    if (!explored){ explored = true; MK.log('explored', { pct, start, upFirst }); }
+    const { s, tue } = prices();
+    MK.say(`Now: ${money(s)}, ${upFirst ? 'up' : 'down'} ${pct}% then ${upFirst ? 'down' : 'up'} ${pct}%, ends at ${money(tue)}.\nTakeaway: a percent is always a piece of the price it is taken from. Going up and down by the same percent never cancels out: you always end lower.`);
+    draw(); report();
+  }
+
+  function tag(cx, text){
+    const y = BASE + 12, l = cx - 52, r = cx + 52;
+    S.polygon([[l + 14, y], [r, y], [r, y + 34], [l + 14, y + 34], [l, y + 17]], { fill: '#f6e7bf', stroke: '#8a6d2f', 'stroke-width': 1.5 });
+    S.circle(l + 13, y + 17, 3.5, { fill: '#fff', stroke: '#8a6d2f', 'stroke-width': 1 });
+    S.text(cx + 7, y + 18, text, { size: 20, weight: 700 });
+  }
+  function sign(cx, up){
+    S.rect(cx - 82, 10, 164, 42, { fill: up ? GREEN : RED, rx: 6 });
+    S.text(cx, 32, up ? `PRICE UP ${pct}%` : `SALE ${pct}% OFF`, { size: 20, weight: 800, fill: '#fff' });
+  }
+  function change(cx, y, base, after){
+    const x = cx - BW / 2, b = +base, a = +after;
+    if (a > b){
+      S.rect(x, y(b), BW, y(0) - y(b), { fill: NAVY });
+      S.rect(x, y(a), BW, y(b) - y(a), { fill: GREEN });
+      S.text(x - 6, (y(a) + y(b)) / 2, '+' + money(after.sub(base)), { size: 18, weight: 700, anchor: 'end', fill: GREEN });
+    } else {
+      S.rect(x, y(a), BW, y(0) - y(a), { fill: NAVY });
+      S.rect(x, y(b), BW, y(a) - y(b), { fill: '#fbe0dc', stroke: RED, 'stroke-width': 2, 'stroke-dasharray': '6 4' });
+      S.text(x - 6, (y(a) + y(b)) / 2, '−' + money(base.sub(after)), { size: 18, weight: 700, anchor: 'end', fill: RED });
+    }
+    // slices of the price before this day's change, each pct% tall: counted up from the bottom for a raise, down from the top for a cut
+    for (let k = 1; k * pct < 100; k++){ const yy = y(a > b ? b * k * pct / 100 : b * (1 - k * pct / 100)); S.line(x, yy, x + BW, yy, { stroke: '#fff', 'stroke-width': 1.5, 'stroke-dasharray': '4 3', opacity: .85 }); }
+  }
+  function unknown(cx){
+    S.line(cx - BW / 2, BASE, cx + BW / 2, BASE, { stroke: '#9aa1ad', 'stroke-dasharray': '5 4' });
+    tag(cx, '?');
+  }
+  function draw(){
+    S.clear();
+    const { s, mon, tue } = prices();
+    const y = MK.scale(0, Math.max(+s, +s.mul(MK.frac(100 + pct, 100))), BASE, TOP);
+    sign(205, upFirst); sign(395, !upFirst);
+    S.rect(XS[0] - BW / 2, y(+s), BW, BASE - y(+s), { fill: NAVY });
+    if (phase >= 2) change(XS[1], y, s, mon); else unknown(XS[1]);
+    if (phase >= 3) change(XS[2], y, mon, tue); else unknown(XS[2]);
+    S.line(30, BASE, W - 30, BASE, { stroke: '#1d2330', 'stroke-width': 1.5 });
+    tag(XS[0], money(s));
+    if (phase >= 2) tag(XS[1], money(mon));
+    if (phase >= 3) tag(XS[2], money(tue));
+    ['Start', 'After Monday', 'After Tuesday'].forEach((t, i) => S.text(XS[i], BASE + 68, t, { size: 19, fill: '#5d6676' }));
+  }
+  function report(){
+    const { s, mon, tue } = prices(), p = phase >= 3 ? tue : phase >= 2 ? mon : s;
+    now.set(money(p));
+    const c = p.cmp(s), gap = c < 0 ? s.sub(p) : p.sub(s);
+    diff.set(c === 0 ? 'Same as the start' : `${money(gap)} ${c < 0 ? 'lower' : 'higher'}\n(${MK.fmt(+gap.div(s).mul(100), { dp: 2 })}% ${c < 0 ? 'less' : 'more'})`);
+    if (phase < 3) return;
+    const d1 = mon.sub(s), d2 = tue.sub(mon), a1 = d1.cmp(0) < 0 ? s.sub(mon) : d1, a2 = d2.cmp(0) < 0 ? mon.sub(tue) : d2;
+    const big = a2.cmp(a1) > 0;
+    why.set(`Each white dashed line marks off ${pct}% of the price before that day's change. The ${upFirst ? 'green' : 'red'} piece on Monday is one of those slices, and so is the ${upFirst ? 'red' : 'green'} piece on Tuesday.\n\n` +
+      `Monday: ${pct}% of ${money(s)} = ${money(a1)}, ${upFirst ? 'up' : 'down'} to ${money(mon)}.\n` +
+      `Tuesday: ${pct}% of ${money(mon)} = ${money(a2)}, ${upFirst ? 'down' : 'up'} to ${money(tue)}.\n\n` +
+      `Same percent, different price. Tuesday's ${pct}% is taken from a ${big ? 'bigger' : 'smaller'} price, so it is a ${big ? 'bigger cut' : 'smaller raise'}. ` +
+      `${money(a1)} ${upFirst ? 'up' : 'down'} and ${money(a2)} ${upFirst ? 'down' : 'up'} leaves the shirt ${money(s.sub(tue))} lower.\n` +
+      `That ${money(s.sub(tue))} is exactly ${pct}% of Monday's ${money(a1)} change.`);
+  }
+  draw();
+}
+</script>
+</body>
+</html>

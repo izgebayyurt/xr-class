@@ -1,0 +1,24 @@
+{
+  "title": "Chocolate bar fractions",
+  "concept": "Comparing fractions with different denominators: 5/9 vs 4/7. A bigger top and bottom number does not mean a bigger amount, because the bottom number sets the piece size. 4/7 is bigger: 36/63 vs 35/63.",
+  "kept": [
+    "The question: which is bigger, 5/9 or 4/7",
+    "Two chocolate bars of the same size, one cut into 9 pieces and one into 7",
+    "Taking 5 and 4 pieces and putting them next to each other to compare",
+    "Order: guess which is bigger, then cut the bars, then compare, then try other fractions",
+    "The student's common-denominator method (5/9 = 35/63, 4/7 = 36/63) and the decimal method, both shown in the explanation",
+    "The friend's likely mistake (5 and 9 are bigger numbers) named in the guess feedback",
+    "Chocolate, cozy look: dark and milk chocolate bars, warm cream background, serif title"
+  ],
+  "filled_in": [
+    "Cutting is done with one button per bar; taking is done by tapping pieces, which move into two rows lined up from the same left edge",
+    "Dashed orange markers at the end of each row so the small gap (1/63 of a bar) is visible",
+    "A 'Cut into tiny matching pieces' button that draws the common-denominator grid (63 tiny pieces) on the bars and rows so the visitor can count 35 vs 36; this is the student's own common-denominator idea made visible, not a new activity",
+    "'Try other fractions' as four sliders (pieces each bar is cut into, 2-12; pieces taken, up to that number)",
+    "Plain-word definitions of fraction, numerator, denominator and common denominator; 'of a bar' as the unit",
+    "Takeaway sentence in the card once the visitor explores",
+    "Model footer noting that the pieces are perfectly equal, unlike real chocolate"
+  ],
+  "changed": [],
+  "math_check": "Design math is correct (5/9 = 35/63 < 36/63 = 4/7). All numbers are computed in code: pieces taken are counted from the visitor's taps; fractions and the difference use MK.frac (5/9 vs 4/7 gives 4/7 bigger by 1/63); tiny-piece counts use lcm(9,7) = 63 and n x (63/d) = 35 and 36; decimals are n/d to 3 places (0.556, 0.571). Walked through in a headless browser and recomputed by hand: 5/9 vs 4/7 -> 35/63 vs 36/63, difference 1/63; 2/3 vs 3/5 -> 10/15 vs 9/15, difference 1/15; 12/12 vs 12/12 -> same amount. check-page.mjs passes with no problems or warnings."
+}

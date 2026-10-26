@@ -1,0 +1,34 @@
+{
+  "title": "Counting to a billion",
+  "concept": "Counting one number per second, a million takes about 11.6 days but a billion takes about 31.7 years, because a billion is a thousand millions, not 'a bit more' than a million.",
+  "kept": [
+    "The question: counting one number every second, how long to reach a million and a billion",
+    "The answers from the design: about 11 days for a million and about 31 years for a billion",
+    "The misconception the design targets: a billion is just a bit more than a million (the guess options run from 'About 2 weeks' to 'About 300 years')",
+    "Guess first, then both timelines",
+    "Timelines compared with the visitor's own life: a 'Your life' bar on the same year scale as the billion timeline",
+    "Calm, minimal, flat 2D look: muted blues, one warm colour for 'your life', no animation"
+  ],
+  "filled_in": [
+    "The guess is multiple choice about the billion (5 options), so the 'a bit more than a million' idea can be picked and then checked",
+    "How the visitor builds the timelines: they press 'Count one more day' (each box = 86,400 numbers) until the count passes 1,000,000, then 'Count one more year' / 'Count 5 more years' (each box = 31,557,600 numbers) until it passes 1,000,000,000. Readouts show the running count and time, worked out from the boxes filled",
+    "The exact moment each target is reached, computed: 11 days, 13 hours, 46 minutes, 40 seconds and 31.7 years",
+    "An age input, so 'your life' has a real length; then the page says how old you were a billion seconds ago, or, if you are younger than 31.7, how many more years you would still be counting if you had started at birth",
+    "A 'why' note: a billion = 1,000 × 1,000,000, so 1,000 × 11.57 days = 11,574 days ÷ 365¼ = 31.7 years; the million is drawn at its true width as a thin sliver on the billion timeline",
+    "Explore: a 'Count to' slider from a thousand to a billion (powers of ten) that outlines that length on the year timeline and highlights a table of times",
+    "Plain-word definitions in the opening card: a million is 1,000,000, a billion is 1,000,000,000",
+    "A model label: one number every second, nonstop with no sleep, a year counted as 365¼ days, and a note that saying big numbers out loud really takes longer",
+    "A narrower drawing at phone width so the labels can still be read"
+  ],
+  "changed": [
+    {
+      "what": "The design's '11 days' and '31 years' are shown more precisely as 11.6 days (11 days 13 h 46 min 40 s) and 31.7 years",
+      "why": "1,000,000 s ÷ 86,400 s per day = 11.574 days, which is nearer 11½ than 11; 1,000,000,000 s ÷ 31,557,600 s per year = 31.69 years. The design's numbers are rounded down, not wrong, so the activity is unchanged"
+    },
+    {
+      "what": "Stated the hidden assumption (nonstop counting, one number per second even for long numbers) as the page's model",
+      "why": "The TikTok numbers are really 'a million seconds' and 'a billion seconds'. Actual counting out loud would be slower and would need sleep, so the page says it is a simplification"
+    }
+  ],
+  "math_check": "Every number shown is computed in code: DAY = 24×60×60 = 86,400; YEAR = 365.25×DAY = 31,557,600. Counts are filled boxes × seconds per box (12 days = 1,036,800 ≥ 1,000,000 > 11 days = 950,400; 32 years = 1,009,843,200 ≥ 1e9 > 31 years = 978,285,600). Exact million time: 1,000,000 − 11×86,400 = 49,600 s = 13 h 46 min 40 s. Billion: 1e9/31,557,600 = 31.69 years. Table: 1e3 s = 16.7 min, 1e4 = 2.8 h, 1e5 = 1.2 days, 1e6 = 11.6 days, 1e7 = 115.7 days, 1e8 = 3.2 years, 1e9 = 31.7 years (checked by hand). Guess feedback: 31.69/3 ≈ 11 times longer than '3 years'; 300/31.69 ≈ 9 times too long. Age 45 → 45 − 31.7 ≈ 13 years old; age 24 → 31.7 − 24 = 7.7 years to go. check-page.mjs reported no problems and no warnings; full playthroughs at 1280 px and 390 px were screenshotted and inspected."
+}

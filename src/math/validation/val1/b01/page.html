@@ -1,0 +1,119 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Is 0.999… equal to 1?</title>
+<script src="mathkit.js"></script>
+</head>
+<body>
+<script>
+// Student design: "Is 0.999… equal to 1? Show 1/3 = 0.333… and times 3."
+// Activity: share 1 m of ribbon among 3 friends by cutting the leftover into 10 again and again (long division made physical).
+// Each friend's pieces give the digits of 1/3; all 3 friends' pieces give 0.999…; the grey leftover is the "gap".
+// Every number is computed from the cuts the visitor makes.
+MK.start({ title: 'Is 0.999… equal to 1?', build });
+
+const COLORS = ['#2f6fde', '#e8912d', '#1f8a4c'];
+const MAXCUTS = 12;
+const powStr = e => e >= 0 ? '1' + '0'.repeat(e) : '0.' + '0'.repeat(-e - 1) + '1';   // 10^e written out
+const pieceNum = k => k <= 2 ? powStr(2 - k) : powStr(3 - k), pieceUnit = k => k <= 2 ? 'cm' : 'mm';   // a piece after k cuts is 10^-k m
+const pieceLabel = k => pieceNum(k) + ' ' + pieceUnit(k);
+const dec = (N, n) => '0.' + String(N).padStart(n, '0');                               // N / 10^n as a decimal
+
+function build(){
+  const W = 600, H = 440, x0 = 160, sw = 380, sh = 36, top = 40, rowH = 76;
+  let f = 3, n = 0, guessIdx = null, explored = false, whyShown = false;
+  const S = MK.svg(W, H, { maxHeight: '60vh' });
+  MK.model('a perfect ribbon you can cut as finely as you like.');
+  MK.say('Here is a number: 0.999…\nThe three dots mean the 9s go on forever. Is it exactly 1, or a tiny bit less than 1?\nPick your guess below.');
+
+  const OPTIONS = ['A tiny bit less than 1', 'Exactly 1', 'A tiny bit more than 1'];
+  MK.guess({ ask: 'Your guess: 0.999… is…', options: OPTIONS }, (v, i) => {
+    guessIdx = i;
+    MK.say(`You picked “${v}”. Let's test it.\nThe bar is 1 metre of ribbon, shared fairly by 3 friends. Each should get 1/3 of a metre. (1/3 is a fraction: 1 split into 3 equal parts.)\nPress “Cut and share” to cut the ribbon into 10 equal pieces and hand them out.`);
+    MK.show(cut); draw();
+  });
+  const cut = MK.button('Cut and share', () => { if (n < MAXCUTS){ n++; slider.value = n; update(); } }).hide();
+  const slider = MK.slider({ label: 'Cuts', min: 1, max: MAXCUTS, step: 1, value: 1, onInput: v => { n = v; explore(); } }).hide();
+  const who = MK.choices(['3 friends', '9 friends'], i => { f = i === 0 ? 3 : 9; who.reset(); who.mark(i, 'right'); explore(); }, { ask: 'Share among' }).hide();
+  who.mark(0, 'right');
+
+  const share = MK.readout('One friend’s share').hide();
+  const total = MK.readout('All 3 shares together').hide();
+  const gap = MK.readout('Left over (the gap)').hide();
+  const why = MK.note('', { where: 'stage' }).hide();
+
+  // long division as ribbon cutting: leftover pieces × 10, shared among f friends
+  function rows(){
+    const out = []; let rem = 1, N = 0;
+    for (let k = 1; k <= n; k++){ const pieces = rem * 10, each = Math.floor(pieces / f); rem = pieces - each * f; N = N * 10 + each; out.push({ k, pieces, each, rem, N }); }
+    return out;
+  }
+
+  function draw(){
+    S.clear();
+    const R = rows();
+    if (n === 0){
+      S.text(W / 2, 16, 'Your ribbon', { size: 18, fill: '#5d6676' });
+      S.rect(x0, top, sw, sh, { fill: '#cfe0fb', stroke: '#1d2330', 'stroke-width': 1.5 });
+      S.text(x0 - 8, top + sh / 2, '1 m', { anchor: 'end', size: 20, weight: 600 });
+      return;
+    }
+    const first = Math.max(1, n - 4);
+    S.text(W / 2, 16, first > 1 ? `… ${first - 1} earlier cut${first > 2 ? 's' : ''} not shown (each one the same)` : 'Your 1 m ribbon, cut and shared', { size: 18, fill: '#5d6676' });
+    for (let k = first; k <= n; k++){
+      const r = R[k - 1], y = top + (k - first) * rowH, cw = sw / r.pieces;
+      S.text(x0 - 8, y + sh / 2 - 9, pieceNum(k), { anchor: 'end', size: pieceNum(k).length > 8 ? 17 : 20, weight: 650 });
+      S.text(x0 - 8, y + sh / 2 + 12, pieceUnit(k) + ' pieces', { anchor: 'end', size: 15, fill: '#5d6676' });
+      for (let j = 0; j < r.pieces; j++){
+        const owner = j < r.each * f ? Math.floor(j / r.each) : -1;
+        S.rect(x0 + j * cw, y, cw, sh, { fill: owner < 0 ? '#e4e1d8' : COLORS[owner % 3], stroke: '#fff', 'stroke-width': 2 });
+        S.text(x0 + (j + 0.5) * cw, y + sh / 2, owner < 0 ? 'left' : owner + 1, { size: owner < 0 ? 13 : 19, weight: 600, fill: owner < 0 ? '#1d2330' : '#fff' });
+      }
+      S.text(x0 + sw + 8, y + sh / 2, `${r.each} each`, { anchor: 'start', size: 16 });
+      if (k < n){   // the leftover piece gets blown up ×10 in the next row
+        const lx = x0 + (r.pieces - r.rem) * cw, ny = y + rowH;
+        S.line(lx, y + sh, x0, ny, { stroke: '#8a8f99', 'stroke-width': 1, 'stroke-dasharray': '4 4' });
+        S.line(x0 + sw, y + sh, x0 + sw, ny, { stroke: '#8a8f99', 'stroke-width': 1, 'stroke-dasharray': '4 4' });
+      }
+    }
+    const yb = top + (n - first) * rowH + sh + 22;
+    S.text(x0 + sw / 2, yb, `Number = which friend owns it. Grey = left over.`, { size: 17, fill: '#5d6676' });
+  }
+
+  function update(){
+    const R = rows(), last = R[n - 1], Ndig = last.N, all = f * Ndig, G = 10 ** n - all;
+    const shareStr = dec(Ndig, n), allStr = dec(all, n), gapStr = dec(G, n);
+    share.set(`${shareStr} m`);
+    total.label(`All ${f} shares together`).set(`${allStr} m`);
+    gap.set(`${gapStr} m\n(${last.rem} piece of ${pieceLabel(n)})`);
+    MK.show(share, total, gap);
+    draw();
+    const sameRem = R.every(r => r.rem === R[0].rem);
+    why.set(`Why: in all ${n} rows the grey leftover is ${last.rem} piece. Cut into ${last.pieces} and shared by ${f}, that is ${last.each} each with ${last.rem} left, the same as before.${sameRem ? ' So the cutting never ends.' : ''}\n` +
+      `One share is 0.${String(last.each).repeat(3)}… with ${last.each}s forever. That is exactly 1/${f} of the ribbon.\n` +
+      `All ${f} shares are 0.${String(f * last.each).repeat(3)}… with ${f * last.each}s forever. But all ${f} shares are the whole ribbon: ${f} × 1/${f} = 1. So 0.999… = 1.\n` +
+      `The gap is only there because we stopped. After ${n} cut${n > 1 ? 's' : ''} it is ${gapStr} m. Each cut makes it 10 times smaller. Name any tiny gap, and enough cuts make the leftover smaller still. With 9s that never stop, no gap is left.`);
+    if (explored){ takeaway(); return; }
+    if (n < 4){
+      MK.say(`Cut ${n}: the ${n === 1 ? 'ribbon' : 'leftover'} became ${last.pieces} pieces of ${pieceLabel(n)}. Each friend got ${last.each}, so each now has ${shareStr} m. Together they have ${allStr} m.\n${last.rem} grey piece is left over. Press “Cut and share” to cut it into 10 smaller pieces.${n === 3 ? ' One more cut, then look for the pattern.' : ''}`);
+      return;
+    }
+    if (!whyShown){ whyShown = true; MK.log('why', { cuts: n }); }
+    const fb = guessIdx === 1 ? 'You guessed exactly 1, and that is right.'
+      : guessIdx === 0 ? `You guessed a tiny bit less than 1. You are right about every stopped version, like ${allStr}: it is short by ${gapStr}. But 0.999… never stops, and then it is exactly 1.`
+      : `You guessed a tiny bit more than 1. The shares never go past the ribbon's end: each stopped version, like ${allStr}, is less than 1, and 0.999… is exactly 1.`;
+    MK.say(`${fb}\nRead the “Why” box under the ribbon. Then try the Cuts slider, or share among 9 friends.`);
+    MK.show(why, slider, who);
+    cut.enable(n < MAXCUTS);
+  }
+  function explore(){ explored = true; cut.enable(n < MAXCUTS); update(); }
+  function takeaway(){
+    MK.say(`Takeaway: 1/${f} = 0.${String(rows()[0].each).repeat(3)}… and ${f} × 1/${f} = 1, so 0.999… = 1.\nA stopped version like ${dec(f * rows()[n - 1].N, n)} has a gap, but 0.999… never stops, so no gap is left. It is just another way to write 1.`);
+  }
+  draw();
+}
+</script>
+</body>
+</html>

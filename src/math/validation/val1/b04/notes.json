@@ -1,0 +1,25 @@
+{
+  "title": "Interest on interest",
+  "concept": "Compound interest: $1,000 at 7% a year grows to about $7,612 in 30 years because each year's interest is 7% of the whole stack (old interest included), versus $3,100 with simple interest, which adds only $70 a year.",
+  "kept": [
+    "The question: $1,000 at 7% a year, roughly how much after 30 years",
+    "A guess first",
+    "Two coin stacks: one growing with interest on interest, one growing by only $70 a year, so the gap shows",
+    "Press play year by year, then compare the two stacks at year 30",
+    "The simple-interest mistake (1000 + 30 x 70 = 3100) shown as the second stack and named in the guess feedback",
+    "Rule of 72 as a rough check (72 / 7 is about 10 years to double, about 3 doublings in 30 years, about $8,000)",
+    "Money / green look"
+  ],
+  "filled_in": [
+    "Each coin is $100; the original $1,000 coins are dark green, compound interest coins light green, simple interest coins gold so the two stacks are easy to tell apart",
+    "A 'Next year' button plus a 'Play to year 30' button that steps one year at a time",
+    "A bracket beside each stack showing how much it grew this year, and a gap arrow between the stack tops",
+    "Readouts for year, both stacks and the gap; a note showing this year's interest calculation (7% of the current stack vs 7% of $1,000)",
+    "End explanation, a table of yearly interest earned (years 1, 5, 10 ... 30), and the years the compound stack actually passed $2,000 and $4,000",
+    "Exploration: sliders for interest rate (1-12%) and years (1-50); coin value rescales so the tall stack fits",
+    "Plain-word definitions of interest, 7%, compound and simple interest, and the rule of 72",
+    "Model label: interest added once a year, no deposits, withdrawals, fees or taxes"
+  ],
+  "changed": [],
+  "math_check": "The design's math is correct: 1000 x 1.07^30 = 7,612.26 (student said about 7,600), simple interest 1000 + 30 x 70 = 3,100, rule of 72 gives about 3 doublings (~$8,000). The page computes every amount by looping year by year (interest = rate x previous stack), never from typed results. Cross-checked in Python: 1000*1.07^30 = 7612.255, year-30 interest 0.07 x 7114.26 = 498.00, 12% for 50 years = 289,002.19, 3% for 5 years = 1,159.27; all match the page. Passed $2,000 in year 11 (1.07^11 = 2.10) and $4,000 in year 21 (1.07^21 = 4.14). check-page.mjs reports no problems and no warnings; desktop and 390 px screenshots reviewed."
+}

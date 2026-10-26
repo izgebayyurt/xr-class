@@ -1,0 +1,26 @@
+{
+  "title": "A 5 and a 6, or two 6s?",
+  "concept": "Rolling two dice: a 5 and a 6 (in either order) has 2 of the 36 equally likely outcomes (1/18), while two 6s has only 1 (1/36), so a 5 and a 6 is twice as likely.",
+  "kept": [
+    "The exact question: is a 5 and a 6 more likely than two 6s, or equally likely?",
+    "'Equally likely' kept as a guess option, matching the student's own first thought",
+    "The student's way of showing it: roll the dice a lot and compare the counts",
+    "The student's '1 in 6 for each number' idea, acknowledged as true for each die on its own"
+  ],
+  "filled_in": [
+    "Multiple-choice guess before any rolling",
+    "Roll once / 100 / 1,000 buttons with live counts and a two-bar chart; at least 300 rolls before moving on",
+    "A red die and a blue die so the two orders (red 5 blue 6, red 6 blue 5) are visible",
+    "A clickable 6 x 6 grid of all 36 outcomes, with the 5-and-6 squares orange and the two-6s square green, as the 'why' step",
+    "Chance as a fraction and percent, plus expected vs actual counts for the visitor's rolls",
+    "Explore step: the same comparison for 1 and 2 vs two 1s, and 3 and 4 vs two 3s",
+    "Plain flat 2D look, since look and 3D were left open"
+  ],
+  "changed": [
+    {
+      "what": "The student's expected answer ('they are the same, because each number is 1/6') is not built as the answer; the page shows a 5 and a 6 is twice as likely (2/36 vs 1/36).",
+      "why": "A 5 and a 6 can happen two ways (5 then 6, or 6 then 5); two 6s only one way. The 1/6 idea is correct only for one fixed order (e.g. red 5 and blue 6 = 1/36), and the page points this out."
+    }
+  ],
+  "math_check": "Grid counts are computed by looping over all 36 (red, blue) pairs: 2 orange, 1 green, 36 total; MK.frac gives 2/36 = 1/18 (5.6%) and 1/36 (2.8%). The guess verdict uses those counts. Expected counts are rolls x fraction (1,000 rolls: about 56 and 28). Walked through: 1,000 simulated rolls gave 51-64 for the mixed pair and 20-37 for the double, in line with expectations. The same holds for 1 and 2 vs two 1s and 3 and 4 vs two 3s."
+}

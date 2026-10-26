@@ -1,0 +1,101 @@
+{
+ "file": "b09/page.html",
+ "lines": 140,
+ "usesKit": true,
+ "problems": [],
+ "warnings": [],
+ "desktop": {
+  "errors": [],
+  "kit": true,
+  "start": {
+   "card": "Class A has 10 students. Their average on a test (out of 100 points) is 70.\nClass B has 30 students. Their average is 90.\nWhat is the average score of all 40 students together? Type your guess first.",
+   "title": "Two classes, one average",
+   "overflowX": false,
+   "height": 824,
+   "shownErr": [],
+   "svgTextOverlaps": [],
+   "offscreenSvgText": [],
+   "guessOpen": true,
+   "visibleButtons": [
+    "Lock in my guess",
+    "Start over"
+   ]
+  },
+  "guessKind": "input",
+  "guessLogged": true,
+  "afterGuess": {
+   "card": "You guessed 5 points. Let's test it.\nAn \"average\" is the score everyone would get if all the points were shared out equally.\nMove the \"Everyone gets\" slider. Class B gives away the points above the orange line, and class A fills its gaps up to the line. Find the level where nothing is left over.",
+   "title": "Two classes, one average",
+   "overflowX": false,
+   "height": 802,
+   "shownErr": [],
+   "svgTextOverlaps": [],
+   "offscreenSvgText": [],
+   "guessOpen": true,
+   "visibleButtons": [
+    "Start over"
+   ]
+  },
+  "after": {
+   "card": "At 90: class B gives away 30 × 0 = 0 points. Class A needs 10 × 20 = 200 points.\nThat is 200 points short, so the level is too high. Move the slider down.",
+   "title": "Two classes, one average",
+   "overflowX": false,
+   "height": 800,
+   "shownErr": [],
+   "svgTextOverlaps": [],
+   "offscreenSvgText": [],
+   "guessOpen": true,
+   "visibleButtons": [
+    "Start over"
+   ]
+  },
+  "eventsAfter": [
+   "ready",
+   "enter",
+   "guess",
+   "say",
+   "say",
+   "say",
+   "slide",
+   "say",
+   "slide",
+   "say",
+   "slide"
+  ],
+  "restart": {
+   "card": "Class A has 10 students. Their average on a test (out of 100 points) is 70.\nClass B has 30 students. Their average is 90.\nWhat is the average score of all 40 students together? Type your guess first.",
+   "title": "Two classes, one average",
+   "overflowX": false,
+   "height": 824,
+   "shownErr": [],
+   "svgTextOverlaps": [],
+   "offscreenSvgText": [],
+   "guessOpen": true,
+   "visibleButtons": [
+    "Lock in my guess",
+    "Start over"
+   ]
+  },
+  "firstGuessBeforeVisitor": false
+ },
+ "phone": {
+  "errors": [],
+  "kit": true,
+  "start": {
+   "card": "Class A has 10 students. Their average on a test (out of 100 points) is 70.\nClass B has 30 students. Their average is 90.\nWhat is the average score of all 40 students together? Type your guess first.",
+   "title": "Two classes, one average",
+   "overflowX": false,
+   "height": 844,
+   "shownErr": [],
+   "svgTextOverlaps": [],
+   "offscreenSvgText": [],
+   "guessOpen": true,
+   "visibleButtons": [
+    "Lock in my guess",
+    "Start over"
+   ]
+  },
+  "events": 1
+ },
+ "pass": true
+}

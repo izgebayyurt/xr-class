@@ -1,0 +1,27 @@
+{
+  "title": "Is 0.999… equal to 1?",
+  "concept": "0.999… (9s forever) is exactly 1: 1/3 = 0.333… with 3s forever, and 3 × 1/3 = 1, so 3 × 0.333… = 0.999… = 1. Any stopped version (0.999 with n nines) is short by 1/10^n, but the infinite decimal has no last place for a gap, and the gap shrinks below any size you name.",
+  "kept": [
+    "The question exactly as posed: is 0.999… equal to 1 or just very close?",
+    "The friend's likely mistake (there is always a tiny gap) as the first guess option, and the feedback speaks to it directly",
+    "The student's method: 1/3 = 0.333… and multiply by 3",
+    "The 'tiny gap' idea, made visible as the grey leftover piece and its size"
+  ],
+  "filled_in": [
+    "A concrete context for 1/3: 1 metre of ribbon shared fairly by 3 friends",
+    "The activity: press 'Cut and share' to cut the leftover into 10 pieces and hand them out, 3 each with 1 left. This is long division of 1 ÷ 3, so the visitor produces the digits of 1/3 themselves and sees why they repeat (the leftover is always 1 piece)",
+    "A zoom ladder: each row is the previous row's leftover piece blown up ×10, so pieces can be counted per friend",
+    "Readouts: one friend's share, all shares together, and the leftover gap in metres and in cm/mm",
+    "A multiple-choice guess (less than 1 / exactly 1 / more than 1) before any cutting",
+    "Explore step: a Cuts slider (1–12) and a 3 or 9 friends switch (1/9 = 0.111…, 9 × 1/9 = 1), the same activity with different numbers",
+    "Order: guess, cut 4 times, why box, explore, takeaway in the card",
+    "Model label: a perfect ribbon that can be cut as finely as you like"
+  ],
+  "changed": [
+    {
+      "what": "Used 0.333… (3s that never stop) instead of 0.333",
+      "why": "0.333 × 3 = 0.999, which is 0.001 short of 1, so the finite version does not show the equality. The argument only works with the repeating decimal. The page shows both: every stopped share, like 0.333, gives a total with a gap, and the gap disappears only because the 3s never stop."
+    }
+  ],
+  "math_check": "All values computed in code by simulating the long division: leftover × 10 pieces, each = floor(pieces / friends), new leftover = pieces − each × friends; share digits N built as N×10+each; total = friends × N; gap = 10^n − total, all exact integers over 10^n (max 10^12, safe in JS). Checked by hand: 3 cuts → 0.333 m, 0.999 m, gap 0.001 m = 1 mm; 5 cuts → 0.33333, 0.99999, 0.00001 m = 0.01 mm; 12 cuts with 9 friends → 0.111111111111, 0.999999999999, 0.000000000001 m = 0.000000001 mm. Leftover is 1 piece in every row for both 3 and 9 friends. check-page.mjs passes with no problems or warnings; screenshots reviewed at desktop and 390 px."
+}

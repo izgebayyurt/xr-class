@@ -1,0 +1,68 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Handshakes</title>
+<script src="mathkit.js"></script>
+</head>
+<body>
+<script>
+// Example experience: "Everyone at a party shakes hands with everyone else once. With 10 people, how many handshakes?"
+// Pattern: card → guess → evidence the visitor builds and counts → explore → takeaway. Every number on screen is counted or computed here.
+MK.start({ title: 'Handshakes at a party', build });
+
+function build(){
+  const W = 560, H = 420, cx = W / 2, cy = H / 2 + 6, R = 165;
+  let n = 10, edges = new Set(), guessed = null, picked = null, auto = null;
+  MK.say('Ten friends meet at a party. Everyone shakes hands with everyone else, once.\nHow many handshakes happen? Make a guess first.');
+  const S = MK.svg(W, H, { maxHeight: '58vh' });
+
+  // the guess comes first, so it sits first in the controls row
+  MK.guess({ ask: 'Your guess: how many handshakes for 10 people?', unit: 'handshakes', placeholder: 'e.g. 20' }, v => {
+    guessed = v;
+    MK.say(`You guessed ${v}. Now count them for real: click one person, then another, and they shake hands.\nOr press the button to do every pair.`);
+    MK.show(count, people, doAll, why); draw(); report();
+  });
+  const people = MK.slider({ label: 'People', min: 2, max: 12, value: 10, onInput: v => {
+    n = v; edges.clear(); picked = null; if (auto) MK.stop(auto), auto = null; doAll.enable(true);
+    MK.say(`Now there are ${n} people. Click pairs, or do all the handshakes, and watch the count.`); draw(); report(); } }).hide();
+  const doAll = MK.button('Do all the handshakes', () => {
+    const pairs = allPairs(); let i = 0; doAll.enable(false);
+    auto = MK.every(90, () => { if (i >= pairs.length){ MK.stop(auto); auto = null; doAll.enable(true); return; }
+      edges.add(pairs[i++].join('-')); draw(); report(); });
+  }).hide();
+  const count = MK.readout('Handshakes so far', '0').hide();
+  const why = MK.note('').hide();
+  const table = MK.table(['People', 'Handshakes'], []).hide();
+
+  function allPairs(){ const p = []; for (let a = 0; a < n; a++) for (let b = a + 1; b < n; b++) p.push([a, b]); return p; }
+  const pos = i => [cx + R * Math.cos(2 * Math.PI * i / n - Math.PI / 2), cy + R * Math.sin(2 * Math.PI * i / n - Math.PI / 2)];
+  function draw(){
+    S.clear();
+    for (const e of edges){ const [a, b] = e.split('-').map(Number); const [x1, y1] = pos(a), [x2, y2] = pos(b); S.line(x1, y1, x2, y2, { stroke: '#2f6fde', 'stroke-width': 1.5, opacity: .7 }); }
+    for (let i = 0; i < n; i++){
+      const [x, y] = pos(i);
+      S.circle(x, y, 17, { fill: picked === i ? '#e8912d' : '#fff', stroke: '#1d2330', 'stroke-width': 2 }).on('click', () => tap(i));
+      S.text(x, y, i + 1, { size: 14, weight: 600, 'pointer-events': 'none' });
+    }
+  }
+  function tap(i){
+    if (guessed === null) return;                       // guess first
+    if (picked === null || picked === i){ picked = picked === i ? null : i; draw(); return; }
+    edges.add([Math.min(picked, i), Math.max(picked, i)].join('-')); picked = null; draw(); report();
+  }
+  function report(){
+    const total = allPairs().length;                    // counted, not from the formula
+    count.set(`${edges.size} of ${total}`);
+    why.set(`Each of the ${n} people shakes ${n - 1} hands: ${n} × ${n - 1} = ${n * (n - 1)}.\nThat counts every handshake twice (once for each person), so ${n * (n - 1)} ÷ 2 = ${n * (n - 1) / 2}.`);
+    if (edges.size === total){
+      MK.say(`All ${total} handshakes for ${n} people are done${n === 10 ? ` (you guessed ${guessed})` : ''}.\nTry other party sizes with the slider. Why does one more person add so many handshakes?`);
+      table.set(Array.from({ length: 11 }, (_, j) => [j + 2, (j + 2) * (j + 1) / 2]), n - 2).show();
+    }
+  }
+  draw();
+}
+</script>
+</body>
+</html>

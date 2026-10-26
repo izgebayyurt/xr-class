@@ -1,0 +1,170 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>A 5 and a 6, or two 6s?</title>
+<script src="mathkit.js"></script>
+</head>
+<body>
+<script>
+// Student design: "Rolling two dice: is a 5 and a 6 more likely than two 6s, or equally likely?" Show it by rolling a lot.
+// Order: card -> guess -> roll a lot (counts) -> why (36-way grid the visitor inspects) -> other pairs -> takeaway.
+MK.start({ title: 'A 5 and a 6, or two 6s?', build });
+
+function build(){
+  const NARROW = innerWidth < 640, W = NARROW ? 340 : 640, H = 330, RED = '#d64545', BLUE = '#2f6fde', ORANGE = '#e8912d', GREEN = '#3aa66a';
+  const PAIRS = [{ a: 5, b: 6, d: 6 }, { a: 1, b: 2, d: 1 }, { a: 3, b: 4, d: 3 }];
+  const r = MK.rng();
+  let guessed = null, gi = -1, pair = PAIRS[0], rolls = 0, cMix = 0, cDbl = 0, last = null;
+  let step = 0;          // 0 guess, 1 rolling, 2 rolled enough, 3 grid shown, 4 inspected, 5 varied
+  let varied = false, shownTake = false;
+  const ENOUGH = 300;
+
+  MK.say('Roll two dice. Which is more likely: a 5 and a 6 (any order), or two 6s?\nPick your guess first.');
+  MK.model('computer dice. Each face 1 to 6 is equally likely, and every roll is random, like fair real dice.');
+  const S = MK.svg(W, H, { maxHeight: NARROW ? 'none' : '52vh' });
+
+  const mixName = () => `${pair.a} and ${pair.b}`, dblName = () => `Two ${pair.d}s`;
+
+  MK.guess({ ask: 'Your guess: which happens more often?', options: ['A 5 and a 6', 'Two 6s', 'Equally likely'] }, (v, i) => {
+    guessed = v; gi = i; step = 1;
+    MK.say(`You picked "${v}". Now test it: roll the dice a lot and watch the two counts.\nTry for at least ${ENOUGH} rolls.`);
+    MK.show(b1, b100, b1000, rollsBox, mixBox, dblBox); draw();
+  });
+  const b1 = MK.button('Roll once', () => roll(1)).hide();
+  const b100 = MK.button('Roll 100 times', () => roll(100)).hide();
+  const b1000 = MK.button('Roll 1,000 times', () => roll(1000)).hide();
+  const whyBtn = MK.button('Why? Show all 36 ways', () => {
+    step = 3; whyBtn.hide(); MK.wide(false); draw();
+    explainWays(); why2.show();
+    const w = countWays(), truth = w.mix > w.dbl ? 0 : w.dbl > w.mix ? 1 : 2, ans = ['A 5 and a 6', 'Two 6s', 'Equally likely'][truth];
+    verdict.set(`So the answer is "${ans}" (${w.mix} squares vs ${w.dbl}). You guessed "${guessed}": ${gi === truth ? 'right' : 'not quite'}.`).show();
+    MK.say('Count the orange squares and the green squares.\nThen click an orange square to see which roll it is.');
+    MK.log('reached', { step: 'grid' });
+  }, { alt: true }).hide();
+  const pick = MK.choices(PAIRS.map(p => `${p.a} and ${p.b} vs two ${p.d}s`), i => {
+    pair = PAIRS[i]; varied = true; shownTake = false; rolls = cMix = cDbl = 0; last = null; cellNote.hide();
+    pick.reset();
+    MK.say(`Now compare "${mixName()}" with "${dblName().toLowerCase()}". Roll at least ${ENOUGH} times.\nDo the counts look like the squares?`);
+    draw(); explainWays(); report();
+  }, { ask: 'Try another pair:' }).hide();
+
+  const rollsBox = MK.readout('Rolls so far', '0').hide();
+  const mixBox = MK.readout('A 5 and a 6', '0').hide();
+  const dblBox = MK.readout('Two 6s', '0').hide();
+  const why1 = MK.note('').hide();
+  const why2 = MK.note('').hide();
+  const verdict = MK.note('').hide();
+  const why3 = MK.note('').hide();
+  const cellNote = MK.note('').hide();
+
+  // ---------- drawing ----------
+  const diceG = S.g(), gridG = S.g();
+  const barOpts = { values: [0, 0], labels: ['A 5 and a 6', 'Two 6s'], color: GREEN, highlight: [0], format: v => v,
+    tick: v => v, xLabel: 'times it happened', box: { x: 60, y: 130, w: 240, h: 150 } };
+  const chart = MK.bars(S, barOpts);
+
+  const PIPS = { 1: [[0, 0]], 2: [[-1, -1], [1, 1]], 3: [[-1, -1], [0, 0], [1, 1]], 4: [[-1, -1], [1, -1], [-1, 1], [1, 1]],
+    5: [[-1, -1], [1, -1], [0, 0], [-1, 1], [1, 1]], 6: [[-1, -1], [1, -1], [-1, 0], [1, 0], [-1, 1], [1, 1]] };
+  function die(cx, cy, v, color){
+    S.rect(cx - 34, cy - 34, 68, 68, { fill: '#fff', stroke: color, 'stroke-width': 4, rx: 12, parent: diceG });
+    if (v) PIPS[v].forEach(([px, py]) => S.circle(cx + px * 18, cy + py * 18, 6.5, { fill: color, parent: diceG }));
+    else S.text(cx, cy + 1, '?', { size: 30, weight: 700, fill: color, parent: diceG });
+  }
+  function isMix(a, b){ return (a === pair.a && b === pair.b) || (a === pair.b && b === pair.a); }
+  function isDbl(a, b){ return a === pair.d && b === pair.d; }
+  function countWays(){
+    let mix = 0, dbl = 0, total = 0;
+    for (let a = 1; a <= 6; a++) for (let b = 1; b <= 6; b++){ total++; if (isMix(a, b)) mix++; if (isDbl(a, b)) dbl++; }
+    return { mix, dbl, total };
+  }
+
+  function draw(){
+    const shift = step >= 3 || NARROW ? 0 : 150;
+    if (NARROW) S.node.setAttribute('viewBox', `0 0 ${W} ${step >= 3 ? 650 : H}`);
+    diceG.attr({ transform: `translate(${shift},0)` }); chart.node.setAttribute('transform', `translate(${shift},0)`);
+    diceG.node.replaceChildren(); gridG.node.replaceChildren(); barOpts.labels = [`A ${pair.a} and a ${pair.b}`, dblName()];
+    die(125, 52, last && last[0], RED); die(215, 52, last && last[1], BLUE);
+    S.text(170, 105, last ? `Red ${last[0]}, blue ${last[1]}` : 'Red die and blue die', { size: 14, fill: '#5d6676', parent: diceG });
+    chart.set([cMix, cDbl], { max: Math.max(10, cMix, cDbl) });
+    if (step < 3) return;
+    const gx = NARROW ? 76 : 396, gy = NARROW ? 384 : 52, c = NARROW ? 38 : 36, ways = countWays();
+    S.text(gx + 3 * c, gy - 34, 'Blue die', { size: 14, weight: 600, fill: BLUE, parent: gridG });
+    S.text(gx - 34, gy + 3 * c, 'Red die', { size: 14, weight: 600, fill: RED, transform: `rotate(-90 ${gx - 34} ${gy + 3 * c})`, parent: gridG });
+    for (let k = 1; k <= 6; k++){
+      S.text(gx + (k - 0.5) * c, gy - 12, k, { size: 13, weight: 600, fill: BLUE, parent: gridG });
+      S.text(gx - 12, gy + (k - 0.5) * c, k, { size: 13, weight: 600, fill: RED, parent: gridG });
+    }
+    for (let a = 1; a <= 6; a++) for (let b = 1; b <= 6; b++){
+      const fill = isMix(a, b) ? ORANGE : isDbl(a, b) ? GREEN : '#f4f1ea';
+      const x = gx + (b - 1) * c, y = gy + (a - 1) * c;
+      S.rect(x + 1, y + 1, c - 2, c - 2, { fill, stroke: '#cfcabd', rx: 4, parent: gridG }).on('click', () => cell(a, b));
+      S.text(x + c / 2, y + c / 2 + 1, `${a},${b}`, { size: 11, fill: fill === '#f4f1ea' ? '#8a8f99' : '#fff', 'pointer-events': 'none', parent: gridG });
+    }
+    S.text(gx + 3 * c, gy + 6 * c + 18, `Orange ${ways.mix} · Green ${ways.dbl} · All ${ways.total}`, { size: 13, fill: '#1d2330', parent: gridG });
+  }
+
+  function cell(a, b){
+    const kind = isMix(a, b) ? `one way to get a ${pair.a} and a ${pair.b}. Its flip, red ${b}, blue ${a}, is orange too` : isDbl(a, b) ? `the only way to get two ${pair.d}s` : 'not one we are counting';
+    cellNote.set(`Red ${a}, blue ${b}: ${kind}.`).show();
+    if (step === 3 && (isMix(a, b) || isDbl(a, b))){
+      step = 4; explainChance(); MK.show(pick);
+      MK.say('Each die alone is 1 in 6, but a 5 and a 6 can come in two orders.\nNow try another pair below and roll again.');
+    }
+  }
+
+  function explainWays(){
+    const w = countWays(), s = n => n === 1 ? 'way' : 'ways';
+    why2.set(`Picture one red die and one blue die. Each square is one way they can land: ${w.total} ways, all equally likely.\nOrange: ${w.mix} ${s(w.mix)} to get a ${pair.a} and a ${pair.b}. Green: ${w.dbl} ${s(w.dbl)} to get two ${pair.d}s.`);
+  }
+  function explainChance(){
+    const w = countWays(), pm = MK.frac(w.mix, w.total), pd = MK.frac(w.dbl, w.total);
+    const ratio = pm.div(pd);
+    let t = `Chance (or probability) means how often something happens in the long run. ${mixName()}: ${w.mix} of ${w.total} squares = ${pm}, about ${MK.fmt(pm * 100, { dp: 1 })}%. ${dblName()}: ${pd}, about ${MK.fmt(pd * 100, { dp: 1 })}%.`;
+    if (rolls) t += `\nIn ${MK.fmt(rolls)} rolls, expect about ${MK.fmt(rolls * pm, { dp: 0 })} and ${MK.fmt(rolls * pd, { dp: 0 })}. You got ${cMix} and ${cDbl}.`;
+    else t += ` So it should happen ${ratio} times as often.`;
+    why3.set(t).show();
+  }
+
+  // ---------- rolling ----------
+  function roll(k){
+    if (step < 1) return;
+    for (let i = 0; i < k; i++){
+      const a = r.int(1, 6), b = r.int(1, 6);
+      rolls++; if (isMix(a, b)) cMix++; if (isDbl(a, b)) cDbl++; last = [a, b];
+    }
+    draw(); report();
+  }
+
+  function report(){
+    rollsBox.set(MK.fmt(rolls)); mixBox.label(`A ${pair.a} and a ${pair.b}`).set(cMix); dblBox.label(dblName()).set(cDbl);
+    if (step >= 4) explainChance();
+    if (rolls < ENOUGH){
+      if (step === 1 && rolls > 0) MK.say(`${MK.fmt(rolls)} rolls so far. Keep rolling until you have at least ${ENOUGH}.`);
+      return;
+    }
+    const times = cDbl ? MK.fmt(cMix / cDbl, { dp: 1 }) : null;
+    const cmp = times ? `about ${times} times as often` : `${cMix} times, and two ${pair.d}s never came up`;
+    const line = `In ${MK.fmt(rolls)} rolls, a ${pair.a} and a ${pair.b} came up ${cMix} times and two ${pair.d}s came up ${cDbl} times. That's ${cmp}.`;
+    if (step === 1){
+      step = 2;
+      const lead = cMix > cDbl ? 'A 5 and a 6 came up more' : cDbl > cMix ? 'Two 6s came up more' : 'They came up the same number of times';
+      why1.set(`${line}\nYou guessed "${guessed}". ${lead} in these rolls.`).show();
+      MK.say(`${lead} in your rolls. But each die is 1 in 6, so why?\nPress "Why? Show all 36 ways".`);
+      MK.show(whyBtn);
+      return;
+    }
+    if (step >= 2) why1.set(line);
+    if (step >= 4 && varied && !shownTake){
+      shownTake = true; step = 5;
+      MK.say(`Takeaway: two different numbers can land in two orders (red ${pair.a} blue ${pair.b}, or red ${pair.b} blue ${pair.a}). A double has only one way, so it's half as likely.`);
+      MK.log('reached', { step: 'takeaway' });
+    }
+  }
+
+  draw();
+}
+</script>
+</body>
+</html>

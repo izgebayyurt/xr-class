@@ -1,0 +1,108 @@
+{
+ "file": "b01/page.html",
+ "lines": 120,
+ "usesKit": true,
+ "problems": [],
+ "warnings": [],
+ "desktop": {
+  "errors": [],
+  "kit": true,
+  "start": {
+   "card": "Here is a number: 0.999…\nThe three dots mean the 9s go on forever. Is it exactly 1, or a tiny bit less than 1?\nPick your guess below.",
+   "title": "Is 0.999… equal to 1?",
+   "overflowX": false,
+   "height": 840,
+   "shownErr": [],
+   "svgTextOverlaps": [],
+   "offscreenSvgText": [],
+   "guessOpen": true,
+   "visibleButtons": [
+    "A tiny bit less than 1",
+    "Exactly 1",
+    "A tiny bit more than 1",
+    "Start over"
+   ]
+  },
+  "guessKind": "choice",
+  "guessLogged": true,
+  "afterGuess": {
+   "card": "You picked “A tiny bit less than 1”. Let's test it.\nThe bar is 1 metre of ribbon, shared fairly by 3 friends. Each should get 1/3 of a metre. (1/3 is a fraction: 1 split into 3 equal parts.)\nPress “Cut and share” to cut the ribbon into 10 equal pieces and hand them out.",
+   "title": "Is 0.999… equal to 1?",
+   "overflowX": false,
+   "height": 840,
+   "shownErr": [],
+   "svgTextOverlaps": [],
+   "offscreenSvgText": [],
+   "guessOpen": false,
+   "visibleButtons": [
+    "Cut and share",
+    "Start over"
+   ]
+  },
+  "after": {
+   "card": "Cut 3: the leftover became 10 pieces of 1 mm. Each friend got 3, so each now has 0.333 m. Together they have 0.999 m.\n1 grey piece is left over. Press “Cut and share” to cut it into 10 smaller pieces. One more cut, then look for the pattern.",
+   "title": "Is 0.999… equal to 1?",
+   "overflowX": false,
+   "height": 815,
+   "shownErr": [],
+   "svgTextOverlaps": [],
+   "offscreenSvgText": [],
+   "guessOpen": false,
+   "visibleButtons": [
+    "Cut and share",
+    "Start over"
+   ]
+  },
+  "eventsAfter": [
+   "ready",
+   "pick",
+   "guess",
+   "say",
+   "click",
+   "say",
+   "click",
+   "say",
+   "click",
+   "say"
+  ],
+  "restart": {
+   "card": "Here is a number: 0.999…\nThe three dots mean the 9s go on forever. Is it exactly 1, or a tiny bit less than 1?\nPick your guess below.",
+   "title": "Is 0.999… equal to 1?",
+   "overflowX": false,
+   "height": 840,
+   "shownErr": [],
+   "svgTextOverlaps": [],
+   "offscreenSvgText": [],
+   "guessOpen": true,
+   "visibleButtons": [
+    "A tiny bit less than 1",
+    "Exactly 1",
+    "A tiny bit more than 1",
+    "Start over"
+   ]
+  },
+  "firstGuessBeforeVisitor": false
+ },
+ "phone": {
+  "errors": [],
+  "kit": true,
+  "start": {
+   "card": "Here is a number: 0.999…\nThe three dots mean the 9s go on forever. Is it exactly 1, or a tiny bit less than 1?\nPick your guess below.",
+   "title": "Is 0.999… equal to 1?",
+   "overflowX": false,
+   "height": 844,
+   "shownErr": [],
+   "svgTextOverlaps": [],
+   "offscreenSvgText": [],
+   "guessOpen": true,
+   "visibleButtons": [
+    "A tiny bit less than 1",
+    "Exactly 1",
+    "A tiny bit more than 1",
+    "Start over"
+   ]
+  },
+  "events": 1
+ },
+ "pass": true
+}

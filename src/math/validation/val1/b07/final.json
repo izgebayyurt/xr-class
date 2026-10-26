@@ -1,0 +1,115 @@
+{
+ "file": "b07/page.html",
+ "lines": 248,
+ "usesKit": true,
+ "problems": [],
+ "warnings": [],
+ "desktop": {
+  "errors": [],
+  "kit": true,
+  "start": {
+   "card": "Welcome to the game show! There are 3 doors. Behind one is a car. Behind each of the other two is a goat.\nYou pick a door. The host knows where the car is. He opens a different door that has a goat. Then he asks: do you stay with your door, or switch to the other closed door?\nFirst, make a guess below.",
+   "title": "Stay or Switch?",
+   "overflowX": false,
+   "height": 817,
+   "shownErr": [],
+   "svgTextOverlaps": [],
+   "offscreenSvgText": [],
+   "guessOpen": true,
+   "visibleButtons": [
+    "Staying wins more often",
+    "Switching wins more often",
+    "It's 50/50 (each wins half the time)",
+    "Start over"
+   ]
+  },
+  "guessKind": "choice",
+  "guessLogged": true,
+  "afterGuess": {
+   "card": "You guessed: \"Staying wins more often\".\nNow play one round. Click a door to pick it.",
+   "title": "Stay or Switch?",
+   "overflowX": false,
+   "height": 800,
+   "shownErr": [],
+   "svgTextOverlaps": [],
+   "offscreenSvgText": [],
+   "guessOpen": false,
+   "visibleButtons": [
+    "Start over"
+   ]
+  },
+  "after": {
+   "card": "You picked door 1. The host opened door 3, and it's a goat!\nTwo doors are still closed: yours (door 1) and door 2. Stay or switch? Use the buttons below.",
+   "title": "Stay or Switch?",
+   "overflowX": false,
+   "height": 816,
+   "shownErr": [],
+   "svgTextOverlaps": [],
+   "offscreenSvgText": [],
+   "guessOpen": false,
+   "visibleButtons": [
+    "Stay with door 1",
+    "Switch to door 2",
+    "Start over"
+   ]
+  },
+  "eventsAfter": [
+   "ready",
+   "pick",
+   "guess",
+   "say",
+   "say",
+   "click",
+   "round",
+   "say",
+   "click",
+   "say",
+   "say",
+   "click",
+   "round",
+   "say",
+   "click",
+   "say",
+   "say"
+  ],
+  "restart": {
+   "card": "Welcome to the game show! There are 3 doors. Behind one is a car. Behind each of the other two is a goat.\nYou pick a door. The host knows where the car is. He opens a different door that has a goat. Then he asks: do you stay with your door, or switch to the other closed door?\nFirst, make a guess below.",
+   "title": "Stay or Switch?",
+   "overflowX": false,
+   "height": 817,
+   "shownErr": [],
+   "svgTextOverlaps": [],
+   "offscreenSvgText": [],
+   "guessOpen": true,
+   "visibleButtons": [
+    "Staying wins more often",
+    "Switching wins more often",
+    "It's 50/50 (each wins half the time)",
+    "Start over"
+   ]
+  },
+  "firstGuessBeforeVisitor": false
+ },
+ "phone": {
+  "errors": [],
+  "kit": true,
+  "start": {
+   "card": "Welcome to the game show! There are 3 doors. Behind one is a car. Behind each of the other two is a goat.\nYou pick a door. The host knows where the car is. He opens a different door that has a goat. Then he asks: do you stay with your door, or switch to the other closed door?\nFirst, make a guess below.",
+   "title": "Stay or Switch?",
+   "overflowX": false,
+   "height": 1018,
+   "shownErr": [],
+   "svgTextOverlaps": [],
+   "offscreenSvgText": [],
+   "guessOpen": true,
+   "visibleButtons": [
+    "Staying wins more often",
+    "Switching wins more often",
+    "It's 50/50 (each wins half the time)",
+    "Start over"
+   ]
+  },
+  "events": 1
+ },
+ "pass": true
+}

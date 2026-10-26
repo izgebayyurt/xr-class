@@ -1,0 +1,139 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Two Classes, One Average</title>
+<script src="mathkit.js"></script>
+</head>
+<body>
+<script>
+// Student's design: Class A (10 students) averages 70, class B (30 students) averages 90. What is the average of all 40?
+// The design said 80 = (70 + 90) / 2. That is only right when the classes are the same size; the real answer is 85.
+// Activity: every student is a bar. Pick a level "everyone gets" and share points out evenly; the level where
+// nothing is left over is the average. All numbers below are computed from the bars on screen.
+MK.start({ title: 'Two classes, one average', build });
+
+function build(){
+  const W = 500, H = 396, x0 = 56, x1 = 490;
+  const y = MK.scale(0, 100, 330, 30);
+  const COL_A = '#2a9d8f', COL_B = '#7b5cc4', COL_L = '#e8912d';
+  const SCORE_A = 70, SCORE_B = 90;
+  let nA = 10, nB = 30, level = 75, phase = 'guess', guessed = null, sizesMoved = false, balanceFb = '';
+
+  MK.say('Class A has 10 students. Their average on a test (out of 100 points) is 70.\nClass B has 30 students. Their average is 90.\nWhat is the average score of all 40 students together? Type your guess first.');
+  MK.model('to keep the bars simple, every student shows their class average. The class total is the same either way.');
+  const S = MK.svg(W, H, { maxHeight: '58vh', fontSize: 16 });
+
+  MK.guess({ ask: 'Your guess (0 to 100): the average of all 40 students?', unit: 'points', placeholder: 'e.g. 75' }, v => {
+    guessed = v; phase = 'balance';
+    const intro = (`You guessed ${v} points. Let's test it.\nAn "average" is the score everyone would get if all the points were shared out equally.\nMove the "Everyone gets" slider. Class B gives away the points above the orange line, and class A fills its gaps up to the line. Find the level where nothing is left over.`);
+    MK.show(levelSl, giveR, needR, leftR); draw(); report();
+    MK.say(intro);
+  });
+  const levelSl = MK.slider({ label: 'Everyone gets', min: 70, max: 90, step: 0.5, value: level, format: v => v + ' points',
+    onInput: v => { level = v; draw(); report(); } }).hide();
+  const sizeA = MK.slider({ label: 'Students in class A', min: 1, max: 40, step: 1, value: nA, format: v => v + ' students',
+    onInput: v => { nA = v; sizesChanged(); } }).hide();
+  const sizeB = MK.slider({ label: 'Students in class B', min: 1, max: 40, step: 1, value: nB, format: v => v + ' students',
+    onInput: v => { nB = v; sizesChanged(); } }).hide();
+
+  const giveR = MK.readout('Points class B gives away', '').hide();
+  const needR = MK.readout('Points class A needs', '').hide();
+  const leftR = MK.readout('Left over', '').hide();
+  const why = MK.note('').hide();
+
+  const scores = () => [...Array(nA).fill(SCORE_A), ...Array(nB).fill(SCORE_B)];
+  const f1 = x => MK.fmt(x, { dp: 1 });
+  const fp = x => MK.fmt(x, { dp: 2 });
+
+  function draw(){
+    S.clear();
+    const sc = scores(), n = sc.length, bw = (x1 - x0) / n, gap = n > 50 ? 0.5 : 1.5;
+    for (const t of [0, 20, 40, 60, 80, 100]){
+      S.line(x0, y(t), x1, y(t), { stroke: '#d9dde6', 'stroke-width': 1 });
+      S.text(x0 - 8, y(t), t, { anchor: 'end', size: 17, fill: '#5a6275' });
+    }
+    S.text(12, y(50), 'points', { size: 17, fill: '#5a6275', transform: `rotate(-90 12 ${y(50)})` });
+    const showLevel = phase !== 'guess';
+    sc.forEach((s, i) => {
+      const bx = x0 + i * bw + gap / 2, w = bw - gap, col = i < nA ? COL_A : COL_B;
+      const keep = showLevel ? Math.min(s, level) : s;
+      S.rect(bx, y(keep), w, y(0) - y(keep), { fill: col });
+      if (showLevel && s > level) S.rect(bx, y(s), w, y(level) - y(s), { fill: col, opacity: 0.35, stroke: col, 'stroke-width': 1 });
+      if (showLevel && s < level) S.rect(bx, y(level), w, y(s) - y(level), { fill: '#fff4e6', stroke: COL_L, 'stroke-width': 1, 'stroke-dasharray': '3 2' });
+    });
+    S.line(x0, y(0), x1, y(0), { stroke: '#1d2330', 'stroke-width': 1.5 });
+    const xb = x0 + nA * bw;   // where class B starts
+    S.text(x0, 352, `Class A: ${nA} student${nA > 1 ? 's' : ''}`, { anchor: 'start', size: 17, weight: 650, fill: COL_A });
+    S.text(x0, 376, `${SCORE_A} points each`, { anchor: 'start', size: 15, fill: COL_A });
+    S.text(x1, 352, `Class B: ${nB} student${nB > 1 ? 's' : ''}`, { anchor: 'end', size: 17, weight: 650, fill: COL_B });
+    S.text(x1, 376, `${SCORE_B} points each`, { anchor: 'end', size: 15, fill: COL_B });
+    S.line(xb, y(0), xb, y(0) + 8, { stroke: '#1d2330', 'stroke-width': 1.5 });
+    if (!showLevel) return;
+    const half = (SCORE_A + SCORE_B) / 2;
+    S.line(x0, y(half), x1, y(half), { stroke: '#5a6275', 'stroke-width': 1.5, 'stroke-dasharray': '6 5' });
+    S.line(x0, y(level), x1, y(level), { stroke: COL_L, 'stroke-width': 3 });
+    S.text(x0 + 6, y(half) - 11, `halfway: ${half}`, { anchor: 'start', size: 15, fill: '#3b4252', stroke: '#fff', 'stroke-width': 4, 'paint-order': 'stroke' });
+    S.text(x1 - 4, y(level) - 12, `everyone gets ${level}`, { anchor: 'end', size: 16, weight: 650, fill: '#a85a0c', stroke: '#fff', 'stroke-width': 4, 'paint-order': 'stroke' });
+  }
+
+  function counts(){
+    const sc = scores();
+    const give = MK.sum(sc.map(s => Math.max(0, s - level)));     // points above the line
+    const need = MK.sum(sc.map(s => Math.max(0, level - s)));     // gaps below the line
+    const total = MK.sum(sc), mean = total / sc.length;
+    return { sc, give, need, total, mean, n: sc.length, even: Math.abs(level - mean) < 0.25 + 1e-9 };
+  }
+
+  function report(){
+    const c = counts(), left = c.give - c.need;
+    giveR.set(`${f1(c.give)} points`);
+    needR.set(`${f1(c.need)} points`);
+    const leftTxt = Math.abs(left) < 1e-9 ? '0 points' : left > 0 ? `${f1(left)} extra` : `${f1(-left)} short`;
+    leftR.set(c.even && Math.abs(left) >= 1e-9 ? `${leftTxt} (closest mark to even)` : leftTxt);
+    if (phase === 'explore' || phase === 'done' || c.even) why.set(whyText(c)).show();
+    if (!c.even){
+      if (phase === 'balance') MK.say(`At ${level}: class B gives away ${nB} × ${f1(SCORE_B - level)} = ${f1(c.give)} points. Class A needs ${nA} × ${f1(level - SCORE_A)} = ${f1(c.need)} points.\n` +
+        (left > 0 ? `${f1(left)} points are left over, so everyone can get more. Move the slider up.` : `That is ${f1(-left)} points short, so the level is too high. Move the slider down.`));
+      else if (phase === 'explore' && !sizesMoved) MK.say(`At ${level}: ${left > 0 ? `${f1(left)} points left over` : `${f1(-left)} points short`}. The even level for these classes is ${fp(c.mean)}.\n${balanceFb}\nNext: change the class sizes with the new sliders, then find the even level again.`);
+      else if (phase !== 'guess') MK.say(`Class A: ${nA}, class B: ${nB}. ${left > 0 ? `${f1(left)} points left over. Move "Everyone gets" up.` : `${f1(-left)} points short. Move "Everyone gets" down.`}\nFind the level where nothing is left over.`);
+      return;
+    }
+    const exact = Math.abs(level - c.mean) < 1e-9;
+    const exactTxt = exact ? '' : ` (the exact even level is ${fp(c.mean)}, between two slider marks)`;
+    if (phase === 'balance'){
+      phase = 'explore'; MK.log('balanced', { level, mean: c.mean });
+      const diff = guessed - c.mean;
+      const fb = Math.abs(diff) < 1e-9 ? `You guessed ${guessed}. That's exactly right.` :
+        `You guessed ${guessed}. The even level is ${fp(c.mean)}, so your guess was ${fp(Math.abs(diff))} points too ${diff > 0 ? 'high' : 'low'}.`;
+      balanceFb = fb;
+      MK.say(balanceText(c));
+      MK.show(sizeA, sizeB);
+    } else if (phase === 'explore' && !sizesMoved){
+      MK.say(balanceText(c));
+    } else if (phase === 'explore' && sizesMoved){
+      phase = 'done';
+      MK.say(`Even at ${level}${exactTxt}.\nTakeaway: the average of everyone is all the points ÷ all the students. The bigger class pulls the average toward its own score, so "halfway" only works when the classes are the same size.\nTry more class sizes, or press Start over.`);
+    } else if (phase === 'done'){
+      MK.say(`Even at ${level}${exactTxt}, with ${nA} in class A and ${nB} in class B.\nTakeaway: the average of everyone is all the points ÷ all the students, and the bigger class pulls it toward its own score.\nTry more sizes, or press Start over.`);
+    }
+  }
+
+  function balanceText(c){
+    return (`Nothing left over at ${level}: class B gives away ${f1(c.give)} points and class A needs exactly ${f1(c.need)}. So the average of all ${c.n} students is ${fp(c.mean)} points, not the halfway ${(SCORE_A + SCORE_B) / 2}.\n${balanceFb}\nNext: change the class sizes with the new sliders, then find the even level again.`);
+  }
+
+  function whyText(c){
+    return (`Why it works\nAll the points: ${nA} × ${SCORE_A} = ${MK.fmt(nA * SCORE_A)}, plus ${nB} × ${SCORE_B} = ${MK.fmt(nB * SCORE_B)}. Total ${MK.fmt(c.total)} points.\nShared by ${c.n} students: ${MK.fmt(c.total)} ÷ ${c.n} = ${fp(c.mean)} points each.\n` +
+      (nA === nB ? `The classes are the same size, so the average is exactly halfway.` :
+        `Halfway (${(SCORE_A + SCORE_B) / 2}) would only be right if both classes had the same number of students. Class ${nB > nA ? 'B' : 'A'} has more students, so it pulls the average toward ${nB > nA ? SCORE_B : SCORE_A}.`));
+  }
+
+  function sizesChanged(){ sizesMoved = true; if (phase === 'done') phase = 'explore'; draw(); report(); }
+
+  draw();
+}
+</script>
+</body>
+</html>

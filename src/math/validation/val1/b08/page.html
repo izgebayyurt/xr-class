@@ -1,0 +1,163 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>A 5 and a 6, or two 6s?</title>
+<script src="mathkit.js"></script>
+</head>
+<body>
+<script>
+// Student design: "Rolling two dice: is a 5 and a 6 more likely than two 6s, or equally likely?" Show it by rolling a lot.
+// Every count on screen is tallied from the simulated rolls; every chance is counted from the 36 boxes of the grid.
+MK.start({ title: 'A 5 and a 6, or two 6s?', build });
+
+function build(){
+  const W = 560, H = 580, X0 = 150, Y0 = 190, C = 58;
+  const RED = '#c2412d', BLUE = '#2f6fde', ORANGE = '#e8912d';
+  const counts = Array.from({ length: 6 }, () => Array(6).fill(0));   // counts[red-1][blue-1]
+  let A = 5, B = 6, total = 0, last = null, stage = 'guess', guessI = -1, guessT = '', r = MK.rng();
+  const OPTIONS = ['A 5 and a 6 is more likely', 'They are equally likely', 'Two 6s is more likely'];
+
+  MK.say('You roll two dice at the same time.\nWhich is more likely: getting a 5 and a 6, or getting two 6s? Pick your guess below.');
+  MK.model('each die is fair, so every face (1 to 6) has the same chance. The computer picks each face at random.');
+  const S = MK.svg(W, 320, { maxHeight: '62vh' });
+
+  MK.guess({ ask: 'Your guess: which is more likely?', options: OPTIONS }, (t, i) => {
+    guessI = i; guessT = t; stage = 'roll';
+    S.node.setAttribute('viewBox', `0 0 ${W} ${H}`);
+    MK.show(roll1, roll10, roll100, roll1000, nRolls, mixedR, dblR, cmpR, gridNote);
+    MK.say(`You picked "${t}". Now let's test it.\nOne die is red and one is blue, so you can tell them apart. Press "Roll 10" a few times, then "Roll 100". Watch the counts on the right.`);
+    draw(); report();
+  });
+  const roll1 = MK.button('Roll once', () => rollMany(1)).hide();
+  const roll10 = MK.button('Roll 10', () => rollMany(10)).hide();
+  const roll100 = MK.button('Roll 100', () => rollMany(100)).hide();
+  const roll1000 = MK.button('Roll 1,000', () => rollMany(1000), { alt: true }).hide();
+  const sA = MK.slider({ label: 'First number', min: 1, max: 6, step: 1, value: 5, onInput: v => { A = v; changed(); } }).hide();
+  const sB = MK.slider({ label: 'Second number', min: 1, max: 6, step: 1, value: 6, onInput: v => { B = v; changed(); } }).hide();
+  const sum = MK.button('Sum it up', () => takeaway()).hide();
+
+  const nRolls = MK.readout('Rolls so far', '0').hide();
+  const mixedR = MK.readout('', '').hide();
+  const dblR = MK.readout('', '').hide();
+  const cmpR = MK.readout('Compare', '').hide();
+  const gridNote = MK.note('').hide();
+  const why = MK.note('').hide();
+
+  // ---------- counting ----------
+  const mixedName = () => A === B ? `two ${B}s` : `a ${A} and a ${B}`;
+  const Cap = t => t.replace(/^./, c => c.toUpperCase());
+  const N = () => total.toLocaleString('en-US');
+  const isMixed = (rd, bl) => (rd === A && bl === B) || (rd === B && bl === A);
+  const isDouble = (rd, bl) => rd === B && bl === B;
+  function tally(test){                       // boxes that match, and how many rolls landed in them
+    let boxes = 0, hits = 0, list = [];
+    for (let rd = 1; rd <= 6; rd++) for (let bl = 1; bl <= 6; bl++) if (test(rd, bl)){ boxes++; hits += counts[rd - 1][bl - 1]; list.push([rd, bl, counts[rd - 1][bl - 1]]); }
+    return { boxes, hits, list };
+  }
+  const allBoxes = () => tally(() => true).boxes;  // 36, counted from the grid
+  const pct = (k, n) => n ? MK.fmt(100 * k / n, { dp: 1 }) + '%' : '—';
+  const times = k => `${k} time${k === 1 ? '' : 's'}`;
+
+  function rollMany(k){
+    for (let i = 0; i < k; i++){ const rd = r.int(1, 6), bl = r.int(1, 6); counts[rd - 1][bl - 1]++; total++; last = [rd, bl]; }
+    MK.log('rolled', { k, total });
+    if (stage === 'roll' && total >= 200) explain();
+    draw(); report();
+  }
+
+  // ---------- drawing ----------
+  const PIPS = { 1: [[1, 1]], 2: [[0, 0], [2, 2]], 3: [[0, 0], [1, 1], [2, 2]], 4: [[0, 0], [2, 0], [0, 2], [2, 2]],
+    5: [[0, 0], [2, 0], [1, 1], [0, 2], [2, 2]], 6: [[0, 0], [2, 0], [0, 1], [2, 1], [0, 2], [2, 2]] };
+  function die(x, y, s, face, fill){
+    const ink = fill === '#fff' ? '#1d2330' : '#fff';
+    S.rect(x, y, s, s, { fill, stroke: '#1d2330', 'stroke-width': 2, rx: s * 0.18 });
+    if (!face){ S.text(x + s / 2, y + s / 2 + 2, '?', { size: s * 0.5, weight: 700, fill: ink }); return; }
+    for (const [i, j] of PIPS[face]) S.circle(x + s * (0.25 + 0.25 * i), y + s * (0.25 + 0.25 * j), s * 0.08, { fill: ink });
+  }
+  function drawQuestion(){
+    S.clear();
+    die(70, 70, 70, 5, '#fff'); die(155, 70, 70, 6, '#fff');
+    S.text(162, 175, 'A 5 and a 6', { size: 20, weight: 600 });
+    S.text(280, 105, 'or', { size: 20, fill: '#5d6676' });
+    die(335, 70, 70, 6, '#fff'); die(420, 70, 70, 6, '#fff');
+    S.text(422, 175, 'Two 6s', { size: 20, weight: 600 });
+    S.text(280, 250, 'Which happens more often?', { size: 20, fill: '#5d6676' });
+  }
+  function draw(){
+    if (stage === 'guess') return drawQuestion();
+    S.clear();
+    S.text(W / 2, 16, total ? 'Last roll' : 'Ready to roll', { size: 15, fill: '#5d6676' });
+    die(200, 34, 70, last && last[0], RED); die(290, 34, 70, last && last[1], BLUE);
+    S.text(X0 + 3 * C, 150, 'Blue die shows', { size: 15, fill: BLUE, weight: 600 });
+    S.text(96, Y0 + 3 * C, 'Red die shows', { size: 15, fill: RED, weight: 600, transform: `rotate(-90 96 ${Y0 + 3 * C})` });
+    for (let i = 1; i <= 6; i++){
+      S.text(X0 + (i - 0.5) * C, Y0 - 14, i, { size: 17, weight: 700, fill: BLUE });
+      S.text(X0 - 16, Y0 + (i - 0.5) * C, i, { size: 17, weight: 700, fill: RED });
+    }
+    for (let rd = 1; rd <= 6; rd++) for (let bl = 1; bl <= 6; bl++){
+      const x = X0 + (bl - 1) * C, y = Y0 + (rd - 1) * C, m = isMixed(rd, bl), d = isDouble(rd, bl);
+      const isLast = last && last[0] === rd && last[1] === bl;
+      S.rect(x, y, C, C, { fill: d ? '#d6e4fb' : m ? '#fbe3c4' : '#fff', stroke: d ? BLUE : m ? ORANGE : '#d9d6cc', 'stroke-width': d || m ? 2.5 : 1 });
+      if (isLast) S.rect(x + 4, y + 4, C - 8, C - 8, { fill: 'none', stroke: '#1d2330', 'stroke-width': 2, rx: 4 });
+      S.text(x + C / 2, y + C / 2 + 1, counts[rd - 1][bl - 1], { size: 17, weight: d || m ? 700 : 400, fill: d || m ? '#1d2330' : '#5d6676' });
+    }
+    const lx = A === B ? X0 : X0 + 190;
+    if (A !== B){
+      S.rect(X0, 556, 16, 16, { fill: '#fbe3c4', stroke: ORANGE, 'stroke-width': 2 });
+      S.text(X0 + 22, 565, `= ${mixedName()}`, { size: 15, anchor: 'start' });
+    }
+    S.rect(lx, 556, 16, 16, { fill: '#d6e4fb', stroke: BLUE, 'stroke-width': 2 });
+    S.text(lx + 22, 565, `= two ${B}s`, { size: 15, anchor: 'start' });
+  }
+
+  // ---------- readouts and explanation ----------
+  function report(){
+    const mx = tally(isMixed), db = tally(isDouble);
+    nRolls.set(total.toLocaleString('en-US'));
+    mixedR.show(A !== B).label(`${Cap(mixedName())} (orange)`).set(`${times(mx.hits)}\n${pct(mx.hits, total)} of rolls`);
+    dblR.label(`Two ${B}s (blue)`).set(`${times(db.hits)}\n${pct(db.hits, total)} of rolls`);
+    cmpR.set(A === B ? 'Same thing: pick two different numbers'
+      : mx.hits === db.hits ? 'Same count so far: keep rolling' : db.hits ? `${Cap(mixedName())} came up ${MK.fmt(mx.hits / db.hits, { dp: 1 })} times as often as two ${B}s` : `Two ${B}s hasn't come up yet`);
+    gridNote.set(`The grid: each box is one way the dice can land (red number, blue number). It counts how many times that landing happened.\n"%" means "out of every 100 rolls".`);
+    const n36 = allBoxes();
+    if (A === B){
+      why.set(`Both now mean two ${B}s: just 1 box out of ${n36}.`);
+    } else {
+      const [p, q] = mx.list, dd = db.list[0];
+      why.set(`Why: there are 6 × 6 = ${n36} boxes, and each one is equally likely (a chance of 1 in ${n36}).\n` +
+        `${Cap(mixedName())} fills ${mx.boxes} boxes: red ${p[0]} + blue ${p[1]} (${times(p[2])}) and red ${q[0]} + blue ${q[1]} (${times(q[2])}).\n` +
+        `Two ${B}s fills only ${db.boxes} box: red ${B} + blue ${B} (${times(dd[2])}).\n` +
+        `So ${mixedName()} has a chance of ${mx.boxes} in ${n36} (about ${MK.fmt(100 * mx.boxes / n36, { dp: 1 })} in every 100 rolls), and two ${B}s has ${db.boxes} in ${n36} (about ${MK.fmt(100 * db.boxes / n36, { dp: 1 })} in 100).`);
+    }
+    if (stage === 'roll' && total){
+      MK.say(`${N()} roll${total === 1 ? '' : 's'} so far. A 5 and a 6: ${times(mx.hits)}. Two 6s: ${times(db.hits)}.\nKeep rolling until you reach 200 rolls (${200 - total} to go). With only a few rolls, luck can fool you.`);
+    } else if (stage === 'explore') exploreCard(mx, db);
+  }
+  let moved = false;
+  function explain(){ stage = 'explore'; MK.show(why, sA, sB, sum); MK.log('explained', { total }); }
+  function explainCard(mx, db){
+    const right = mx.boxes > db.boxes ? 0 : mx.boxes === db.boxes ? 1 : 2;   // decided by counting boxes
+    const clear = mx.hits >= 1.5 * db.hits && db.hits > 0;
+    MK.say(`${guessI === right ? 'Your guess was right!' : `You guessed "${guessT}". The grid shows that's not how it works.`} In ${N()} rolls, a 5 and a 6 came up ${times(mx.hits)} and two 6s came up ${times(db.hits)}. ` +
+      `${clear ? `That's about ${MK.fmt(mx.hits / db.hits, { dp: 1 })} times as often as two 6s.` : `${mx.hits > db.hits ? 'That\'s close' : 'Your rolls don\'t show the difference yet'}, so luck still matters. Press "Roll 1,000" and watch the gap.`}\n` +
+      `Look at the grid. Orange boxes are "a 5 and a 6". The blue box is "two 6s". Read "Why" on the right, then try other numbers with the sliders.`);
+  }
+  function exploreCard(mx, db){
+    if (!moved) return explainCard(mx, db);
+    if (A === B) return MK.say(`Both choices now mean two ${B}s, so there's nothing to compare.\nMove a slider so the two numbers are different.`);
+    MK.say(`Now comparing ${mixedName()} (${mx.boxes} orange boxes) with two ${B}s (${db.boxes} blue box). In your ${N()} rolls: ${times(mx.hits)} vs ${times(db.hits)}.\nTry other numbers, roll more, or press "Sum it up" when you're ready.`);
+  }
+  function changed(){ moved = true; draw(); report(); }
+  function takeaway(){
+    stage = 'done';
+    const a = A, b = B; A = 5; B = 6; const mx = tally(isMixed), db = tally(isDouble); A = a; B = b;
+    MK.say(`Takeaway: a 5 and a 6 is ${mx.boxes / db.boxes === 2 ? 'twice' : mx.boxes / db.boxes + ' times'} as likely as two 6s (${mx.boxes} in ${allBoxes()} vs ${db.boxes} in ${allBoxes()}), because it can happen two ways: red 5 + blue 6, or red 6 + blue 5. Each die is 1 in 6, but with two dice you have to count the orders too.\nRoll more or try other numbers if you like, or press Start over.`);
+    MK.log('takeaway', { total });
+  }
+  draw();
+}
+</script>
+</body>
+</html>

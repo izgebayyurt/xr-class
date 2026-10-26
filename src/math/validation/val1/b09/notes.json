@@ -1,0 +1,25 @@
+{
+  "title": "Two classes, one average",
+  "concept": "Weighted average: the average of two groups combined is total points divided by total people, so the bigger group pulls it toward its own average. Class A (10 students, average 70) and class B (30 students, average 90) together average 85, not 80.",
+  "kept": [
+    "The exact scenario: class A has 10 students averaging 70, class B has 30 students averaging 90, and the question is the average of all 40",
+    "The student's idea of halfway, (70 + 90) / 2 = 80, shown on the chart as a dashed 'halfway: 80' line so the friend can test it directly",
+    "A flat 2D page (design had no 3D preference)"
+  ],
+  "filled_in": [
+    "Opening number guess for the average of all 40 students",
+    "Activity: the standard 'share the points out evenly' (levelling) model of the average. Each of the 40 students is a bar; the visitor moves an 'Everyone gets' slider, class B's points above the line are given away, class A's gaps below the line are filled, and readouts count points given, points needed and left over",
+    "Plain definition of average as 'the score everyone would get if all the points were shared out equally'",
+    "Why note: 10 × 70 = 700, 30 × 90 = 2,700, total 3,400 ÷ 40 = 85, and why halfway only works for equal class sizes",
+    "Exploration: sliders for the number of students in each class (1 to 40), then find the new even level",
+    "Takeaway in the card, and a clean teal/purple/orange look since no look was given",
+    "Model label: each bar shows its class average, which keeps the class total the same as with varied scores"
+  ],
+  "changed": [
+    {
+      "what": "The answer is 85, not 80 ((70 + 90) / 2).",
+      "why": "Averaging the two averages treats both classes as the same size. Class B has 30 students and class A only 10, so the combined average is (10 × 70 + 30 × 90) / 40 = 3,400 / 40 = 85. The page keeps 80 visible as 'halfway' so the friend can see it leaves 200 points over."
+    }
+  ],
+  "math_check": "All on-screen numbers are computed from the array of bar scores: points given = sum of (score − level) above the line, points needed = sum of (level − score) below it, average = sum ÷ count. Checked by hand: at 80, B gives 30 × 10 = 300, A needs 10 × 10 = 100, 200 left over; at 85, 30 × 5 = 150 equals 10 × 15 = 150, so 85 is even; 3,400 ÷ 40 = 85. Equal sizes (10 and 10) give 1,600 ÷ 20 = 80. 7 and 10 give 1,390 ÷ 17 = 81.76; at 86.5, B gives 35 and A needs 115.5, so 80.5 short. The checker passed with no problems or warnings at laptop and phone width."
+}

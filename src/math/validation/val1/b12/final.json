@@ -1,0 +1,107 @@
+{
+ "file": "b12/page.html",
+ "lines": 209,
+ "usesKit": true,
+ "problems": [],
+ "warnings": [],
+ "desktop": {
+  "errors": [],
+  "kit": true,
+  "start": {
+   "card": "You're riding a Ferris wheel at the fair. Its spokes (the bars from the hub, the wheel's centre, out to the rim) are 20 m long.\nYou get on level with the hub. A quarter turn, 90°, takes you to the very top.\nGuess first: compare a 30° turn with a 60° turn (twice as far). How high does 60° lift you, compared with 30°?",
+   "title": "Sunset Ferris Wheel",
+   "overflowX": false,
+   "height": 856,
+   "shownErr": [],
+   "svgTextOverlaps": [],
+   "offscreenSvgText": [],
+   "guessOpen": true,
+   "visibleButtons": [
+    "Twice as high",
+    "Higher, but less than twice as high",
+    "More than twice as high",
+    "Start over"
+   ]
+  },
+  "guessKind": "choice",
+  "guessLogged": true,
+  "afterGuess": {
+   "card": "You picked \"Twice as high\". Let's find out.\nDrag your orange car up the wheel, or use the Turn slider. Stop at 30° first and read your height.",
+   "title": "Sunset Ferris Wheel",
+   "overflowX": false,
+   "height": 883,
+   "shownErr": [],
+   "svgTextOverlaps": [],
+   "offscreenSvgText": [],
+   "guessOpen": true,
+   "visibleButtons": [
+    "Start over"
+   ]
+  },
+  "after": {
+   "card": "At 30° you are 10.0 m up: half of the 20 m spoke.\nNow keep turning to 60°. Will you be twice as high?",
+   "title": "Sunset Ferris Wheel",
+   "overflowX": false,
+   "height": 883,
+   "shownErr": [],
+   "svgTextOverlaps": [],
+   "offscreenSvgText": [],
+   "guessOpen": true,
+   "visibleButtons": [
+    "Start over"
+   ]
+  },
+  "eventsAfter": [
+   "ready",
+   "pick",
+   "guess",
+   "say",
+   "slide",
+   "drag",
+   "slide",
+   "say",
+   "drag",
+   "slide",
+   "drag"
+  ],
+  "restart": {
+   "card": "You're riding a Ferris wheel at the fair. Its spokes (the bars from the hub, the wheel's centre, out to the rim) are 20 m long.\nYou get on level with the hub. A quarter turn, 90°, takes you to the very top.\nGuess first: compare a 30° turn with a 60° turn (twice as far). How high does 60° lift you, compared with 30°?",
+   "title": "Sunset Ferris Wheel",
+   "overflowX": false,
+   "height": 856,
+   "shownErr": [],
+   "svgTextOverlaps": [],
+   "offscreenSvgText": [],
+   "guessOpen": true,
+   "visibleButtons": [
+    "Twice as high",
+    "Higher, but less than twice as high",
+    "More than twice as high",
+    "Start over"
+   ]
+  },
+  "firstGuessBeforeVisitor": false
+ },
+ "phone": {
+  "errors": [],
+  "kit": true,
+  "start": {
+   "card": "You're riding a Ferris wheel at the fair. Its spokes (the bars from the hub, the wheel's centre, out to the rim) are 20 m long.\nYou get on level with the hub. A quarter turn, 90°, takes you to the very top.\nGuess first: compare a 30° turn with a 60° turn (twice as far). How high does 60° lift you, compared with 30°?",
+   "title": "Sunset Ferris Wheel",
+   "overflowX": false,
+   "height": 949,
+   "shownErr": [],
+   "svgTextOverlaps": [],
+   "offscreenSvgText": [],
+   "guessOpen": true,
+   "visibleButtons": [
+    "Twice as high",
+    "Higher, but less than twice as high",
+    "More than twice as high",
+    "Start over"
+   ]
+  },
+  "events": 1
+ },
+ "pass": true
+}

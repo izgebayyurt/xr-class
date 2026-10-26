@@ -1,0 +1,143 @@
+{
+ "file": "b10/page.html",
+ "lines": 189,
+ "usesKit": true,
+ "problems": [],
+ "warnings": [],
+ "desktop": {
+  "errors": [],
+  "kit": true,
+  "start": {
+   "card": "Two hospitals. The small one has 15 babies born every day. The big one has 45.\nEvery baby has the same 50/50 chance of being a boy or a girl. But some days, more than 60% of the babies are boys (that means more than 6 out of every 10).\nOver one year, which hospital has more of those days? Make your guess below.",
+   "title": "Small hospital, big hospital",
+   "overflowX": false,
+   "height": 908,
+   "shownErr": [],
+   "svgTextOverlaps": [],
+   "offscreenSvgText": [],
+   "guessOpen": true,
+   "visibleButtons": [
+    "The small hospital",
+    "The big hospital",
+    "About the same",
+    "Start over"
+   ]
+  },
+  "guessKind": "choice",
+  "guessLogged": true,
+  "afterGuess": {
+   "card": "You guessed: the small hospital. Now let's live through a year.\nPress Next day to see one day of births in both hospitals: blue is a boy, pink is a girl.",
+   "title": "Small hospital, big hospital",
+   "overflowX": false,
+   "height": 907,
+   "shownErr": [],
+   "svgTextOverlaps": [],
+   "offscreenSvgText": [],
+   "guessOpen": false,
+   "visibleButtons": [
+    "Next day",
+    "Run the rest of the year",
+    "Start over"
+   ]
+  },
+  "after": {
+   "card": "Year done. 15 babies a day: 47 days over 60% boys. 45 babies a day: 27 days.\nTakeaway: the fewer babies a day, the further a day can swing from half boys. So a small hospital has more lopsided days, even though every baby is still 50/50.",
+   "title": "Small hospital, big hospital",
+   "overflowX": false,
+   "height": 1503,
+   "shownErr": [],
+   "svgTextOverlaps": [],
+   "offscreenSvgText": [],
+   "guessOpen": true,
+   "visibleButtons": [
+    "Run a new year",
+    "Start over"
+   ]
+  },
+  "eventsAfter": [
+   "ready",
+   "pick",
+   "guess",
+   "say",
+   "click",
+   "say",
+   "click",
+   "bar",
+   "bar",
+   "bar",
+   "bar",
+   "bar",
+   "bar",
+   "bar",
+   "bar",
+   "bar",
+   "bar",
+   "bar",
+   "bar",
+   "bar",
+   "bar",
+   "say",
+   "year",
+   "click",
+   "bar",
+   "say",
+   "year",
+   "click",
+   "bar",
+   "bar",
+   "bar",
+   "bar",
+   "bar",
+   "bar",
+   "bar",
+   "bar",
+   "bar",
+   "bar",
+   "bar",
+   "bar",
+   "bar",
+   "bar",
+   "say",
+   "year"
+  ],
+  "restart": {
+   "card": "Two hospitals. The small one has 15 babies born every day. The big one has 45.\nEvery baby has the same 50/50 chance of being a boy or a girl. But some days, more than 60% of the babies are boys (that means more than 6 out of every 10).\nOver one year, which hospital has more of those days? Make your guess below.",
+   "title": "Small hospital, big hospital",
+   "overflowX": false,
+   "height": 908,
+   "shownErr": [],
+   "svgTextOverlaps": [],
+   "offscreenSvgText": [],
+   "guessOpen": true,
+   "visibleButtons": [
+    "The small hospital",
+    "The big hospital",
+    "About the same",
+    "Start over"
+   ]
+  },
+  "firstGuessBeforeVisitor": false
+ },
+ "phone": {
+  "errors": [],
+  "kit": true,
+  "start": {
+   "card": "Two hospitals. The small one has 15 babies born every day. The big one has 45.\nEvery baby has the same 50/50 chance of being a boy or a girl. But some days, more than 60% of the babies are boys (that means more than 6 out of every 10).\nOver one year, which hospital has more of those days? Make your guess below.",
+   "title": "Small hospital, big hospital",
+   "overflowX": false,
+   "height": 1639,
+   "shownErr": [],
+   "svgTextOverlaps": [],
+   "offscreenSvgText": [],
+   "guessOpen": true,
+   "visibleButtons": [
+    "The small hospital",
+    "The big hospital",
+    "About the same",
+    "Start over"
+   ]
+  },
+  "events": 1
+ },
+ "pass": true
+}

@@ -1,0 +1,25 @@
+{
+  "title": "Two classes, one average",
+  "concept": "Combining the averages of two groups of different sizes (a weighted average): add all the points and divide by all the students, so the larger group pulls the result toward its own average.",
+  "kept": [
+    "The exact problem: class A with 10 students averaging 70, class B with 30 students averaging 90, average of all 40",
+    "The halfway answer (70 + 90) / 2 = 80 stays visible as a dashed 'halfway' mark on the number line and is named in the 'Why isn't it 80?' step",
+    "No 3D (design had no preference), so a flat 2D drawing"
+  ],
+  "filled_in": [
+    "Opening number guess for the combined average, with honest feedback (exactly right, or how many points too low/high)",
+    "Activity: 40 student circles, each showing a score; the visitor clicks students (or 'Add everyone left') to pool them into one group while readouts count students added, total points and average so far",
+    "A number line from 60 to 100 points with a dot for the running average, the class scores 70 and 90, the halfway mark and the visitor's guess",
+    "Stepwise explanation: after pooling, a note with 10 x 70 = 700, 30 x 90 = 2700, 3400 / 40 = 85; then a 'Why isn't it 80?' button reveals why the halfway answer fails",
+    "Exploration: sliders for class sizes (A 1-25, B 1-40) with a table of results, prompting the visitor to find sizes that give exactly 80 (equal sizes)",
+    "Simplification labelled as a model: each student is shown with their class average score; class totals are the same as with real varied scores",
+    "Plain-word definition of 'average' shown from the start; takeaway in the card at the end"
+  ],
+  "changed": [
+    {
+      "what": "The design's answer of 80 from (70 + 90) / 2 is replaced by the correct combined average of 85.",
+      "why": "The classes are different sizes. Total points are 10 x 70 + 30 x 90 = 3400, and 3400 / 40 = 85. The simple halfway average only works when both classes have the same number of students."
+    }
+  ],
+  "math_check": "All on-screen numbers are computed from the student circles shown: total = sum of counted students' scores, average = total / students counted. Verified by hand: 700 + 2700 = 3400, 3400 / 40 = 85; equal sizes 12 + 12 give 1920 / 24 = 80; 25 + 40 give 5350 / 65 = 82.31 (shown as 'about 82.31'). Ran check-page.mjs (pass, no problems or warnings), viewed the start, after and phone screenshots, and walked the flow headlessly (guess 80 -> pool -> '5 points too low' -> why -> sliders -> takeaway)."
+}
