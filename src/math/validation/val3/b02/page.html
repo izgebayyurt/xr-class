@@ -1,0 +1,166 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Which is bigger, 5/9 or 4/7?</title>
+<script src="mathkit.js"></script>
+</head>
+<body>
+<script>
+// Design: two equal chocolate bars, one cut in 9 pieces and one in 7; take 5 and 4 pieces and compare.
+MK.start({ title: 'Which is bigger, 5/9 or 4/7?', build });
+
+function build(){
+  const W = 640, H = 390, X0 = 40, BW = 560, BH = 54;
+  const ROWY = [48, 128], CY = [248, 304];
+  const DARK = '#5a2d12', MID = '#c68b59', LIGHT = '#ecd2ae', LINE = '#3b1c0a';
+  let phase = 'guess', cut = false, guessed = null;
+  let f = [[5, 9], [4, 7]];
+  const taken = [new Set(), new Set()];
+
+  const gcd = (a, b) => b ? gcd(b, a % b) : a;
+  const lcm = (a, b) => a / gcd(a, b) * b;
+  const S = MK.svg(W, H, { maxHeight: '56vh' });
+
+  MK.say('Two chocolate bars are exactly the same size. One is cut into 9 pieces, the other into 7.\nWhich is bigger: 5 pieces of the 9-piece bar (5/9) or 4 pieces of the 7-piece bar (4/7)? Make a guess first.');
+  MK.model('Both bars are the same size, drawn 560 units wide. Pieces are cut into equal parts.');
+
+  MK.guess({ ask: 'Your guess: which is bigger?', options: ['5/9 is bigger', '4/7 is bigger', 'They are the same'] }, (v, i) => {
+    guessed = i; phase = 'cut';
+    MK.say(`You guessed "${v}". Let's test it. Press "Cut the bars" to cut one bar into 9 pieces and the other into 7.`);
+    MK.show(cutBtn); draw();
+  });
+
+  const cutBtn = MK.button('Cut the bars', () => {
+    cut = true; phase = 'take'; cutBtn.hide();
+    MK.say('Now take your pieces. Click 5 pieces on the top bar and 4 pieces on the bottom bar.');
+    MK.show(rA, rB); draw(); report();
+  }).hide();
+
+  const sideBtn = MK.button('Put them side by side', () => {
+    phase = 'side'; sideBtn.hide();
+    MK.say('Look at the two rows at the bottom. Both start at the same line. Which row sticks out further?');
+    MK.show(why); MK.show(tinyBtn); draw(); report();
+  }).hide();
+
+  const tinyBtn = MK.button('Cut both into equal tiny pieces', () => {
+    phase = 'tiny'; tinyBtn.hide();
+    MK.show(sA, sB, dA, dB); draw(); report();
+  }).hide();
+
+  const rA = MK.readout('First bar', '').hide();
+  const rB = MK.readout('Second bar', '').hide();
+  const why = MK.note('').hide();
+
+  // explore controls (shown at the end)
+  const sA = MK.slider({ label: 'Top bar: pieces taken', min: 1, max: 12, step: 1, value: 5, onInput: update }).hide();
+  const dA = MK.slider({ label: 'Top bar: cut into', min: 2, max: 12, step: 1, value: 9, onInput: update }).hide();
+  const sB = MK.slider({ label: 'Bottom bar: pieces taken', min: 1, max: 12, step: 1, value: 4, onInput: update }).hide();
+  const dB = MK.slider({ label: 'Bottom bar: cut into', min: 2, max: 12, step: 1, value: 7, onInput: update }).hide();
+
+  function update(){
+    f = [[Math.min(sA.value, dA.value), dA.value], [Math.min(sB.value, dB.value), dB.value]];
+    phase = 'explore';
+    MK.say('Change the sliders to compare other fractions. Do the tiny-piece counts match what the red gap shows?\nTo compare fractions, make the pieces the same size. A bigger number on the bottom means smaller pieces.');
+    draw(); report();
+  }
+
+  const isTaken = (k, i) => phase === 'take' ? taken[k].has(i) : i < f[k][0];
+  const shapes = [[], []];   // piece rectangles, so lengths come from the drawn objects
+
+  function draw(){
+    S.clear(); shapes[0] = []; shapes[1] = [];
+    for (let k = 0; k < 2; k++){
+      const d = f[k][1], y = ROWY[k], pw = BW / d;
+      S.text(X0, y - 14, `${f[k][0]}/${d} of a bar${cut ? '' : ` (a whole bar, to be cut into ${d})`}`, { size: 15, weight: 600, anchor: 'start', fill: LINE });
+      if (!cut){
+        S.rect(X0, y, BW, BH, { fill: MID, stroke: LINE, 'stroke-width': 2, rx: 6 });
+        continue;
+      }
+      for (let i = 0; i < d; i++){
+        const r = S.rect(X0 + i * pw, y, pw, BH, { fill: isTaken(k, i) ? DARK : LIGHT, stroke: LINE, 'stroke-width': 2 });
+        shapes[k].push(r);
+        if (phase === 'take') r.on('click', () => tap(k, i));
+      }
+    }
+    if (phase === 'tiny' || phase === 'explore') ticks();
+    if (phase === 'side' || phase === 'tiny' || phase === 'explore') compare();
+  }
+
+  function takenWidth(k){ let w = 0; for (let i = 0; i < f[k][1]; i++) if (isTaken(k, i)) w += BW / f[k][1]; return w; }
+  const L = () => lcm(f[0][1], f[1][1]);
+
+  function ticks(){
+    const n = L(), tw = BW / n;
+    for (let k = 0; k < 2; k++) for (let j = 1; j < n; j++)
+      S.line(X0 + j * tw, ROWY[k], X0 + j * tw, ROWY[k] + BH, { stroke: '#fff', 'stroke-width': 1, opacity: .55, 'pointer-events': 'none' });
+  }
+
+  function compare(){
+    S.text(X0, CY[0] - 14, 'Your pieces, side by side', { size: 15, weight: 600, anchor: 'start', fill: LINE });
+    S.rect(X0, CY[0] - 2, BW, 2 * BH / 1.4 + 20, { fill: 'none', stroke: '#b9a58c', 'stroke-dasharray': '4 4' });
+    const wA = takenWidth(0), wB = takenWidth(1);
+    for (let k = 0; k < 2; k++){
+      const w = k ? wB : wA;
+      S.rect(X0, CY[k], w, 38, { fill: DARK, stroke: LINE, 'stroke-width': 2 });
+      S.text(X0 + w + 8, CY[k] + 19, `${f[k][0]}/${f[k][1]}`, { size: 14, anchor: 'start', fill: LINE });
+    }
+    const xe = X0 + Math.min(wA, wB);
+    S.line(xe, CY[0] - 6, xe, CY[1] + 46, { stroke: '#d0462c', 'stroke-width': 2, 'stroke-dasharray': '5 3' });
+    {
+      const lo = Math.min(wA, wB), hi = Math.max(wA, wB);
+      if (hi - lo > 0.01) S.rect(X0 + lo, CY[wA > wB ? 0 : 1], hi - lo, 38, { fill: '#d0462c', opacity: .5, 'pointer-events': 'none' });
+    }
+  }
+
+  function tap(k, i){
+    if (phase !== 'take') return;
+    const need = f[k][0];
+    if (taken[k].has(i)) taken[k].delete(i);
+    else if (taken[k].size < need) taken[k].add(i);
+    draw(); report();
+  }
+
+  const pct = x => MK.fmt(x * 100, { dp: 1 }) + '%';
+
+  function report(){
+    if (phase === 'take'){
+      rA.set(`${taken[0].size} of ${f[0][0]} pieces`);
+      rB.set(`${taken[1].size} of ${f[1][0]} pieces`);
+      const done = taken[0].size === f[0][0] && taken[1].size === f[1][0];
+      if (done){
+        MK.say('You have both servings. Press "Put them side by side" to line the pieces up.');
+        MK.show(sideBtn);
+      } else sideBtn.hide();
+      return;
+    }
+    const wA = takenWidth(0), wB = takenWidth(1);
+    const pA = BW / f[0][1], pB = BW / f[1][1];
+    rA.set(`${pct(wA / BW)} of a bar`); rB.set(`${pct(wB / BW)} of a bar`);
+    MK.show(rA, rB);
+    const diff = wA - wB;
+    const bigger = Math.abs(diff) < 0.01 ? 'They are the same size' : (diff > 0 ? `${f[0][0]}/${f[0][1]} is bigger` : `${f[1][0]}/${f[1][1]} is bigger`);
+    if (phase === 'side'){
+      const right = diff > 0.01 ? 0 : diff < -0.01 ? 1 : 2;
+      const verdict = guessed === right ? 'Your guess was right.' : 'Your guess was off.';
+      why.set(`${verdict} The red part is the gap: ${bigger}.\nOne piece of the 9-piece bar is ${pct(pA / BW)} of a bar. One piece of the 7-piece bar is ${pct(pB / BW)}. The 9-piece bar has smaller pieces, so 5 of them is not as much as you'd think.`);
+    } else {
+      const n = L(), tw = BW / n, cnt = k => { let c = 0; for (let j = 0; j < n; j++) if (X0 + (j + .5) * tw < X0 + takenWidth(k)) c++; return c; };
+      const cA = cnt(0), cB = cnt(1);
+      rA.set(`${cA} of ${n} tiny pieces`); rB.set(`${cB} of ${n} tiny pieces`);
+      why.set(`Both bars are now cut into ${n} equal tiny pieces (${n} is a number both ${f[0][1]} and ${f[1][1]} fit into).\nThe top bar covers ${cA} tiny pieces and the bottom covers ${cB}. ${cA === cB ? 'Same amount.' : (cA > cB ? `${f[0][0]}/${f[0][1]} is bigger.` : `${f[1][0]}/${f[1][1]} is bigger.`)}`);
+    }
+    MK.show(why);
+    if (phase === 'tiny'){
+      const n = L(), tw = BW / n, cnt = k => { let c = 0; for (let j = 0; j < n; j++) if (X0 + (j + .5) * tw < X0 + takenWidth(k)) c++; return c; };
+      const cA = cnt(0), cB = cnt(1);
+      MK.say(`With equal tiny pieces you can just count: ${cA} vs ${cB}. To compare fractions, make the pieces the same size. A bigger number on the bottom means smaller pieces.\nNow try other fractions with the sliders.`);
+    }
+  }
+
+  draw();
+}
+</script>
+</body>
+</html>

@@ -1,0 +1,8 @@
+{
+  "title": "Ferris wheel heights",
+  "concept": "sin 30° = 1/2 and sin 60° is about 0.87, not 1: height above the axle divided by spoke length, measured on a turning Ferris wheel.",
+  "kept": ["Ferris wheel showing how high you are as it turns", "Sine as opposite over hypotenuse (height over spoke)", "Compare 30 and 60 degrees", "Fair / sunset look: dusk sky bands, sun, dark ground", "The friend's likely mistake (sin 60 = 1) is the wrong-guess option '20 m, the very top'"],
+  "filled_in": ["Wheel size: 20 m spoke, angle measured up from level with the axle", "Multiple-choice guess at 60° with 10, 13, 17 and 20 m options", "Slider 0 to 90 degrees plus Turn to 30 and Turn to 60 buttons", "Table of real height vs 'rises evenly' (10 m per 30 degrees) so the friend sees even growth would pass the top", "Mirror-seat picture showing why 30 degrees gives exactly half (equilateral triangle)", "SOH CAH TOA not repeated as a word; sine is explained as height divided by spoke"],
+  "changed": [{ "what": "The design said the friend thinks sin 60 would be 1 because sin goes up evenly; page uses the 'rises evenly' column to show that rule would put 90 degrees at 30 m, beyond the 20 m top", "why": "Makes the wrong idea testable without staging it" }],
+  "math_check": "Heights are measured from the drawn rider's pixel position (150 px = 20 m) and spoke length from the axle-to-seat distance. 30°: 10.0 m, ratio 0.50. 60°: 17.3 m, ratio 0.87. 90°: 20.0 m, 1.00. Table 15°: 5.2, 45°: 14.1, 75°: 19.3 m; even column 0,5,10,15,20,25,30 m. Mirror chord at ±30° = 20.0 m equals spoke."
+}

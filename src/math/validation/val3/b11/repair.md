@@ -1,0 +1,9 @@
+- Opening screen now shows only the 80-year life ruler. Both timelines and all answers are hidden until the visitor guesses (guess-first restored).
+- Removed the pre-drawn full-length billion bar, the "31.7 years", "age 52" and "11 days 14 h / thin sliver" labels. Every bar and label now grows from the visitor's own counted seconds.
+- Added "Count 1 million seconds" and "Count 100 million seconds" buttons, so the visitor counts million-blocks and sees the million bar and the billion bar on the same scale. Day/year/decade buttons kept.
+- Final text (blocks counted, years, finishing age) is computed from the visitor's count, not stated as "1,000 times"; the "1,000 millions" claim is gone.
+- Age slider now goes to 60, so the count can run past an 80-year life; the bar stops at the life end and says so.
+- Bigger SVG fonts (14-16) and taller layout for phone; labels sit above bars with a white halo; age line starts below the ruler so it no longer crosses tick labels or bar text; the "age N" label sits at the bar end.
+- dur() no longer prints "24 h" (rolls over to the next day).
+- Reworded the guess feedback ("Your guess is about N times too short."). Math is unchanged and was already correct.
+- Not changed: no separate guess for the million (the kit allows one guess).

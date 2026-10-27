@@ -1,0 +1,157 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Money that earns money</title>
+<script src="mathkit.js"></script>
+</head>
+<body>
+<script>
+// Design: $1,000 at 7% a year for 30 years. Guess, then play year by year and compare a compound pile with a simple-interest pile ($70 a year).
+MK.start({ title: 'Money that earns money', build });
+
+function build(){
+  const W = 560, H = 440, BASE = 360, PLOT = 300, START = 1000, YEARS = 30;
+  let rate = 7, year = 0, guessed = null, done = false, auto = null, comp = [], simp = [];
+  const money = (x, dp = 0) => '$' + x.toLocaleString('en-US', { minimumFractionDigits: dp, maximumFractionDigits: dp });
+
+  function compute(){
+    comp = [START]; simp = [START];
+    for (let y = 1; y <= YEARS; y++){
+      comp.push(comp[y - 1] * (1 + rate / 100));            // earns interest on everything so far
+      simp.push(simp[y - 1] + START * rate / 100);          // earns interest on the first $1,000 only
+    }
+  }
+  compute();
+
+  MK.say('You put $1,000 in a savings account that pays 7% interest a year. You never add or take out money.\nHow much will you have after 30 years? Type a guess first.');
+  MK.model('Money grows by the same percent every year. No deposits, fees or taxes. Real accounts change from year to year.');
+  const S = MK.svg(W, H, { maxHeight: '54vh' });
+
+  MK.guess({ ask: 'Your guess: money after 30 years', unit: 'dollars', placeholder: 'e.g. 3000', step: 100 }, v => {
+    guessed = v;
+    MK.say('Two piles of coins start at $1,000. The green pile earns 7% on all its money. The simple pile earns only $70 a year.\nPress "Next year" to watch them grow.');
+    MK.show(next, playAll, rYear, rComp, rSimp, rGap, stepNote, table);
+    render();
+  });
+
+  const next = MK.button('Next year', () => step()).hide();
+  const playAll = MK.button('Play all 30 years', () => {
+    next.enable(false); playAll.enable(false);
+    auto = MK.every(160, () => { step(); if (year >= YEARS){ MK.stop(auto); auto = null; } });
+  }, { alt: true }).hide();
+  const why = MK.button('Why is the gap so big?', () => {
+    why.hide(); revealWhy();
+  }).hide();
+  const rateSlider = MK.slider({ label: 'Yearly rate', min: 1, max: 12, step: 1, value: 7, format: v => v + '%', onInput: v => {
+    rate = v; compute(); year = YEARS; render();
+    const fin = comp[YEARS];
+    MK.say(`At ${rate}% a year, $1,000 grows to ${money(fin)} in 30 years. Simple interest gives ${money(simp[YEARS])}.\nInterest that earns interest is why the green pile pulls ahead. Try another rate.`);
+    showDoubling();
+  } }).hide();
+
+  const rYear = MK.readout('Year', '0 of 30').hide();
+  const rComp = MK.readout('Green pile (compound)', money(START)).hide();
+  const rSimp = MK.readout('Simple pile', money(START)).hide();
+  const rGap = MK.readout('Gap', '$0').hide();
+  const stepNote = MK.note('').hide();
+  const guessNote = MK.note('').hide();
+  const whyNote = MK.note('').hide();
+  const dblNote = MK.note('').hide();
+  const table = MK.table(['Year', 'Green pile', 'Simple pile'], []).hide();
+
+  function step(){
+    if (year >= YEARS) return;
+    year++;
+    render();
+    if (year >= YEARS) finish();
+  }
+
+  function finish(){
+    done = true; next.enable(false); playAll.enable(false);
+    const fin = comp[YEARS];
+    const off = Math.abs(guessed - fin) / fin;
+    let verdict;
+    if (off <= 0.05) verdict = 'Very close.';
+    else if (Math.abs(guessed - simp[YEARS]) / simp[YEARS] <= 0.05) verdict = 'That matches the simple-interest pile, not the green one.';
+    else verdict = guessed < fin ? 'A bit low.' : 'A bit high.';
+    guessNote.set(`You guessed ${money(guessed)}. The green pile ended at ${money(fin)}. ${verdict}`);
+    MK.show(guessNote, why);
+    MK.say(`After 30 years: ${money(fin)} in the green pile, ${money(simp[YEARS])} in the other.\nPress "Why is the gap so big?" to see where the extra coins come from.`);
+  }
+
+  function revealWhy(){
+    const fin = comp[YEARS], plain = simp[YEARS] - START, extra = fin - simp[YEARS];
+    whyNote.set(`The green pile is ${money(START)} you put in, plus ${money(plain)} of interest that simple interest also gets (${YEARS} years × ${money(START * rate / 100)}), plus ${money(extra)} of interest on interest.`);
+    MK.show(whyNote, rateSlider);
+    MK.say(`The dark green coins are interest on interest. Each year there is more money, so each year earns more.\nMove the rate slider to see how the piles change.`);
+    showDoubling();
+  }
+
+  function showDoubling(){
+    const d = comp.findIndex(v => v >= 2 * START);
+    const rule = (72 / rate).toFixed(1);
+    dblNote.set(`Rule of 72: 72 ÷ ${rate} = ${rule} years for money to double (grow to 2 times as much). In the piles, the first year at $2,000 or more is ${d < 0 ? 'after year 30' : 'year ' + d}.`);
+    MK.show(dblNote);
+  }
+
+  // ---- drawing ----
+  function render(){
+    S.clear();
+    const maxV = Math.max(comp[YEARS], simp[YEARS]);
+    const cv = [50, 100, 200, 500, 1000, 2000].find(c => maxV / c <= 80);
+    const units = Math.ceil(maxV / cv) + 2;
+    const ch = PLOT / units;
+    S.line(30, BASE + 3, W - 30, BASE + 3, { stroke: '#7a8a7e', 'stroke-width': 2 });
+    stack(150, comp[year], cv, ch);
+    stack(410, simp[year], cv, ch);
+    const gx = 150, sx = 410;
+    S.text(gx, BASE + 24, 'Compound', { size: 15, weight: 700, fill: '#0f5a30' });
+    S.text(sx, BASE + 24, 'Simple (+' + money(START * rate / 100) + ' a year)', { size: 15, weight: 700, fill: '#4f6b57' });
+    S.text(W / 2, 22, 'Year ' + year, { size: 20, weight: 700, fill: '#1d2a21' });
+    S.text(W / 2, 42, 'Each coin = ' + money(cv), { size: 12, fill: '#4f6b57' });
+    // legend
+    [['#d3e3d0', 'You put in'], ['#5fb77c', 'Interest (both piles)'], ['#0b5d33', 'Interest on interest']].forEach(([c, t], i) => {
+      const x = 28 + i * 180;
+      S.rect(x, H - 24, 14, 14, { fill: c, stroke: '#2f5e40', rx: 3 });
+      S.text(x + 20, H - 17, t, { size: 12, anchor: 'start', fill: '#1d2a21' });
+    });
+    rYear.set(year + ' of ' + YEARS);
+    rComp.set(money(comp[year]));
+    rSimp.set(money(simp[year]));
+    rGap.set(money(comp[year] - simp[year]));
+    const rows = [0, 5, 10, 15, 20, 25, 30].filter(y => y <= year).map(y => [y, money(comp[y]), money(simp[y])]);
+    table.set(rows, rows.length && rows[rows.length - 1][0] === year ? rows.length - 1 : -1);
+    explain();
+  }
+
+  function stack(cx, value, cv, ch){
+    const w = 130, plainTop = START + START * rate / 100 * year;
+    const color = mid => mid < START ? '#d3e3d0' : mid < plainTop ? '#5fb77c' : '#0b5d33';
+    const full = Math.floor(value / cv + 1e-9), frac = value / cv - full;
+    for (let i = 0; i < full; i++){
+      S.rect(cx - w / 2, BASE - (i + 1) * ch, w, ch * 0.82, { fill: color((i + 0.5) * cv), stroke: '#2f5e40', 'stroke-width': 0.6, rx: 1.5 });
+    }
+    let top = BASE - full * ch;
+    if (frac > 0.02){
+      const h = ch * 0.82 * frac;
+      S.rect(cx - w / 2, BASE - full * ch - h - ch * 0.18, w, h, { fill: color((full + frac / 2) * cv), stroke: '#2f5e40', 'stroke-width': 0.6, rx: 1.5 });
+      top -= ch;
+    }
+    S.text(cx, top - 8, money(value), { size: 16, weight: 700, fill: '#1d2a21' });
+  }
+
+  function explain(){
+    if (year === 0){ stepNote.set(''); return; }
+    const r = rate / 100, ci = comp[year - 1] * r, si = START * r;
+    let t = `Year ${year}: the green pile earns ${rate}% of ${money(comp[year - 1], 2)} = ${money(ci, 2)}. The other pile earns ${money(si, 2)}.`;
+    if (year >= 2) t += `\nThe green pile gets ${money(ci - si, 2)} more, because it earns interest on interest it already got.`;
+    stepNote.set(t);
+  }
+
+  render();
+}
+</script>
+</body>
+</html>

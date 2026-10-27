@@ -1,0 +1,122 @@
+{
+ "file": "b05/sonnet/page.html",
+ "lines": 189,
+ "usesKit": true,
+ "problems": [],
+ "warnings": [],
+ "desktop": {
+  "errors": [],
+  "kit": true,
+  "start": {
+   "card": "A box is 3 cubes long, 2 wide and 2 tall. Then we make a bigger box: twice as long, twice as wide and twice as tall.\nHow much more paint and water will the big box need? Make a guess first.",
+   "title": "Double the box",
+   "overflowX": false,
+   "height": 800,
+   "shownErr": [],
+   "svgTextOverlaps": [],
+   "offscreenSvgText": [],
+   "guessBelowFold": -87,
+   "longText": [],
+   "guessOpen": true,
+   "visibleButtons": [
+    "Both 2 times as much",
+    "Paint 8 times, water 4 times",
+    "Paint 4 times, water 8 times",
+    "Both 4 times as much",
+    "Start over"
+   ]
+  },
+  "guessKind": "choice",
+  "guessLogged": true,
+  "afterGuess": {
+   "card": "Let's test it with real cubes. Build the small box: press \"Add a layer\" until it is full.",
+   "title": "Double the box",
+   "overflowX": false,
+   "height": 807,
+   "shownErr": [],
+   "svgTextOverlaps": [],
+   "offscreenSvgText": [],
+   "guessBelowFold": null,
+   "longText": [],
+   "guessOpen": false,
+   "visibleButtons": [
+    "Add a layer",
+    "Start over"
+   ]
+  },
+  "after": {
+   "card": "Painted! The small box has 32 red squares on the outside.\nNow make every side twice as long and build the big box the same way.",
+   "title": "Double the box",
+   "overflowX": false,
+   "height": 833,
+   "shownErr": [],
+   "svgTextOverlaps": [],
+   "offscreenSvgText": [],
+   "guessBelowFold": null,
+   "longText": [],
+   "guessOpen": false,
+   "visibleButtons": [
+    "Build the big box (twice as long, wide and tall)",
+    "Start over"
+   ]
+  },
+  "eventsAfter": [
+   "ready",
+   "pick",
+   "guess",
+   "guess",
+   "say",
+   "click",
+   "say",
+   "click",
+   "say",
+   "click",
+   "say"
+  ],
+  "restart": {
+   "card": "A box is 3 cubes long, 2 wide and 2 tall. Then we make a bigger box: twice as long, twice as wide and twice as tall.\nHow much more paint and water will the big box need? Make a guess first.",
+   "title": "Double the box",
+   "overflowX": false,
+   "height": 800,
+   "shownErr": [],
+   "svgTextOverlaps": [],
+   "offscreenSvgText": [],
+   "guessBelowFold": -87,
+   "longText": [],
+   "guessOpen": true,
+   "visibleButtons": [
+    "Both 2 times as much",
+    "Paint 8 times, water 4 times",
+    "Paint 4 times, water 8 times",
+    "Both 4 times as much",
+    "Start over"
+   ]
+  },
+  "firstGuessBeforeVisitor": false
+ },
+ "phone": {
+  "errors": [],
+  "kit": true,
+  "start": {
+   "card": "A box is 3 cubes long, 2 wide and 2 tall. Then we make a bigger box: twice as long, twice as wide and twice as tall.\nHow much more paint and water will the big box need? Make a guess first.",
+   "title": "Double the box",
+   "overflowX": false,
+   "height": 934,
+   "shownErr": [],
+   "svgTextOverlaps": [],
+   "offscreenSvgText": [],
+   "guessBelowFold": -7,
+   "longText": [],
+   "guessOpen": true,
+   "visibleButtons": [
+    "Both 2 times as much",
+    "Paint 8 times, water 4 times",
+    "Paint 4 times, water 8 times",
+    "Both 4 times as much",
+    "Start over"
+   ]
+  },
+  "events": 1
+ },
+ "pass": true
+}

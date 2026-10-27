@@ -1,0 +1,113 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Two dice: 5 and 6, or two 6s?</title>
+<script src="mathkit.js"></script>
+</head>
+<body>
+<script>
+MK.start({ title: 'Two dice: 5 and 6, or two 6s?', build });
+
+function build(){
+  const W = 420, H = 420, C = 50, X0 = 78, Y0 = 70;
+  const rnd = MK.rng();
+  let a = 5, b = 6;                 // the mixed pair is "a and b"; the double is "b and b"
+  let counts, rolls, last, guessed = null, showWays = false, stepsDone = 0;
+  const reset = () => { counts = Array.from({ length: 6 }, () => Array(6).fill(0)); rolls = 0; last = null; };
+  reset();
+
+  MK.say('You roll two dice, one red and one blue.\nWhich is more likely: a 5 and a 6 (in any order), or two 6s? Make a guess first.');
+  MK.model('Each roll is a computer-made random roll of two fair dice, so it is a model of real dice.');
+  const S = MK.svg(W, H, { maxHeight: '60vh' });
+
+  MK.guess({ ask: 'Your guess', options: ['A 5 and a 6 is more likely', 'Two 6s is more likely', 'They are equally likely'] }, (v, i) => {
+    guessed = i;
+    MK.say(`You guessed: ${v.toLowerCase()}.\nNow roll the dice and watch the tallies. Press "Roll 100 times" a few times.`);
+    MK.show(roll1, roll100, tally1, tally2, rollsOut); draw(); report();
+  });
+
+  const roll1 = MK.button('Roll once', () => doRolls(1)).hide();
+  const roll100 = MK.button('Roll 100 times', () => doRolls(100)).hide();
+  const rollsOut = MK.readout('Rolls so far', '0').hide();
+  const tally1 = MK.readout('Pair', '0').hide();
+  const tally2 = MK.readout('Double', '0').hide();
+  const why = MK.note('').hide();
+  const ways = MK.button('Show the ways', () => {
+    showWays = true; ways.enable(false); draw(); report();
+  }, { alt: true }).hide();
+  const sa = MK.slider({ label: 'First number', min: 1, max: 6, step: 1, value: 5, format: v => v, onInput: v => { a = v; restart(); } }).hide();
+  const sb = MK.slider({ label: 'Second number', min: 1, max: 6, step: 1, value: 6, format: v => v, onInput: v => { b = v; restart(); } }).hide();
+  const table = MK.table(['Pick', 'Ways to roll it', 'Chance'], []).hide();
+
+  const isPair = (r, c) => ((r === a && c === b) || (r === b && c === a));
+  const isDouble = (r, c) => r === b && c === b;
+  const total = f => { let t = 0; for (let r = 1; r <= 6; r++) for (let c = 1; c <= 6; c++) if (f(r, c)) t += counts[r - 1][c - 1]; return t; };
+  const ways_ = f => { let t = 0; for (let r = 1; r <= 6; r++) for (let c = 1; c <= 6; c++) if (f(r, c)) t++; return t; };
+  const pairName = () => a === b ? `Two ${a}s (the same as the double)` : `A ${a} and a ${b}`;
+
+  function restart(){
+    reset(); showWays = false; stepsDone = 0; ways.enable(true); MK.hide(why, table); draw(); report();
+    MK.say(a === b ? `Now both picks are two ${b}s. Roll and see the tallies match, then pick two different numbers.` : `Now the pair is a ${a} and a ${b}, and the double is two ${b}s. Roll again and compare the tallies.`);
+  }
+
+  function doRolls(n){
+    for (let i = 0; i < n; i++){ const r = rnd.int(1, 6), c = rnd.int(1, 6); counts[r - 1][c - 1]++; rolls++; last = [r, c]; }
+    draw(); report();
+  }
+
+  function draw(){
+    S.clear();
+    S.text(X0 + 3 * C, 18, 'Blue die', { size: 14, weight: 600, anchor: 'middle', fill: '#2f6fde' });
+    S.text(20, Y0 + 3 * C, 'Red die', { size: 14, weight: 600, anchor: 'middle', fill: '#c0392b', transform: `rotate(-90 20 ${Y0 + 3 * C})` });
+    for (let i = 1; i <= 6; i++){
+      S.text(X0 + (i - .5) * C, 50, i, { size: 15, weight: 600, anchor: 'middle' });
+      S.text(58, Y0 + (i - .5) * C + 1, i, { size: 15, weight: 600, anchor: 'middle' });
+    }
+    for (let r = 1; r <= 6; r++) for (let c = 1; c <= 6; c++){
+      const p = isPair(r, c), d = isDouble(r, c);
+      const fill = showWays && p ? '#fbd9a8' : showWays && d ? '#bcd3f7' : '#fff';
+      S.rect(X0 + (c - 1) * C, Y0 + (r - 1) * C, C, C, { fill, stroke: '#9aa3b2', 'stroke-width': 1 });
+      if (last && last[0] === r && last[1] === c) S.rect(X0 + (c - 1) * C + 2, Y0 + (r - 1) * C + 2, C - 4, C - 4, { fill: 'none', stroke: '#e8912d', 'stroke-width': 3 });
+      const n = counts[r - 1][c - 1];
+      if (guessed !== null) S.text(X0 + (c - .5) * C, Y0 + (r - .5) * C + 1, n, { size: 14, fill: n ? '#1d2330' : '#b5bcc9' });
+    }
+    if (last) S.text(X0 + 3 * C, H - 14, `Last roll: red ${last[0]}, blue ${last[1]}`, { size: 14, anchor: 'middle' });
+  }
+
+  function report(){
+    if (guessed === null) return;
+    const nPair = total(isPair), nDouble = total(isDouble);
+    rollsOut.set(rolls);
+    tally1.set(`${a === b ? `Two ${a}s` : `${a} and ${b}`}: ${nPair}`); tally2.set(`Two ${b}s: ${nDouble}`);
+    if (rolls === 0){ return; }
+    if (rolls < 100 && stepsDone < 1){
+      MK.say(`${rolls} roll${rolls === 1 ? '' : 's'} so far. Keep rolling. A few hundred rolls will show a pattern.`); return;
+    }
+    if (rolls >= 100 && stepsDone < 2 && !showWays){
+      stepsDone = 1; MK.show(ways);
+      const lead = nPair > nDouble ? `"${pairName()}" is ahead: ${nPair} against ${nDouble}.` : nPair < nDouble ? `Two ${b}s are ahead: ${nDouble} against ${nPair}.` : `They are tied at ${nPair} each.`;
+      MK.say(`After ${rolls} rolls: ${lead}\nWhy? Press "Show the ways" to see which squares count.`);
+    }
+    if (showWays){
+      const wp = ways_(isPair), wd = ways_(isDouble);
+      stepsDone = 2;
+      MK.show(why, table, sa, sb);
+      why.set(`The grid shows every way two dice can land. There are ${ways_(() => true)} squares, and each is equally likely.\nTwo ${b}s fill ${wd} square (red ${b}, blue ${b}). ${a === b ? '' : `A ${a} and a ${b} fill ${wp} squares (red ${a} blue ${b}, or red ${b} blue ${a}).`}`);
+      table.set([[`Two ${b}s`, wd, `${wd}/36`], [a === b ? '(same as above)' : `A ${a} and a ${b}`, a === b ? wd : wp, `${a === b ? wd : wp}/36`]]);
+      if (rolls >= 300){
+        MK.say(a === b
+          ? `Both picks are the same thing here, so the tallies match (up to luck). Move a slider to pick two different numbers.`
+          : `Each single square is 1 in 36, but a ${a} and a ${b} has ${wp} squares, so it comes up about twice as often.\nTakeaway: two dice are separate, so the order matters. "${a} then ${b}" and "${b} then ${a}" are two different ways to get the same pair. Try other numbers with the sliders.`);
+      } else {
+        MK.say('Keep rolling to 300 and compare the tallies with the squares.');
+      }
+    }
+  }
+
+  draw();
+}
+</script>
+</body>
+</html>

@@ -1,0 +1,124 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>A million vs. a billion seconds</title>
+<script src="mathkit.js"></script>
+</head>
+<body>
+<script>
+// Student design: counting one number per second. How long to reach a million? A billion? Timelines compared to a life.
+MK.start({ title: 'A million vs. a billion seconds', build });
+
+function build(){
+  const W = 600, H = 300, X0 = 20, XW = 560, LIFE = 80;
+  const SEC_DAY = 86400, SEC_YEAR = 365.25 * SEC_DAY, MILLION = 1e6, BILLION = 1e9;
+  let sec = 0, age = 20, guessed = null, seenM = false, seenB = false;
+  const nf = v => Math.round(v).toLocaleString('en-US');
+  const yrs = s => s / SEC_YEAR;
+  function dur(s){
+    if (s < 60) return nf(s) + ' seconds';
+    if (s < SEC_DAY){ const h = Math.floor(s / 3600), m = Math.floor((s % 3600) / 60); return h + ' h ' + m + ' min'; }
+    if (s < SEC_YEAR){
+      let d = Math.floor(s / SEC_DAY), h = Math.round((s - d * SEC_DAY) / 3600);
+      if (h === 24){ d += 1; h = 0; }
+      return d + (d === 1 ? ' day' : ' days') + (h ? ' ' + h + ' h' : '');
+    }
+    return MK.fmt(yrs(s), { dp: 1 }) + ' years';
+  }
+  const x = years => X0 + XW * Math.min(years, LIFE) / LIFE;
+  const halo = { stroke: '#fff', 'stroke-width': 4, 'paint-order': 'stroke' };
+
+  MK.wide();
+  MK.say('Say you count out loud, one number every second, never stopping to eat or sleep.\nHow long would it take to reach 1,000,000? And 1,000,000,000 (a billion)? Make a guess first.');
+  const S = MK.svg(W, H, { maxHeight: '52vh' });
+
+  const options = ['About 2 weeks', 'About 1 year', 'About 5 years', 'About 30 years', 'About 300 years'];
+  const optYears = [14 / 365.25, 1, 5, 30, 300];
+  MK.guess({ ask: 'Your guess: how long to count to a billion?', options }, (v, i) => {
+    guessed = i;
+    const real = yrs(BILLION), g = optYears[i];
+    const ratio = g > real ? g / real : real / g;
+    const verdict = ratio < 1.3 ? 'Your guess is close to the real answer.' :
+      (g < real ? `Your guess is about ${MK.fmt(ratio, { dp: 0 })} times too short.` : `Your guess is about ${MK.fmt(ratio, { dp: 0 })} times too long.`);
+    MK.say(`You guessed ${options[i].toLowerCase()}. ${verdict}\nNow count to check. Press the count buttons and watch the bars grow.`);
+    MK.show(block, hundred, day, year, decade, reset, count, time, ageSlider, note); draw(); report();
+  });
+
+  const block = MK.button('Count 1 million seconds', () => add(MILLION)).hide();
+  const hundred = MK.button('Count 100 million seconds', () => add(100 * MILLION)).hide();
+  const day = MK.button('Count for 1 day', () => add(SEC_DAY), { alt: true }).hide();
+  const year = MK.button('Count for 1 year', () => add(SEC_YEAR), { alt: true }).hide();
+  const decade = MK.button('Count for 10 years', () => add(10 * SEC_YEAR), { alt: true }).hide();
+  const reset = MK.button('Reset the count', () => { sec = 0; seenM = seenB = false; MK.say('Back to zero. Count again, or move the age slider.'); draw(); report(); }, { alt: true }).hide();
+  const ageSlider = MK.slider({ label: 'Your age', min: 10, max: 60, step: 1, value: 20, format: v => v + ' years old',
+    onInput: v => { age = v; draw(); report(); } }).hide();
+  const count = MK.readout('Numbers counted', '0', { where: 'side' }).hide();
+  const time = MK.readout('Time passed', '0 seconds', { where: 'side' }).hide();
+  const note = MK.note('', { where: 'side' }).hide();
+  MK.model('You count one number every second, non-stop. A year is 365.25 days, a day is 86,400 seconds (24 × 60 × 60).');
+
+  function add(s){
+    if (guessed === null) return;
+    sec = Math.min(sec + s, BILLION);
+    draw(); report();
+  }
+
+  function report(){
+    count.set(nf(sec));
+    time.set(dur(sec));
+    const lines = [];
+    if (sec >= MILLION) lines.push(`Your first 1,000,000 numbers took ${dur(MILLION)}.`);
+    if (sec >= BILLION){
+      const blocks = Math.round(sec / MILLION), end = age + yrs(sec);
+      lines.push(`You counted ${nf(blocks)} blocks of 1,000,000, each ${dur(MILLION)} long. Together that is ${MK.fmt(yrs(sec), { dp: 1 })} years.`);
+      lines.push(end <= LIFE ? `Starting at ${age}, you would finish at about ${MK.fmt(end, { dp: 0 })} years old.` :
+        `Starting at ${age}, you would still be counting after an 80-year life ends.`);
+    }
+    note.set(lines.join('\n') || `Not at a million yet. Press a count button.`);
+    if (sec >= MILLION && !seenM && sec < BILLION){
+      seenM = true;
+      MK.say(`You passed one million after ${dur(MILLION)}. That felt quick.\nKeep counting. How many of these short blocks fit before you reach a billion?`);
+    }
+    if (sec >= BILLION && !seenB){
+      seenB = true;
+      MK.say(`A billion is not "a bit more" than a million. You counted ${nf(sec / MILLION)} million-blocks: ${dur(MILLION)} each, ${MK.fmt(yrs(sec), { dp: 1 })} years in all.\nMove the age slider to see where those years land in your life.`);
+      MK.log('billion-reached', { age });
+    } else if (sec >= BILLION && seenB) {
+      MK.say(`The billion bar is ${nf(sec / MILLION)} million-blocks long.\nUse the age slider to see where those years land in your life.`);
+    }
+  }
+
+  function draw(){
+    S.clear();
+    // life bar (a ruler, not evidence)
+    S.text(X0, 18, 'A whole life of 80 years', { size: 16, anchor: 'start', fill: '#555' });
+    S.rect(X0, 28, XW, 22, { fill: '#e9edf3', stroke: '#9aa5b5', rx: 3 });
+    for (const t of MK.ticks(0, LIFE, 8)){
+      S.line(x(t), 50, x(t), 57, { stroke: '#888' });
+      S.text(x(t), 74, t, { size: 14, fill: '#666' });
+    }
+    S.text(X0 + XW, 92, 'years of life', { size: 14, anchor: 'end', fill: '#666' });
+    if (guessed === null) return;
+    const by = 140, my = 225, ax = x(age);
+    // age marker
+    S.line(ax, 100, ax, 262, { stroke: '#e8912d', 'stroke-width': 1.5, 'stroke-dasharray': '4 3' });
+    S.text(ax, 284, `you are ${age}`, Object.assign({ size: 15, fill: '#c46f10', anchor: age > 40 ? 'end' : 'start' }, halo));
+    // billion row: grows only as you count
+    const bw = XW * Math.min(yrs(sec), LIFE - age) / LIFE;
+    S.text(X0, by - 8, `Counting on: ${dur(sec)} so far`, Object.assign({ size: 16, anchor: 'start', fill: '#1d2330' }, halo));
+    S.rect(ax, by, XW * (LIFE - age) / LIFE, 24, { fill: 'none', stroke: '#c5cfdf', 'stroke-dasharray': '3 3', rx: 3 });
+    if (bw > 0) S.rect(ax, by, bw, 24, { fill: '#2f6fde', rx: 3 });
+    if (age + yrs(sec) > LIFE) S.text(X0 + XW, by + 44, 'past the end of an 80-year life', Object.assign({ size: 14, anchor: 'end', fill: '#a33' }, halo));
+    else if (sec >= BILLION) S.text(Math.min(x(age + yrs(sec)), X0 + XW) - 4, by + 44, `age ${MK.fmt(age + yrs(sec), { dp: 0 })}`, Object.assign({ size: 14, anchor: 'end', fill: '#1d2330' }, halo));
+    // million row: the first million numbers, same scale
+    const ms = Math.min(sec, MILLION);
+    S.text(X0, my - 8, sec >= MILLION ? `The first million took ${dur(MILLION)}` : `First million: ${dur(ms)} so far`, Object.assign({ size: 16, anchor: 'start', fill: '#1d2330' }, halo));
+    if (ms > 0) S.rect(ax, my, Math.max(2, XW * yrs(ms) / LIFE), 24, { fill: '#e8912d' });
+  }
+  draw();
+}
+</script>
+</body>
+</html>

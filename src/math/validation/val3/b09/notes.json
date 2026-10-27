@@ -1,0 +1,8 @@
+{
+ "title": "Average of two classes",
+ "concept": "Combined average of groups of different sizes is a weighted average: total points divided by total students.",
+ "kept": ["Class A: 10 students averaging 70; Class B: 30 students averaging 90", "Question: the average of all 40 students", "The (70+90)/2 = 80 idea, shown as the natural first guess and then tested"],
+ "filled_in": ["Guess: multiple choice (80 / less than 80 / more than 80)", "Activity: slide a balance point along the score line until the total distance of scores on each side is equal", "Step-by-step reveal: total points per class, combined total, divide by 40", "Explore: slider for number of students in class B plus a table of averages", "Takeaway about class size deciding the average"],
+ "changed": [{"what": "Answer is 85, not 80", "why": "(70+90)/2 only works when both classes have the same number of students. The correct combined average is (10x70 + 30x90)/40 = 3400/40 = 85. The page explains that 80 would be right only with equal class sizes (shown in the explore slider at 10 students)."}],
+ "math_check": "Balance pulls are computed from the 40 student scores: at 85, left = 10x15 = 150, right = 30x5 = 150. Totals 700 + 2700 = 3400; 3400/40 = 85. Explore table values come from MK.mean over generated student lists (e.g. B=10 gives 80, B=60 gives 87.14). Checker passed with no problems or warnings."
+}

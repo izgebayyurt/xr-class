@@ -1,0 +1,309 @@
+[
+ {
+  "bid": "b01",
+  "arm": "sonnet",
+  "src": "/home/claude/pme/val3/b01",
+  "dir": "/home/claude/pme/val3/b01/sonnet",
+  "review1": {
+   "verdict": "repair",
+   "blocking": [
+    "The student's own argument (1/3 = 0.333..., times 3) is never closed. The page shows 3 x 0.333... = 0.999... but never says 3 x (1/3) = 1, so 0.999... = 1. The final card relies on a different 'no gap survives' argument that the student did not ask for.",
+    "The big readouts and red line keep showing a finite 0.99..9 with a non-zero gap, up to 12 nines. Nothing links that finite picture to the infinite 0.999... or says the gap is exactly 0 in the limit. A friend who guessed 'smaller' can leave still thinking 'always a tiny gap'. The tbl0 note asks 'is it ever 0?' and nothing resolves it.",
+    "The 'Why do the 3s never stop?' button only appears after moving the slider at least 3 times, and the long-division table is the only place the page defends 'exactly 0.333...'. The path to the conclusion depends on that hidden step. The 1/3 x 3 step has no interactive piece the visitor can inspect."
+   ],
+   "minor": [
+    "The guess area in the start screenshot is an empty white stage panel on desktop and phone. A faint placeholder would help.",
+    "The feedback line for a 'smaller' guess says 'a very common first thought' and does not compare it to the computed answer.",
+    "The slider starts at 3 but the 'Check' line and readouts are small grey text. The 'Check: 3 x 333... = 999..., which is k nines' line is easy to miss.",
+    "The phone screenshot only covers the start state. The after-guess layout at 390px was not captured, but no overflow was reported.",
+    "Slider changes before the guess are impossible since controls are hidden, so guess-first holds. The 'firstGuessBeforeVisitor: false' flag is fine."
+   ],
+   "math_errors": [
+    "No arithmetic errors. BigInt digit strings, gap strings and the gap-picker counts (0.1->2 nines, 0.001->4, 0.000001->7, 0.000000001->10) are correct for all slider values 1 to 12. The long-division table is correct (remainder 1, digit 3 each step)."
+   ],
+   "shows_why": 3,
+   "fidelity": 4,
+   "clarity": 4,
+   "summary": "The visitor guesses whether 0.999... is smaller than or equal to 1. They then slide the number of 3s in 0.333... and see it tripled into 9s with a shrinking gap, view a long-division table, and pick gap sizes to see how many 9s beat them. The mechanics and numbers are computed and correct, but it never states 3 x (1/3) = 1 (the student's idea) and the closing argument leans on a gap argument the student did not choose."
+  },
+  "repaired": true,
+  "repairNote": "Fixed all three blocking problems in `page.html` (the 3 \u00d7 1/3 = 1 step, the finite gap versus the endless 9s, and the always-visible \"Why do the 3s never stop?\" button). `check-page.mjs` passed with no overflow or errors, and I wrote `repair.md`. I only read the check's text output and did not open the screenshots. I skipped the placeholder for the empty guess area."
+ },
+ {
+  "bid": "b02",
+  "arm": "sonnet",
+  "src": "/home/claude/pme/val3/b02",
+  "dir": "/home/claude/pme/val3/b02/sonnet",
+  "review1": {
+   "verdict": "ok",
+   "blocking": [],
+   "minor": [
+    "On phone width the SVG labels shrink to about 8px and are hard to read; the bars and counts are still clear.",
+    "In explore mode a 'pieces taken' slider can sit above 'cut into' (for example 12 taken of 2). The drawing and labels clamp it to 2/2 but the slider still shows 12.",
+    "The side-by-side note hard-codes '9-piece bar' and '7-piece bar' and the line about smaller pieces. It is only reachable with 5/9 vs 4/7, so it is never wrong, but it is typed text rather than computed.",
+    "The side-by-side note gives the verdict and the guess feedback at the same moment as the visual, so the visitor barely gets to look first. The card does ask 'Which row sticks out further?'.",
+    "The explore card replaces the tiny-piece takeaway with generic text, so the page has no clear final one- or two-sentence takeaway once the sliders are touched.",
+    "Pieces picked in the 'take' step are replaced by the first N pieces in later steps, so the pieces the visitor chose are not the ones shown.",
+    "The footer 'Model: ... drawn 560 units wide' is jargon-ish. This is not a simulation, so a model label is unnecessary.",
+    "The chocolate look is limited to the bar colours; the page background and chrome are the kit default."
+   ],
+   "math_errors": [],
+   "shows_why": 4,
+   "fidelity": 5,
+   "clarity": 4,
+   "summary": "The visitor guesses which is bigger, 5/9 or 4/7. They then cut two equal chocolate bars, tap 5 and 4 pieces, line the pieces up so the gap is drawn, and cut both bars into equal tiny pieces to count them. Sliders let them try other fractions. Widths, percentages and tiny-piece counts are computed from the drawn pieces and are correct, including at slider extremes such as 12/12 vs 12/12."
+  },
+  "repaired": false
+ },
+ {
+  "bid": "b03",
+  "arm": "sonnet",
+  "src": "/home/claude/pme/val3/b03",
+  "dir": "/home/claude/pme/val3/b03/sonnet",
+  "review1": {
+   "verdict": "ok",
+   "blocking": [],
+   "minor": [
+    "Footer says 'You can change the percent below' from the start, but the slider only appears after Tuesday.",
+    "After the guess, the finished layout leaves the greyed-out Monday and Tuesday buttons and the locked guess row sitting in the controls area. It looks cluttered and the slider is easy to miss. The card does say to use it.",
+    "Chart text is small at phone width (about 8 to 9px), though still legible. The after-Tuesday state was not captured at phone width.",
+    "The Monday and Tuesday readouts, the $100 comparison and the note duplicate what the bars already show. This is slightly redundant but harmless.",
+    "The brief leaves 'first, next, end' blank. The builder filled it with guess, then Monday, then Tuesday, then a slider. This is a simple, standard fill and does not replace the student's idea."
+   ],
+   "math_errors": [],
+   "shows_why": 4,
+   "fidelity": 5,
+   "clarity": 4,
+   "summary": "The visitor guesses whether a $100 shirt is back at $100 after +25% then -25%. They then press Monday and Tuesday buttons and see computed bars and a step-by-step note: Tuesday's 25% comes off $125, not $100. Afterwards a percent slider and a table of outcomes (5% to 50%) let them explore, and every price is calculated from the percent rather than typed in."
+  },
+  "repaired": false
+ },
+ {
+  "bid": "b04",
+  "arm": "sonnet",
+  "src": "/home/claude/pme/val3/b04",
+  "dir": "/home/claude/pme/val3/b04/sonnet",
+  "review1": {
+   "verdict": "ok",
+   "blocking": [],
+   "minor": [
+    "Guess feedback uses vague words: a guess of $5 gets 'A bit low.' and a very large guess gets 'A bit high.'. It should say how far off the guess was.",
+    "The number-input placeholder 'e.g. 3000' is clipped to 'e.g. 300' in the narrow box on desktop and phone.",
+    "The 'Year 0' opening view shows two identical piles with no hint of what will differ, but the card explains this after the guess, so it is fine.",
+    "After the last year the page grows to about 1130 px tall on desktop, so the buttons sit below the fold. The card still tells the visitor what to press.",
+    "The rule-of-72 note appears only after the 'Why' step. It is a plain note but easy to miss in the side column.",
+    "If the visitor guesses within 5% of the simple-interest answer, the page names this explicitly. That is good, but a guess of $0 or a negative number is accepted without comment."
+   ],
+   "math_errors": [],
+   "shows_why": 4,
+   "fidelity": 5,
+   "clarity": 4,
+   "summary": "The visitor types a guess for $1,000 at 7% over 30 years, then steps through the years while a green compound coin stack and a simple $70-a-year stack grow side by side, with a per-year note and a table. After year 30 the page compares the guess honestly to $7,612, splits the gap into 'you put in', 'interest' and 'interest on interest', and offers a rate slider (1 to 12%) plus a rule-of-72 note."
+  },
+  "repaired": false
+ },
+ {
+  "bid": "b05",
+  "arm": "sonnet",
+  "src": "/home/claude/pme/val3/b05",
+  "dir": "/home/claude/pme/val3/b05/sonnet",
+  "review1": {
+   "verdict": "ok",
+   "blocking": [],
+   "minor": [
+    "Before the guess the stage shows only an empty green baseplate, so the friend has no picture of the small box while guessing. Showing the empty 3x2x2 outline would help.",
+    "At slider value 1 the note reads \"Each side is 1 times as long\", which is awkward grammar.",
+    "The bottom faces are counted as paint (32 and 128) but sit on the baseplate and can't be seen. The card does say \"bottom too\".",
+    "The first card is two sentences plus a question, which is dense on phone width. It still fits.",
+    "The guess options do not show an \"I don't know\" choice. Not required.",
+    "The Lego look is modest: studs and a yellow/blue palette, with red paint squares inset on yellow cubes. It reads as Lego-like but not strongly."
+   ],
+   "math_errors": [],
+   "shows_why": 5,
+   "fidelity": 5,
+   "clarity": 4,
+   "summary": "The visitor guesses how paint and water scale when a 3x2x2 box is doubled in every direction. They then build both boxes layer by layer from 3D cubes and paint them, and counted cubes and outside squares (12 vs 96, 32 vs 128) show 8 times and 4 times. Short step-by-step \"why\" notes and a 1 to 4 scale slider with a computed table follow."
+  },
+  "repaired": false
+ },
+ {
+  "bid": "b06",
+  "arm": "sonnet",
+  "src": "/home/claude/pme/val3/b06",
+  "dir": "/home/claude/pme/val3/b06/sonnet",
+  "review1": {
+   "verdict": "ok",
+   "blocking": [],
+   "minor": [
+    "The 'test' is a bit circular: the code draws exactly 6 students per professor from the premise, then counts them and checks S = 6P. That is fair, since the 6 is the stated premise, but the visitor never builds the groups or finds the ratio themselves.",
+    "Test table cells wrap awkwardly in the narrow side column (e.g. '6 \u00d7 36 = 216' splits over three lines). The table repeats what the two notes below it say.",
+    "On the phone, text inside the drawing ('The students will appear here...', P and S labels) scales down to very small, around 7-8 px. The phone screenshot only shows the start state; the post-test state was not captured at phone width.",
+    "The full takeaway only appears in the card after the visitor moves the slider. If they stop after the second test, the card ends on 'Move the Professors slider' and the takeaway lives only in the side note.",
+    "The card text 'Count check done: the page counted the circles for you' is awkward wording.",
+    "The card after the first test button says only 'Now press the other test button' and does not interpret the result until both tests are done.",
+    "On desktop, the post-test page grows to 1099 px tall, so the slider and the guess row sit below the fold at 800 px. The opening guess is visible at start, which is what the rules require."
+   ],
+   "math_errors": [],
+   "shows_why": 4,
+   "fidelity": 5,
+   "clarity": 4,
+   "summary": "The visitor guesses between S = 6P and 6S = P, then adds 6 students per professor, tests both equations against the counted circles (2 professors gives 12 students, as in the student's example), and varies professors from 1 to 6 with a slider. All numbers are counted from the drawn circles and the table and notes recompute correctly at every slider value; the guess feedback is honest in both directions."
+  },
+  "repaired": false
+ },
+ {
+  "bid": "b07",
+  "arm": "sonnet",
+  "src": "/home/claude/pme/val3/b07",
+  "dir": "/home/claude/pme/val3/b07/sonnet",
+  "review1": {
+   "verdict": "ok",
+   "blocking": [],
+   "minor": [
+    "The 100 or 1000 games are only tallied. The visitor cannot look at individual games, so the 'why' rests mostly on the 3-case table and the explanation notes.",
+    "The 3-case table always assumes the visitor picks door 1 and that the host opens door 2 when he has a choice. This is not explained, so it could confuse a friend who finds math hard.",
+    "The simulation card says 'Your guess was right/off' by matching the guess text to 'Switch' instead of comparing it to the computed result. This is fine in practice, but not strictly an honest comparison.",
+    "The result card after the simulation is about four sentences, which is over the 'three short sentences' limit. The final takeaway card is also long.",
+    "After the simulation the page is about 1290 px tall on desktop. The stage sits next to a tall column of notes, readouts, table and chart, with a large empty area under the doors. The Stay and Switch buttons are in the controls row below, away from the doors.",
+    "The first step is a full manual game, and the 100-game button only appears after it. This is a sensible order, but it delays the student's central '100 games' idea.",
+    "The readout 'Your games: stay wins / switch wins' shows '1 / 0' without saying how many games were played. This is a bit cryptic."
+   ],
+   "math_errors": [],
+   "shows_why": 4,
+   "fidelity": 5,
+   "clarity": 4,
+   "summary": "The visitor first guesses stay, switch or no difference. They then play one real Monty Hall game by clicking doors, run 100 or 1000 simulated games that tally stay and switch wins in a bar chart, and finally see a computed 3-case table showing that switching wins in 2 of 3 cases. The math is correct and uses a bright game-show look, and it follows the student's design closely. The one weakness is that the simulated games are only tallied and cannot be looked at one by one."
+  },
+  "repaired": false
+ },
+ {
+  "bid": "b08",
+  "arm": "sonnet",
+  "src": "/home/claude/pme/val3/b08",
+  "dir": "/home/claude/pme/val3/b08/sonnet",
+  "review1": {
+   "verdict": "ok",
+   "blocking": [],
+   "minor": [
+    "The guess is never compared with the result. The card says 'You guessed X' at the start, but the ending never says whether the guess was right. Add a line such as 'You guessed equally likely; the squares say otherwise'.",
+    "The 'about twice as often' takeaway is fixed text. It appears at 300 rolls even if the tallies are close or reversed by luck. At 100 rolls the 'ahead' line can also mislead, because the expected counts are only about 5.6 and 2.8. A short 'luck can swing small counts' caveat would help.",
+    "The readout labels 'Pair' and 'Double' are vague. 'Pair' could be taken to mean two dice. Use the actual picks, for example '5 and 6' and 'Two 6s'.",
+    "The sliders stay visible after a restart while the explanation and table are hidden, so the page is slightly inconsistent. Their labels ('First number' / 'Second number') don't say that the second number also sets the double.",
+    "Setting both sliders to the same number gives a sensible message, but the tallies then show the same count twice, which is a little odd. The chance column writes '/36' as text; the 36 itself comes from counting squares in the grid.",
+    "The student's stated belief ('each number is 1/6') is not addressed directly. The page shows only that order matters. This is acceptable gap-filling, since the design left the first-and-next steps blank.",
+    "The desktop layout is fine, with the card, grid and guess all visible at 1280x800. Phone width at the start screen has no overlap; the after-guess state was not captured at phone width."
+   ],
+   "math_errors": [],
+   "shows_why": 4,
+   "fidelity": 4,
+   "clarity": 4,
+   "summary": "The visitor guesses between 'a 5 and a 6', 'two 6s' and 'equally likely'. They then roll two simulated dice (rolled with MK.rng and labelled as a model) onto a 6x6 grid of red-die by blue-die counts. After that they press 'Show the ways' to see that the 5-and-6 pair covers 2 squares and two 6s covers 1, and they can change both numbers with sliders. The math is correct for all slider settings, the counts and ways are computed from the grid, and the checker found no problems; the main gap is that the guess is never compared with the result."
+  },
+  "repaired": false
+ },
+ {
+  "bid": "b09",
+  "arm": "sonnet",
+  "src": "/home/claude/pme/val3/b09",
+  "dir": "/home/claude/pme/val3/b09/sonnet",
+  "review1": {
+   "verdict": "ok",
+   "blocking": [],
+   "minor": [
+    "During the 'Show me why' steps 1-3 the card says what is being shown but not what to press next (it should say 'Press Show me why again').",
+    "The 'Pull from the left/right' readouts are blank until the visitor first moves the balance slider, even though the marker already sits at 75.",
+    "In explore mode the green average line and its label can crowd or cross the Class A/B labels (for example, a small class B puts the line through Class A's text); not checked in a screenshot.",
+    "On a 390 px phone the SVG text is very small (about 6 px effective), so the dot labels and axis numbers are hard to read.",
+    "Balancing needs the slider to land exactly on 85 (step 0.5, so it can); the check is exact equality, which works here because all values are whole numbers.",
+    "The 'More than 80' guess feedback line is generic ('the balance point is 85') and does not say whether the guess was right.",
+    "The step-4 'why not 80' note is close to 50 words."
+   ],
+   "math_errors": [],
+   "shows_why": 4,
+   "fidelity": 4,
+   "clarity": 4,
+   "summary": "The visitor guesses the combined average of Class A (10 students, mean 70) and Class B (30 students, mean 90), then slides a balance point over a dot plot, where the left and right pulls are computed from the dots. The balance lands at 85, not the student's 80. Stepped sums (700 + 2700 = 3400, then 3400 \u00f7 40 = 85) follow, and a class B size slider and table show the average moving, equal at 80 only when both classes have 10 students."
+  },
+  "repaired": false
+ },
+ {
+  "bid": "b10",
+  "arm": "sonnet",
+  "src": "/home/claude/pme/val3/b10",
+  "dir": "/home/claude/pme/val3/b10/sonnet",
+  "review1": {
+   "verdict": "ok",
+   "blocking": [],
+   "minor": [
+    "The takeaway text is fixed ('a small hospital has more extreme days'). If the visitor sets the sliders close together (for example 40 vs 41 babies a day), one simulated year can show about the same counts or the big hospital ahead, and the card still states the takeaway as a fact.",
+    "The first-run feedback card is replaced by the takeaway once 'Why did that happen?' is pressed, so the visitor loses the 'You guessed X' comparison. The guess row does still show their choice highlighted.",
+    "Table 'Year' column wraps to two lines ('Year' / '1') in the side column, and the header 'Small hospital' wraps.",
+    "Phone screenshot only covers the opening state. The after-run layout at 390 px was not captured. The side column stacks, so it is probably fine but unconfirmed.",
+    "'Why did that happen?' stays hidden until the first run, then disappears after use. The slider and run controls only appear at that point, so the 'explore' step depends on pressing it.",
+    "Counts are one random year each run, so the visitor never sees the long-run average. Running more years with the table partly covers this."
+   ],
+   "math_errors": [],
+   "shows_why": 4,
+   "fidelity": 4,
+   "clarity": 4,
+   "summary": "The visitor guesses which hospital (15 vs 45 babies a day) has more days with over 60% boys, then simulates a year of 365 coin-flip days in each. They click any square to see that day's boys and girls, and a 'why' step compares how far the daily percentages swing. They can then change the hospital sizes and run more years, with a table of results."
+  },
+  "repaired": false
+ },
+ {
+  "bid": "b11",
+  "arm": "sonnet",
+  "src": "/home/claude/pme/val3/b11",
+  "dir": "/home/claude/pme/val3/b11/sonnet",
+  "review1": {
+   "verdict": "repair",
+   "blocking": [
+    "Guess-first is broken: before any guess, the opening screen already draws both timelines and prints the answers ('1 billion seconds = 31.7 years', 'age 52', '1 million seconds = 11 days 14 h', '11.6 days: a thin sliver'). The visitor sees the evidence before committing.",
+    "The evidence is not built from objects the visitor inspects. Every figure comes from the constants BILLION and MILLION, divided by the year length in draw() and report(). The bars' full lengths and the labels are fixed results. The count buttons only move a progress fill toward an end that is already drawn, so the page stages the answer instead of letting the visitor count or measure it.",
+    "The explanation 'A billion is 1,000 times a million' and the final numbers are written from constants, not from the visitor's counting. The visitor never counts how many million-blocks fit in a billion or lays one timeline against the other."
+   ],
+   "minor": [
+    "Phone width: the SVG shrinks so the labels are about 6 px tall and hard to read. The timeline needs a bigger font or a taller layout at 390 px.",
+    "The orange age line runs through the text 'billion seconds = 31.7 years' and '11 days 14 h'. The 'age 52' label sits inside the bar, not at its end.",
+    "The guess only asks about a billion. The student's question was about both a million and a billion, so there is no guess for the million.",
+    "dur() can print '24 h' (for example '11 days 24 h') when the rounded hours reach 24. The current inputs do not trigger it.",
+    "The age slider stops at 45, so the case where the count runs past an 80-year life is never shown. The brief's idea of comparing with your life is only partly used.",
+    "At phone width, the readouts, note and guess box stack into a long page, and the controls sit below the fold after the guess.",
+    "Feedback text reads 'Let's find out by counting. That is about 827 times too short.' The sentence order is awkward."
+   ],
+   "math_errors": [
+    "No wrong numbers. 1e9 / 31,557,600 = 31.69 years; 1e6 / 86,400 = 11.57 days (11 days 14 h); the 827x ratio for the 2-week guess is correct; age 20 + 31.69 gives 52, and 45 + 31.69 gives 77."
+   ],
+   "shows_why": 2,
+   "fidelity": 4,
+   "clarity": 3,
+   "summary": "The page offers a multiple-choice guess about how long a billion seconds is, then lets the visitor press 'count for a day/year/decade' buttons that fill a bar. The timeline compares 1 million seconds and 1 billion seconds against an 80-year life, with an age slider. It follows the student's idea and calm look, but it shows the answer labels and bars before the guess, and the numbers are fixed values, not counted or measured by the visitor."
+  },
+  "repaired": true,
+  "repairNote": "I fixed the three blocking problems and most of the minor ones in `/home/claude/pme/val3/b11/sonnet/page.html`, and check-page.mjs passes. The screenshots are in `repair-*.png` and the change list is in `repair.md`.\n\n- **Guess-first:** only the 80-year life ruler shows before the guess, with no answers.\n- **Evidence:** the bars and labels now grow only from the seconds the visitor counts, and the new \"Count 1 million seconds\" and \"Count 100 million seconds\" buttons let them count in million-blocks.\n- **Other fixes:** the age slider now goes to 60, so the count can run past an 80-year life. I also made the fonts bigger, kept the age line off the labels, and fixed the \"24 h\" bug and the awkward feedback sentence.\n- **Not done:** there is still no separate guess for the million, because the kit allows only one guess.\n\nI looked at the opening and post-reset screenshots; I did not look at the phone-width one, and I made the last tweak (starting the age line below the ruler) after viewing the screenshots."
+ },
+ {
+  "bid": "b12",
+  "arm": "sonnet",
+  "src": "/home/claude/pme/val3/b12",
+  "dir": "/home/claude/pme/val3/b12/sonnet",
+  "review1": {
+   "verdict": "ok",
+   "blocking": [],
+   "minor": [
+    "After the guess, the controls (Turn buttons, slider) sit below the stage and the side notes, so on a 1280x800 laptop the page grows to about 850-1240 px tall. The visitor has to scroll to reach Turn to 30 and the slider.",
+    "The 'If it rose evenly' table column is a simple model (30 deg height scaled up), but it is not labelled with MK.model. It reaches 30 m at 90 deg, past the 20 m top, which could confuse a reader.",
+    "If the visitor presses Turn to 60 before Turn to 30, the card still says to press Turn to 30 and the guess comparison waits. The flow still works, but it is a little stiff.",
+    "The word 'sine' first appears only in the final takeaway. The student's SOH CAH TOA / opposite over hypotenuse idea is not linked to the drawn triangle (the vertical side is not labelled opposite or the spoke hypotenuse).",
+    "The 'you' label sits very close to the 'level with axle' label in the opening drawing.",
+    "The picture shows only 30 deg and the mirror seat construction. There is no side-by-side comparison of 30 and 60 apart from the readouts, notes and table."
+   ],
+   "math_errors": [],
+   "shows_why": 4,
+   "fidelity": 5,
+   "clarity": 4,
+   "summary": "The visitor guesses the height of a Ferris-wheel seat at 60 deg (4 choices). They then turn the wheel to 30 and 60 deg with buttons or a slider and read heights and height-over-spoke ratios that the code measures from the drawn seat. A mirror-seat equilateral-triangle step explains why 30 deg gives exactly half, a table compares real height with an 'even rise', and the card ends with a takeaway."
+  },
+  "repaired": false
+ }
+]

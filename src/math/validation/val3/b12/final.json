@@ -1,0 +1,131 @@
+{
+ "file": "b12/sonnet/page.html",
+ "lines": 133,
+ "usesKit": true,
+ "problems": [],
+ "warnings": [],
+ "desktop": {
+  "errors": [],
+  "kit": true,
+  "start": {
+   "card": "You are on a Ferris wheel. The spoke from the middle (the axle) to your seat is 20 m long.\nYou start level with the axle. The wheel turns 60° (a bit more than half way to the top). How high above the axle are you? Make a guess first.",
+   "title": "Ferris wheel heights",
+   "overflowX": false,
+   "height": 824,
+   "shownErr": [],
+   "svgTextOverlaps": [],
+   "offscreenSvgText": [],
+   "guessBelowFold": -46,
+   "longText": [],
+   "guessOpen": true,
+   "visibleButtons": [
+    "10 m (half way up)",
+    "About 13 m",
+    "About 17 m",
+    "20 m (the very top)",
+    "Start over"
+   ]
+  },
+  "guessKind": "choice",
+  "guessLogged": true,
+  "afterGuess": {
+   "card": "Good. Now turn the wheel and measure.\nPress \"Turn to 30°\" and read your height.",
+   "title": "Ferris wheel heights",
+   "overflowX": false,
+   "height": 851,
+   "shownErr": [],
+   "svgTextOverlaps": [],
+   "offscreenSvgText": [],
+   "guessBelowFold": -19,
+   "longText": [],
+   "guessOpen": true,
+   "visibleButtons": [
+    "Turn to 30°",
+    "Turn to 60°",
+    "Start over"
+   ]
+  },
+  "after": {
+   "card": "At 90° you are at the top, 20 m up, and height ÷ spoke is 1.\nTakeaway: height ÷ spoke is the sine. It rises fast at first, then slows near the top, so sin 30° = 0.5 but sin 60° is only about 0.87.",
+   "title": "Ferris wheel heights",
+   "overflowX": false,
+   "height": 1243,
+   "shownErr": [],
+   "svgTextOverlaps": [],
+   "offscreenSvgText": [],
+   "guessBelowFold": -70,
+   "longText": [],
+   "guessOpen": true,
+   "visibleButtons": [
+    "Turn to 30°",
+    "Turn to 60°",
+    "Start over"
+   ]
+  },
+  "eventsAfter": [
+   "ready",
+   "pick",
+   "guess",
+   "say",
+   "click",
+   "say",
+   "click",
+   "say",
+   "slide",
+   "click",
+   "click",
+   "click",
+   "say",
+   "slide",
+   "click",
+   "click",
+   "say",
+   "slide"
+  ],
+  "restart": {
+   "card": "You are on a Ferris wheel. The spoke from the middle (the axle) to your seat is 20 m long.\nYou start level with the axle. The wheel turns 60° (a bit more than half way to the top). How high above the axle are you? Make a guess first.",
+   "title": "Ferris wheel heights",
+   "overflowX": false,
+   "height": 824,
+   "shownErr": [],
+   "svgTextOverlaps": [],
+   "offscreenSvgText": [],
+   "guessBelowFold": -70,
+   "longText": [],
+   "guessOpen": true,
+   "visibleButtons": [
+    "10 m (half way up)",
+    "About 13 m",
+    "About 17 m",
+    "20 m (the very top)",
+    "Start over"
+   ]
+  },
+  "firstGuessBeforeVisitor": false
+ },
+ "phone": {
+  "errors": [],
+  "kit": true,
+  "start": {
+   "card": "You are on a Ferris wheel. The spoke from the middle (the axle) to your seat is 20 m long.\nYou start level with the axle. The wheel turns 60° (a bit more than half way to the top). How high above the axle are you? Make a guess first.",
+   "title": "Ferris wheel heights",
+   "overflowX": false,
+   "height": 844,
+   "shownErr": [],
+   "svgTextOverlaps": [],
+   "offscreenSvgText": [],
+   "guessBelowFold": -140,
+   "longText": [],
+   "guessOpen": true,
+   "visibleButtons": [
+    "10 m (half way up)",
+    "About 13 m",
+    "About 17 m",
+    "20 m (the very top)",
+    "Start over"
+   ]
+  },
+  "events": 1
+ },
+ "pass": true
+}

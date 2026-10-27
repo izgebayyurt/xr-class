@@ -1,0 +1,90 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Is 0.999... equal to 1?</title>
+<script src="mathkit.js"></script>
+</head>
+<body>
+<script>
+// Student design: show 0.999... = 1 using 1/3 = 0.333... and times 3.
+// Flow: guess -> build 0.33..3 with a slider and triple it -> see the gap -> why the 3s never stop -> shrink the gap -> takeaway.
+MK.start({ title: 'Is 0.999... equal to 1?', build });
+
+function build(){
+  const W = 560, H = 300;
+  let guess = null, k = 3, moved = new Set(), seenWhy = false, done = false;
+  MK.say('Write 0.999... with the 9s going on forever.\nIs it equal to 1, or just a tiny bit smaller? Make a guess first.');
+  const S = MK.svg(W, H, { maxHeight: '48vh' });
+
+  MK.guess({ ask: 'Your guess: 0.999... is', options: ['smaller than 1 (a tiny gap)', 'equal to 1'] }, (v, i) => {
+    guess = i;
+    MK.say('Let\'s test it with 1/3 (one third). As a decimal, 1/3 is 0.333... with 3s going on.\nUse the slider to write more 3s, then multiply by 3 and watch the nines.');
+    MK.show(digits, gapRead, nineRead, tbl0, whyBtn, tie); draw();
+  });
+
+  const digits = MK.slider({ label: 'How many 3s we write', min: 1, max: 12, step: 1, value: 3,
+    format: v => v + (v === 1 ? ' three' : ' threes'),
+    onInput: v => { k = v; moved.add(v); draw(); } }).hide();
+  const nineRead = MK.readout('3 × (that many 3s) =', '').hide();
+  const gapRead = MK.readout('Gap between that and 1', '').hide();
+  const tbl0 = MK.note('Each time you add a 3, the nines get longer and the gap gets smaller. Here the 3s stop at the slider. In the real 0.333... they never stop, so there is no last place left for a gap.').hide();
+  const tie = MK.note('The same tripling on the fraction: 3 × 1/3 = 1 (three thirds make one whole). And 1/3 = 0.333..., so 3 × 0.333... = 0.999... must also be 1.').hide();
+  const why = MK.note('').hide();
+  const tbl = MK.table(['Step', '10 × remainder', 'Digit', 'Remainder left'], []).hide();
+  const whyBtn = MK.button('Why do the 3s never stop?', () => {
+    seenWhy = true; whyBtn.hide();
+    const rows = []; let r = 1;
+    for (let i = 1; i <= 6; i++){ const val = r * 10, d = Math.floor(val / 3); r = val % 3; rows.push([i, val, d, r]); }
+    tbl.set(rows).show();
+    why.set('This is long division of 1 by 3. Every step leaves remainder 1, so the next step is the same again. The 3s never end, so 1/3 is exactly 0.333... with no last digit.').show();
+    MK.say('Look at the table: the remainder is 1 every time, so the digit is 3 every time.\nNow try to beat the gap: pick a gap size and find how many 9s get you closer than that.');
+    MK.show(pick);
+  }, { alt: true }).hide();
+
+  const pick = MK.choices(['0.1', '0.001', '0.000001', '0.000000001'], (i, text) => {
+    const g = Number(text); let n = 0, gapN = 1;
+    while (gapN >= g){ n++; gapN = Math.pow(10, -n); }
+    const nines = (10n ** BigInt(n) - 1n).toString().padStart(n, '0');
+    result.set(`With ${n} nines (0.${nines}) the gap to 1 is 0.${'0'.repeat(n - 1)}1.\nThat is smaller than ${text}. You can always add more 9s to go below any gap you name.`).show();
+    pick.reset();
+    MK.log('gap-picked', { gap: text, nines: n });
+    if (!done){ done = true; finish(); }
+  }, { ask: 'Pick a gap size. How many 9s make the gap smaller than it?' }).hide();
+  const result = MK.note('').hide();
+
+  function finish(){
+    const verdict = guess === 1 ? 'You guessed equal, and the evidence agrees.' : 'You guessed smaller. The gap you pictured is real for any finite number of 9s, but not for 0.999... with 9s that never end.';
+    MK.say(`${verdict}\nYour own argument closes it: 1/3 = 0.333..., and 3 × 1/3 = 1, so 3 × 0.333... = 0.999... = 1. The finite pictures always showed a gap, but 0.999... never stops, so the gap shrinks below any size you name and the only size left is 0. So 0.999... and 1 are the same number.\nStart over to try again.`);
+  }
+
+  function draw(){
+    const n = BigInt(k);
+    const nines = 10n ** n - 1n;               // 99..9 (k nines)
+    const third = nines / 3n;                  // 33..3 (k threes)
+    const tS = third.toString().padStart(k, '0'), nS = (third * 3n).toString().padStart(k, '0');
+    const gapS = '0.' + (1n).toString().padStart(k, '0');
+    nineRead.set('0.' + nS);
+    gapRead.set(gapS);
+    S.clear();
+    S.text(16, 34, 'Write 1/3 as a decimal:', { size: 17, anchor: 'start', fill: '#555' });
+    row(60, '0.', tS, '3', '...');
+    S.text(16, 140, 'Multiply by 3:', { size: 17, anchor: 'start', fill: '#555' });
+    row(166, '0.', nS, '9', '...');
+    S.text(16, 246, `Gap to 1: 1 − 0.${nS} = ${gapS}`, { size: 17, anchor: 'start', weight: 600, fill: '#b3361b' });
+    S.text(16, 276, `Check: 3 × ${third} = ${third * 3n}, which is ${k} nines.`, { size: 15, anchor: 'start', fill: '#555' });
+  }
+  function row(y, pre, str, d, tail){
+    const size = Math.min(40, (W - 140) / (str.length + 2));
+    S.text(16, y + 22, pre, { size: 26, anchor: 'start' });
+    for (let i = 0; i < str.length; i++){
+      S.rect(52 + i * size, y, size - 3, 36, { fill: d === '3' ? '#dce8fb' : '#fde4cf', stroke: '#1d2330', 'stroke-width': 1, rx: 4 });
+      S.text(52 + i * size + (size - 3) / 2, y + 19, str[i], { size: 20, weight: 600 });
+    }
+    S.text(52 + str.length * size + 4, y + 22, tail, { size: 26, anchor: 'start' });
+  }
+}
+</script>
+</body>
+</html>

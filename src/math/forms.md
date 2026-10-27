@@ -42,36 +42,53 @@ Settings: no sign-in needed. If a student submits twice, the later answer (same 
 
 ## Form 2 — "Scene feedback" (after the scenes are built)
 
-Students find their name in the shared sheet. Their row has three "Open" links (their own scene and two classmates' scenes, with no names) and a "Give feedback" link. That link opens this form with their participant ID and the three scene codes already filled in. Each scene shows its code in the top-right corner, so students can check the codes match.
+The AI built every design twice, as **version A** and **version B**. One version comes from Opus 5.5 and the other from Sonnet 5.5 (the free model). Which model is A is randomized and balanced, and students are never told which is which. Students find their name in the shared sheet. Their row has six "Open" links (both versions of their own design and both versions of two classmates' designs, with no names) and a "Give feedback" link. That link opens this form with their participant ID and all six scene codes already filled in. Each scene shows its code in the top-right corner.
 
-**Section 1 — Your scene.** "Open your own scene and try it the way your friend would."
+Use the same scales in every section so the answers can be compared.
+
+**Section 1 — Your design.** "Open both versions of your own design and try each one the way your friend would."
 | # | Question title | Type | Required |
 |---|---|---|---|
 | 1 | **Participant ID (filled in for you)** | Short answer | yes |
-| 2 | **Your scene code** | Short answer | yes |
-| 3 | **How closely did it match what you expected?** | Linear scale 1–5 (Not at all → Exactly) | yes |
-| 4 | **What was different from what you expected?** | Paragraph | yes |
-| 5 | **How much does it feel like your own design?** | Linear scale 1–5 (Not at all → Completely) | yes |
-| 6 | **Is the math in it correct? (your scene)** | Multiple choice: Yes / I think there's a mistake / Not sure | yes |
-| 7 | **If there's a mistake, where? (your scene)** | Short answer | no |
-| 8 | **How well would it help your friend understand? (your scene)** | Linear scale 1–5 | yes |
-| 9 | **If you could change one thing, what would it be?** | Paragraph | no |
-| 10 | **What was it like to design a lesson and have an AI build it?** | Paragraph | yes |
+| 2 | **Version A code** | Short answer | yes |
+| 3 | **Version B code** | Short answer | yes |
+| 4 | **Version A: how closely did it match what you expected?** | Linear scale 1–5 (Not at all → Exactly) | yes |
+| 5 | **Version B: how closely did it match what you expected?** | Linear scale 1–5 (Not at all → Exactly) | yes |
+| 6 | **Version A: how much does it feel like your own design?** | Linear scale 1–5 (Not at all → Completely) | yes |
+| 7 | **Version B: how much does it feel like your own design?** | Linear scale 1–5 (Not at all → Completely) | yes |
+| 8 | **Version A: is the math correct?** | Multiple choice: Yes / I think there's a mistake / Not sure | yes |
+| 9 | **Version B: is the math correct?** | Multiple choice: Yes / I think there's a mistake / Not sure | yes |
+| 10 | **Version A: how well would it help your friend understand?** | Linear scale 1–5 | yes |
+| 11 | **Version B: how well would it help your friend understand?** | Linear scale 1–5 | yes |
+| 12 | **Which version would you give your friend?** | Multiple choice: A / B / No difference | yes |
+| 13 | **Why? What is different between them?** | Paragraph | yes |
+| 14 | **What was it like to design a lesson and have an AI build it?** | Paragraph | yes |
 
-**Section 2 — Scene 1.** "Try it the way a friend who finds math hard would."
+**Section 2 — Design 1.** "Try both versions the way a friend who finds math hard would."
 | # | Question title | Type | Required |
 |---|---|---|---|
-| 11 | **Scene 1 code** | Short answer | yes |
-| 12 | **Scene 1: It was clear what to do.** | Linear scale 1–5 (Strongly disagree → Strongly agree) | yes |
-| 13 | **Scene 1: Guessing first made me curious about the answer.** | Linear scale 1–5 | yes |
-| 14 | **Scene 1: After using it, I could explain why the answer is right.** | Linear scale 1–5 | yes |
-| 15 | **Scene 1: Is the math correct?** | Multiple choice: Yes / I think there's a mistake / Not sure | yes |
-| 16 | **Scene 1: If there's a mistake, where?** | Short answer | no |
-| 17 | **Scene 1: It would help a friend who finds math hard.** | Linear scale 1–5 | yes |
-| 18 | **Scene 1: One thing that works well** | Short answer | no |
-| 19 | **Scene 1: One thing to improve** | Short answer | no |
+| 15 | **Design 1, version A code** | Short answer | yes |
+| 16 | **Design 1, version B code** | Short answer | yes |
+| 17 | **Design 1, version A: it was clear what to do.** | Linear scale 1–5 (Strongly disagree → Strongly agree) | yes |
+| 18 | **Design 1, version B: it was clear what to do.** | Linear scale 1–5 | yes |
+| 19 | **Design 1, version A: after using it, I could explain why the answer is right.** | Linear scale 1–5 | yes |
+| 20 | **Design 1, version B: after using it, I could explain why the answer is right.** | Linear scale 1–5 | yes |
+| 21 | **Design 1, version A: is the math correct?** | Multiple choice: Yes / I think there's a mistake / Not sure | yes |
+| 22 | **Design 1, version B: is the math correct?** | Multiple choice: Yes / I think there's a mistake / Not sure | yes |
+| 23 | **Design 1, version A: it would help a friend who finds math hard.** | Linear scale 1–5 | yes |
+| 24 | **Design 1, version B: it would help a friend who finds math hard.** | Linear scale 1–5 | yes |
+| 25 | **Design 1: which version is better?** | Multiple choice: A / B / No difference | yes |
+| 26 | **Design 1: why?** | Short answer | no |
 
-**Section 3 — Scene 2.** Same as Section 2, with "Scene 2" in place of "Scene 1" (questions 20–28).
+**Section 3 — Design 2.** Same as Section 2, with "Design 2" in place of "Design 1" (questions 27–38).
+
+Grid option: Google Forms "Multiple choice grid" (rows: Version A, Version B; columns: 1–5) is shorter on screen. But the pre-filled link can only fill text fields, so keep the six code fields as Short answer.
 
 ### After you build Form 2
-Open ⋮ → **Get pre-filled link**. Type `PID` into Participant ID, `OWN` into Your scene code, `S1` into Scene 1 code and `S2` into Scene 2 code. Then click **Get link** → **Copy link**, and give that link to the run-day chat. It contains the field numbers needed to make each student's personal feedback link.
+Open ⋮ → **Get pre-filled link**, then type these into the code fields:
+- `PID` into Participant ID
+- `OA` and `OB` into Version A code and Version B code
+- `S1A` and `S1B` into the two Design 1 codes
+- `S2A` and `S2B` into the two Design 2 codes
+
+Then click **Get link** → **Copy link**, and give that link to the run-day chat.

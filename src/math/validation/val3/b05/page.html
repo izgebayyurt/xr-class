@@ -1,0 +1,188 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Double the box</title>
+<script src="mathkit.js"></script>
+<script type="importmap">{"imports":{"three":"https://cdn.jsdelivr.net/npm/three@0.185.1/build/three.module.js"}}</script>
+</head>
+<body>
+<script type="module">
+import * as THREE from 'three';
+// Student design: double a box's length, width and height. Paint (area) goes x4, water (volume) goes x8.
+// Pattern: guess -> build small box from cubes -> paint it -> build big box -> compare counted numbers -> why -> explore sides x1..x4.
+
+const YELLOW = 0xf5c518, BLUE = 0x1e6fd9, RED = 0xe0312b, GREEN = 0x2e9e4f;
+const key = (x, y, z) => x + ',' + y + ',' + z;
+const DIRS = [[1,0,0],[-1,0,0],[0,1,0],[0,-1,0],[0,0,1],[0,0,-1]];   // 0,1 = left/right  2,3 = top/bottom  4,5 = front/back
+const SIDES = ['Left + right', 'Top + bottom', 'Front + back'];
+
+// A box is a length x width x height block made of unit cubes, built one layer at a time.
+function cellsOf(b){
+  const c = [];
+  for (let y = 0; y < b.layers; y++) for (let x = 0; x < b.L; x++) for (let z = 0; z < b.W; z++) c.push([x, y, z]);
+  return c;
+}
+// Every outside square: a cube face with no cube next to it. Counted from the cubes themselves.
+function facesOf(cells){
+  const set = new Set(cells.map(c => key(...c))), f = [];
+  for (const [x, y, z] of cells) DIRS.forEach((d, i) => { if (!set.has(key(x + d[0], y + d[1], z + d[2]))) f.push([x, y, z, i]); });
+  return f;
+}
+function stats(L, W, H){
+  const cells = cellsOf({ L, W, H, layers: H }), faces = facesOf(cells);
+  const bySide = [0, 0, 0]; faces.forEach(f => bySide[f[3] >> 1]++);
+  return { cubes: cells.length, squares: faces.length, bySide };
+}
+
+function build(){
+  const SMALL = { L: 3, W: 2, H: 2 };
+  const small = { ...SMALL, layers: 0, painted: false, color: YELLOW };
+  const big = { L: 6, W: 4, H: 4, layers: 0, painted: false, color: BLUE, on: false };
+  let active = small, guessIdx = null, factor = 2, step = 0;
+  const OPTS = [[2, 2], [8, 4], [4, 8], [4, 4]];
+
+  MK.model('Each little cube stands for 1 cup of water. Each square on the outside stands for 1 patch of paint.');
+  MK.say('A box is 3 cubes long, 2 wide and 2 tall. Then we make a bigger box: twice as long, twice as wide and twice as tall.\nHow much more paint and water will the big box need? Make a guess first.');
+
+  // ---------- 3D scene ----------
+  const stage = document.getElementById('mk-stage');
+  const renderer = new THREE.WebGLRenderer({ antialias: true });
+  renderer.setPixelRatio(Math.min(devicePixelRatio || 1, 2));
+  stage.appendChild(renderer.domElement);
+  const scene = new THREE.Scene(); scene.background = new THREE.Color(0xeef2f7);
+  scene.add(new THREE.HemisphereLight(0xffffff, 0x8899aa, 1.55));
+  const sun = new THREE.DirectionalLight(0xffffff, 1.1); sun.position.set(6, 12, 8); scene.add(sun);
+  const camera = new THREE.PerspectiveCamera(35, 1, 0.1, 200);
+  const world = new THREE.Group(); scene.add(world);
+  let yaw = 0.75, pitch = 0.5, cw = 0, ch = 0;
+
+  const cubeGeo = new THREE.BoxGeometry(0.94, 0.94, 0.94), studGeo = new THREE.CylinderGeometry(0.26, 0.26, 0.14, 16), paintGeo = new THREE.PlaneGeometry(0.72, 0.72);
+  const paintMat = new THREE.MeshBasicMaterial({ color: RED, side: THREE.DoubleSide, polygonOffset: true, polygonOffsetFactor: -2, polygonOffsetUnits: -2 });
+  const dummy = new THREE.Object3D();
+
+  function boxGroup(b, cx){
+    const g = new THREE.Group(), cells = cellsOf(b); if (!cells.length) return g;
+    const mat = new THREE.MeshLambertMaterial({ color: b.color });
+    const off = [-b.L / 2 + 0.5, 0.5, -b.W / 2 + 0.5];
+    const P = (x, y, z) => [x + off[0], y + off[1], z + off[2]];
+    const cubes = new THREE.InstancedMesh(cubeGeo, mat, cells.length);
+    cells.forEach((c, i) => { dummy.position.set(...P(...c)); dummy.rotation.set(0, 0, 0); dummy.updateMatrix(); cubes.setMatrixAt(i, dummy.matrix); });
+    g.add(cubes);
+    const set = new Set(cells.map(c => key(...c))), tops = cells.filter(([x, y, z]) => !set.has(key(x, y + 1, z)));
+    const studs = new THREE.InstancedMesh(studGeo, mat, tops.length);
+    tops.forEach((c, i) => { const p = P(...c); dummy.position.set(p[0], p[1] + 0.54, p[2]); dummy.rotation.set(0, 0, 0); dummy.updateMatrix(); studs.setMatrixAt(i, dummy.matrix); });
+    g.add(studs);
+    if (b.painted){
+      const faces = facesOf(cells), paint = new THREE.InstancedMesh(paintGeo, paintMat, faces.length);
+      faces.forEach(([x, y, z, d], i) => {
+        const p = P(x, y, z), n = DIRS[d];
+        dummy.position.set(p[0] + n[0] * 0.5, p[1] + n[1] * 0.5, p[2] + n[2] * 0.5);
+        dummy.rotation.set(n[1] ? -Math.PI / 2 * n[1] : 0, n[0] ? Math.PI / 2 * n[0] : (n[2] < 0 ? Math.PI : 0), 0);
+        dummy.updateMatrix(); paint.setMatrixAt(i, dummy.matrix);
+      });
+      g.add(paint);
+    }
+    g.position.x = cx; return g;
+  }
+  function layout(){
+    const bigL = big.on ? big.L : 0, bigD = big.on ? big.W : 0, bigH = big.on ? big.H : 0;
+    const bigX = 1.5 + 1.5 + (big.on ? bigL / 2 : 0), left = -1.5 - 1, right = big.on ? bigX + bigL / 2 + 1 : 1.5 + 1;
+    return { bigX, left, right, depth: Math.max(small.W, bigD) + 2, tall: Math.max(small.H, bigH) };
+  }
+  function redraw(){
+    while (world.children.length) { const o = world.children.pop(); o.traverse(m => { if (m.isInstancedMesh) m.dispose(); if (m.isMesh && m.geometry && m.geometry.userData.own) m.geometry.dispose(); }); }
+    const lay = layout(), w = lay.right - lay.left;
+    const plate = new THREE.Mesh(new THREE.BoxGeometry(w, 0.3, lay.depth + 1), new THREE.MeshLambertMaterial({ color: GREEN }));
+    plate.geometry.userData.own = true; plate.position.set((lay.left + lay.right) / 2, -0.15, 0); world.add(plate);
+    world.add(boxGroup(small, 0)); if (big.on) world.add(boxGroup(big, lay.bigX));
+    const cx = (lay.left + lay.right) / 2, ext = Math.max(w, lay.depth, lay.tall * 1.6) * 0.5;
+    const dist = ext / Math.tan(THREE.MathUtils.degToRad(camera.fov / 2)) * 1.6 * (cw / Math.max(ch, 1) < 1.2 ? 1.2 : 1);
+    camera.position.set(cx + dist * Math.sin(yaw) * Math.cos(pitch), dist * Math.sin(pitch) + lay.tall / 2, dist * Math.cos(yaw) * Math.cos(pitch));
+    camera.lookAt(cx, lay.tall / 2, 0);
+    renderer.render(scene, camera);
+  }
+  function resize(){
+    const w = Math.max(240, stage.clientWidth - 20), h = Math.round(Math.min(w * (w < 500 ? 0.8 : 0.62), innerHeight * 0.56));
+    if (w === cw && h === ch) return; cw = w; ch = h; renderer.setSize(w, h); camera.aspect = w / h; camera.updateProjectionMatrix(); redraw();
+  }
+  let lastW = 0, pend = false;
+  new ResizeObserver(() => { if (stage.clientWidth === lastW || pend) return; pend = true; requestAnimationFrame(() => { pend = false; lastW = stage.clientWidth; resize(); }); }).observe(stage); resize();
+  let drag = null; const cv = renderer.domElement;
+  cv.addEventListener('pointerdown', e => { drag = [e.clientX, e.clientY]; cv.setPointerCapture(e.pointerId); });
+  cv.addEventListener('pointermove', e => { if (!drag) return; yaw -= (e.clientX - drag[0]) * 0.008; pitch = Math.max(0.1, Math.min(1.35, pitch + (e.clientY - drag[1]) * 0.008)); drag = [e.clientX, e.clientY]; redraw(); });
+  cv.addEventListener('pointerup', () => { drag = null; MK.log('rotated', { yaw: +yaw.toFixed(2), pitch: +pitch.toFixed(2) }); });
+
+  // ---------- controls ----------
+  MK.guess({ ask: 'Your guess: the big box needs how much more paint and holds how much more water than the small box?', options: OPTS.map(([p, w]) => p === w ? `Both ${p} times as much` : `Paint ${p} times, water ${w} times`) }, (v, i) => {
+    guessIdx = i; MK.log('guess', { paint: OPTS[i][0], water: OPTS[i][1] });
+    MK.say('Let\'s test it with real cubes. Build the small box: press "Add a layer" until it is full.');
+    MK.show(layerBtn, cubeR); layerBtn.label = 'Add a layer'; redraw();
+  });
+  const cubeR = MK.readout('Cubes in this box (1 cup of water each)', '0').hide();
+  const sqR = MK.readout('Painted squares on the outside', '0').hide();
+  const layerBtn = MK.button('Add a layer', () => {
+    active.layers++; cubeR.set(String(cellsOf(active).length)); redraw();
+    if (active.layers === active.H){
+      layerBtn.enable(false); paintBtn.show().enable(true);
+      MK.say(`The ${active === small ? 'small' : 'big'} box is full: ${cellsOf(active).length} cubes. That is how many cups of water it holds.\nNow press "Paint the outside" to cover every outside face, bottom too.`);
+    } else MK.say(`${cellsOf(active).length} cubes so far, ${active.layers} of ${active.H} layers. Keep adding layers.`);
+  }).hide();
+  const paintBtn = MK.button('Paint the outside', () => {
+    active.painted = true; paintBtn.enable(false); sqR.show().set(String(facesOf(cellsOf(active)).length)); redraw();
+    if (active === small) {
+      MK.say(`Painted! The small box has ${facesOf(cellsOf(small)).length} red squares on the outside.\nNow make every side twice as long and build the big box the same way.`);
+      bigBtn.show();
+    } else finish();
+  }, { alt: true }).hide();
+  const bigBtn = MK.button('Build the big box (twice as long, wide and tall)', () => {
+    bigBtn.hide(); active = big; big.on = true; paintBtn.hide(); layerBtn.enable(true).label = 'Add a layer'; sqR.set('0'); cubeR.set('0'); sqR.hide();
+    MK.say(`The big box is ${big.L} long, ${big.W} wide and ${big.H} tall. Press "Add a layer" until it is full.\nIt needs ${big.H} layers this time.`); redraw();
+  }).hide();
+
+  const result = MK.table(['', 'Small box', 'Big box', 'Times'], []).hide();
+  const note = MK.note('').hide();
+  const sideTable = MK.table(['Outside squares on…', 'Small', 'Big'], []).hide();
+  const why4 = MK.button('Why is the paint 4 times?', () => {
+    why4.hide(); const s = stats(small.L, small.W, small.H), b = stats(big.L, big.W, big.H);
+    sideTable.set(SIDES.map((n, i) => [n, s.bySide[i], b.bySide[i]])).show();
+    note.set(`Look at the top. Small: ${small.L} × ${small.W} = ${small.L * small.W} squares. Big: ${big.L} × ${big.W} = ${big.L * big.W} squares.\nThe top is 2 times as long and 2 times as wide, so it holds 2 × 2 = ${(big.L * big.W) / (small.L * small.W)} times as many squares. Every other side does the same.`);
+    MK.say('Paint covers flat surfaces. Each surface grew in two directions at once: length and width.\nNow see why the water is different.'); why8.show();
+  }).hide();
+  const why8 = MK.button('Why is the water 8 times?', () => {
+    why8.hide();
+    note.set(`Water fills the whole inside, so we count cubes. Small: ${small.L} × ${small.W} × ${small.H} = ${small.L * small.W * small.H}. Big: ${big.L} × ${big.W} × ${big.H} = ${big.L * big.W * big.H}.\nThree directions each doubled: 2 × 2 × 2 = ${(big.L * big.W * big.H) / (small.L * small.W * small.H)}.`);
+    MK.say('Doubling is not "double the answer". Paint grows by 2 × 2 = 4, water by 2 × 2 × 2 = 8.\nTry the slider to multiply every side by 1, 2, 3 or 4.'); explore();
+  }).hide();
+
+  const exTable = MK.table(['Sides ×', 'Cubes', 'Squares', 'Water ×', 'Paint ×'], []).hide();
+  const slider = MK.slider({ label: 'Multiply every side by', min: 1, max: 4, step: 1, value: 2, format: v => '× ' + v, onInput: v => { factor = v; setFactor(); } }).hide();
+  function setFactor(){
+    big.L = SMALL.L * factor; big.W = SMALL.W * factor; big.H = SMALL.H * factor; big.layers = big.H; big.painted = true; redraw();
+    const rows = [1, 2, 3, 4].map(k => { const a = stats(SMALL.L * k, SMALL.W * k, SMALL.H * k), s0 = stats(SMALL.L, SMALL.W, SMALL.H); return [k, a.cubes, a.squares, MK.fmt(a.cubes / s0.cubes, { dp: 0 }), MK.fmt(a.squares / s0.squares, { dp: 0 })]; });
+    exTable.set(rows, factor - 1);
+    const r = rows[factor - 1];
+    note.set(`Each side is ${factor} times as long. Paint grows ${factor} × ${factor} = ${factor * factor}, and the table shows ${r[4]}. Water grows ${factor} × ${factor} × ${factor} = ${factor ** 3}, and the table shows ${r[3]}.`);
+    MK.log('factor', { factor });
+  }
+  function explore(){
+    result.hide(); sideTable.hide(); MK.show(slider, exTable); setFactor();
+    MK.say('Takeaway: when every side gets k times longer, paint grows k × k times and water grows k × k × k times.\nSo bigger boxes need far more water than paint.');
+  }
+  function finish(){
+    const s = stats(small.L, small.W, small.H), b = stats(big.L, big.W, big.H);
+    const pr = b.squares / s.squares, wr = b.cubes / s.cubes, g = OPTS[guessIdx];
+    cubeR.hide(); sqR.hide();
+    result.set([['Cubes (cups of water)', s.cubes, b.cubes, MK.fmt(wr, { dp: 0 }) + ' ×'], ['Painted squares', s.squares, b.squares, MK.fmt(pr, { dp: 0 }) + ' ×']]).show();
+    const right = g[0] === pr && g[1] === wr;
+    const gtxt = g[0] === g[1] ? `both ${g[0]} times` : `paint ${g[0]} times and water ${g[1]} times`;
+    MK.say(`You guessed ${gtxt}. Counting gives paint ${pr} times and water ${wr} times${right ? ', so you were right.' : '.'}\nPress the button below to see why.`);
+    note.set(`Doubling the length, width and height made the paint ${pr} times bigger and the water ${wr} times bigger. They are not the same.`).show();
+    why4.show();
+  }
+}
+MK.start({ title: 'Double the box', build, css: '#mk-stage canvas{display:block;width:100%;border-radius:8px;touch-action:none;cursor:grab}' });
+</script>
+</body>
+</html>

@@ -1,0 +1,8 @@
+{
+ "title": "Which is bigger, 5/9 or 4/7?",
+ "concept": "Comparing fractions by making the pieces the same size (same whole, different piece sizes).",
+ "kept": ["Question 5/9 vs 4/7 and the common-denominator idea (63rds: 35 vs 36)", "Two same-size chocolate bars cut into 9 and 7 pieces, take 5 and 4, put them next to each other", "Order: guess, cut, compare, try other fractions", "Chocolate, cozy look; flat 2D"],
+ "filled_in": ["Guess is a 3-way choice (5/9, 4/7, same)", "Visitor clicks pieces to take them", "Cut both bars into lcm tiny pieces and count them (63 for the starting fractions)", "Sliders for pieces taken and cuts, for the 'try other fractions' step", "Piece-size percentages to explain why 5 small pieces can lose to 4 bigger ones"],
+ "changed": [],
+ "math_check": "Student's math is correct: 5/9 = 35/63, 4/7 = 36/63, so 4/7 is bigger (55.6% vs 57.1% of a bar). The page computes every number from drawn piece widths (percentages, counts of tiny pieces), never typed in. Checked by hand: 5/9 = 0.5556, 4/7 = 0.5714, 1/9 = 11.1%, 1/7 = 14.3%, lcm(9,7) = 63, tiny counts 35 and 36. check-page.mjs passes with no problems or warnings."
+}

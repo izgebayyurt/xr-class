@@ -1,0 +1,139 @@
+{
+ "file": "b08/sonnet/page.html",
+ "lines": 114,
+ "usesKit": true,
+ "problems": [],
+ "warnings": [],
+ "desktop": {
+  "errors": [],
+  "kit": true,
+  "start": {
+   "card": "You roll two dice, one red and one blue.\nWhich is more likely: a 5 and a 6 (in any order), or two 6s? Make a guess first.",
+   "title": "Two dice: 5 and 6, or two 6s?",
+   "overflowX": false,
+   "height": 815,
+   "shownErr": [],
+   "svgTextOverlaps": [],
+   "offscreenSvgText": [],
+   "guessBelowFold": -55,
+   "longText": [],
+   "guessOpen": true,
+   "visibleButtons": [
+    "A 5 and a 6 is more likely",
+    "Two 6s is more likely",
+    "They are equally likely",
+    "Start over"
+   ]
+  },
+  "guessKind": "choice",
+  "guessLogged": true,
+  "afterGuess": {
+   "card": "You guessed: a 5 and a 6 is more likely.\nNow roll the dice and watch the tallies. Press \"Roll 100 times\" a few times.",
+   "title": "Two dice: 5 and 6, or two 6s?",
+   "overflowX": false,
+   "height": 815,
+   "shownErr": [],
+   "svgTextOverlaps": [],
+   "offscreenSvgText": [],
+   "guessBelowFold": null,
+   "longText": [],
+   "guessOpen": false,
+   "visibleButtons": [
+    "Roll once",
+    "Roll 100 times",
+    "Start over"
+   ]
+  },
+  "after": {
+   "card": "Now both picks are two 6s. Roll and see the tallies match, then pick two different numbers.",
+   "title": "Two dice: 5 and 6, or two 6s?",
+   "overflowX": false,
+   "height": 841,
+   "shownErr": [],
+   "svgTextOverlaps": [],
+   "offscreenSvgText": [],
+   "guessBelowFold": -29,
+   "longText": [],
+   "guessOpen": true,
+   "visibleButtons": [
+    "Roll once",
+    "Roll 100 times",
+    "Show the ways",
+    "Start over"
+   ]
+  },
+  "eventsAfter": [
+   "ready",
+   "pick",
+   "guess",
+   "say",
+   "click",
+   "say",
+   "click",
+   "say",
+   "click",
+   "say",
+   "click",
+   "say",
+   "click",
+   "say",
+   "say",
+   "say",
+   "slide",
+   "slide",
+   "click",
+   "say",
+   "click",
+   "say",
+   "click",
+   "say",
+   "say",
+   "say",
+   "slide",
+   "slide"
+  ],
+  "restart": {
+   "card": "You roll two dice, one red and one blue.\nWhich is more likely: a 5 and a 6 (in any order), or two 6s? Make a guess first.",
+   "title": "Two dice: 5 and 6, or two 6s?",
+   "overflowX": false,
+   "height": 815,
+   "shownErr": [],
+   "svgTextOverlaps": [],
+   "offscreenSvgText": [],
+   "guessBelowFold": -70,
+   "longText": [],
+   "guessOpen": true,
+   "visibleButtons": [
+    "A 5 and a 6 is more likely",
+    "Two 6s is more likely",
+    "They are equally likely",
+    "Start over"
+   ]
+  },
+  "firstGuessBeforeVisitor": false
+ },
+ "phone": {
+  "errors": [],
+  "kit": true,
+  "start": {
+   "card": "You roll two dice, one red and one blue.\nWhich is more likely: a 5 and a 6 (in any order), or two 6s? Make a guess first.",
+   "title": "Two dice: 5 and 6, or two 6s?",
+   "overflowX": false,
+   "height": 908,
+   "shownErr": [],
+   "svgTextOverlaps": [],
+   "offscreenSvgText": [],
+   "guessBelowFold": -32,
+   "longText": [],
+   "guessOpen": true,
+   "visibleButtons": [
+    "A 5 and a 6 is more likely",
+    "Two 6s is more likely",
+    "They are equally likely",
+    "Start over"
+   ]
+  },
+  "events": 1
+ },
+ "pass": true
+}

@@ -1,0 +1,7 @@
+- Added a "tie" note shown with the slider: 3 x 1/3 = 1, and 1/3 = 0.333..., so 3 x 0.333... = 0.999... must be 1. Closes the student's own argument.
+- Final card now restates that argument and says the finite gap is real only for finitely many 9s; with endless 9s the gap is 0.
+- Reworded the tbl0 note (it asked "is it ever 0?" unanswered) to link the finite picture to the infinite one.
+- "Why do the 3s never stop?" button now shows as soon as the controls appear (was hidden until 3 slider moves); removed the step() gate.
+- Smaller-guess feedback now explains the gap idea instead of "a very common first thought".
+- "Check" line enlarged to 15px and darker.
+- Not done: placeholder in the empty guess area (skipped).

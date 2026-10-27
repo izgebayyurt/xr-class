@@ -1,9 +1,9 @@
 # PME math pipeline (kit 2026-10-26.1)
 
 1. Students design a scene in Google Form 1.
-2. One fresh Opus builder per student turns the design into a scene.
+2. Fresh builders turn each design into a scene, once per model (see 4).
 3. An automatic check runs, plus at most one repair.
-4. Each student gets anonymous private links to their own scene and two classmates' scenes, through a shared sheet.
+4. Every design is built twice, by Opus 5.5 (high) and Sonnet 5.5 (medium, the free model). Each student gets blinded links to versions A and B of their own design and of two classmates' designs, through a shared sheet.
 5. They give feedback in Google Form 2.
 
 ## Files

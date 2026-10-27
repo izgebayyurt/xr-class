@@ -1,0 +1,131 @@
+{
+ "file": "b07/sonnet/page.html",
+ "lines": 168,
+ "usesKit": true,
+ "problems": [],
+ "warnings": [],
+ "desktop": {
+  "errors": [],
+  "kit": true,
+  "start": {
+   "card": "Welcome to the game show! Behind one of three doors is a car. Behind the other two are goats.\nYou pick a door. The host, who knows where the car is, opens a different door with a goat. Then you may switch.\nFirst, make a guess.",
+   "title": "Monty Hall: Stay or Switch?",
+   "overflowX": false,
+   "height": 800,
+   "shownErr": [],
+   "svgTextOverlaps": [],
+   "offscreenSvgText": [],
+   "guessBelowFold": -94,
+   "longText": [],
+   "guessOpen": true,
+   "visibleButtons": [
+    "Stay with my first door",
+    "Switch to the other closed door",
+    "It makes no difference",
+    "Start over"
+   ]
+  },
+  "guessKind": "choice",
+  "guessLogged": true,
+  "afterGuess": {
+   "card": "You guessed: \"Stay with my first door\". Let's test it.\nClick a door to pick it.",
+   "title": "Monty Hall: Stay or Switch?",
+   "overflowX": false,
+   "height": 800,
+   "shownErr": [],
+   "svgTextOverlaps": [],
+   "offscreenSvgText": [],
+   "guessBelowFold": null,
+   "longText": [],
+   "guessOpen": false,
+   "visibleButtons": [
+    "Start over"
+   ]
+  },
+  "after": {
+   "card": "You picked door 1. The host opened door 3: a goat.\nTwo doors are still closed: your door 1 and door 2. Stay or switch?",
+   "title": "Monty Hall: Stay or Switch?",
+   "overflowX": false,
+   "height": 1290,
+   "shownErr": [],
+   "svgTextOverlaps": [],
+   "offscreenSvgText": [],
+   "guessBelowFold": null,
+   "longText": [],
+   "guessOpen": false,
+   "visibleButtons": [
+    "Stay",
+    "Switch",
+    "Play 100 games for me",
+    "Play 1000 games",
+    "Start over"
+   ]
+  },
+  "eventsAfter": [
+   "ready",
+   "pick",
+   "guess",
+   "say",
+   "picked",
+   "say",
+   "click",
+   "chose",
+   "say",
+   "click",
+   "sim",
+   "say",
+   "click",
+   "say",
+   "click",
+   "sim",
+   "say",
+   "click",
+   "say",
+   "picked",
+   "say"
+  ],
+  "restart": {
+   "card": "Welcome to the game show! Behind one of three doors is a car. Behind the other two are goats.\nYou pick a door. The host, who knows where the car is, opens a different door with a goat. Then you may switch.\nFirst, make a guess.",
+   "title": "Monty Hall: Stay or Switch?",
+   "overflowX": false,
+   "height": 800,
+   "shownErr": [],
+   "svgTextOverlaps": [],
+   "offscreenSvgText": [],
+   "guessBelowFold": -94,
+   "longText": [],
+   "guessOpen": true,
+   "visibleButtons": [
+    "Stay with my first door",
+    "Switch to the other closed door",
+    "It makes no difference",
+    "Start over"
+   ]
+  },
+  "firstGuessBeforeVisitor": false
+ },
+ "phone": {
+  "errors": [],
+  "kit": true,
+  "start": {
+   "card": "Welcome to the game show! Behind one of three doors is a car. Behind the other two are goats.\nYou pick a door. The host, who knows where the car is, opens a different door with a goat. Then you may switch.\nFirst, make a guess.",
+   "title": "Monty Hall: Stay or Switch?",
+   "overflowX": false,
+   "height": 844,
+   "shownErr": [],
+   "svgTextOverlaps": [],
+   "offscreenSvgText": [],
+   "guessBelowFold": -120,
+   "longText": [],
+   "guessOpen": true,
+   "visibleButtons": [
+    "Stay with my first door",
+    "Switch to the other closed door",
+    "It makes no difference",
+    "Start over"
+   ]
+  },
+  "events": 1
+ },
+ "pass": true
+}

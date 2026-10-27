@@ -1,0 +1,102 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Students and professors</title>
+<script src="mathkit.js"></script>
+</head>
+<body>
+<script>
+// Design: "There are six times as many students as professors." Which equation: S = 6P or 6S = P?
+// Pattern: guess -> build the groups and count -> test both equations with the counted numbers -> why -> slider -> takeaway.
+MK.start({ title: 'Students and professors', build });
+
+function build(){
+  const W = 560, H = 330;
+  let P = 2, guessed = null, hasStudents = false, moved = false;
+  const tested = { a: false, b: false };
+  const ORANGE = '#e8912d', BLUE = '#2f6fde', INK = '#1d2330';
+
+  MK.say('A small college has 2 professors. It has six times as many students as professors.\nWhich equation says that? S means students and P means professors. Make a guess first.');
+  const S = MK.svg(W, H, { maxHeight: '52vh' });
+
+  MK.guess({ ask: 'Which equation says "six times as many students as professors"?', options: ['S = 6P', '6S = P'] }, v => {
+    guessed = v;
+    MK.say(`You picked ${v}. Let's test it with real numbers.\nPress the button to give each professor their students. Six times as many students means 6 students for each professor.`);
+    MK.show(addBtn); draw();
+  });
+
+  const addBtn = MK.button('Add the students', () => {
+    hasStudents = true; addBtn.hide();
+    report();
+    MK.say('Count check done: the page counted the circles for you.\nNow test each equation with these numbers. Press both buttons.');
+    MK.show(testA, testB, pCount, sCount, slideNote);
+  }).hide();
+
+  const pCount = MK.readout('Professors (P)', '2').hide();
+  const sCount = MK.readout('Students (S)', '0').hide();
+  const slideNote = MK.note('Orange circles are professors. Blue circles are students.').hide();
+  const testA = MK.button('Test S = 6P', () => { tested.a = true; testA.enable(false); report(); stepDone(); }, { alt: true }).hide();
+  const testB = MK.button('Test 6S = P', () => { tested.b = true; testB.enable(false); report(); stepDone(); }, { alt: true }).hide();
+  const table = MK.table(['Equation', 'Left side', 'Right side', 'Equal?'], []).hide();
+  const why1 = MK.note('').hide();
+  const why2 = MK.note('').hide();
+  const slider = MK.slider({ label: 'Professors', min: 1, max: 6, step: 1, value: 2, onInput: v => {
+    P = v; moved = true; report();
+    const c = counts();
+    MK.say(`With ${c.p} professors there are ${c.s} students. S = 6P still works; 6S = P still fails.\nTakeaway: "six times as many students" means students = 6 × professors, so S = 6P. The 6 goes next to the smaller group, P.`);
+  } }).hide();
+
+  function counts(){ return draw(); }
+
+  function draw(){
+    S.clear();
+    const cw = W / 6, x0 = (W - P * cw) / 2;
+    const profs = [], studs = [];
+    for (let k = 0; k < P; k++){
+      const cx = x0 + cw * k + cw / 2;
+      S.circle(cx, 48, 20, { fill: ORANGE, stroke: INK, 'stroke-width': 2 }); profs.push(k);
+      S.text(cx, 48, 'P', { size: 16, weight: 700, fill: '#fff' });
+      if (hasStudents){
+        for (let j = 0; j < 6; j++){
+          const x = cx + (j % 2 ? 15 : -15), y = 115 + Math.floor(j / 2) * 36;
+          S.circle(x, y, 13, { fill: BLUE, stroke: INK, 'stroke-width': 1.5 }); studs.push(j);
+          S.text(x, y, 'S', { size: 12, weight: 600, fill: '#fff' });
+        }
+      }
+    }
+    if (!hasStudents) S.text(W / 2, 200, 'The students will appear here after your guess.', { size: 15, fill: '#667' });
+    return { p: profs.length, s: studs.length };
+  }
+
+  function report(){
+    const c = draw();
+    pCount.set(String(c.p)); sCount.set(String(c.s));
+    const rows = [];
+    if (tested.a) rows.push(['S = 6P', `S = ${c.s}`, `6 × ${c.p} = ${6 * c.p}`, c.s === 6 * c.p ? 'Yes' : 'No']);
+    if (tested.b) rows.push(['6S = P', `6 × ${c.s} = ${6 * c.s}`, `P = ${c.p}`, 6 * c.s === c.p ? 'Yes' : 'No']);
+    if (rows.length){ table.set(rows); MK.show(table); }
+    if (tested.a) why1.set(`S = 6P: the left side is ${c.s} and the right side is 6 × ${c.p} = ${6 * c.p}. ${c.s === 6 * c.p ? 'They match, so this one works.' : 'They differ.'}`);
+    if (tested.b) why2.set(`6S = P: the left side is 6 × ${c.s} = ${6 * c.s} and the right side is ${c.p}. ${6 * c.s === c.p ? 'They match.' : 'They differ, so this one does not work.'}`);
+    if (tested.a) MK.show(why1);
+    if (tested.b) MK.show(why2);
+  }
+
+  function stepDone(){
+    if (!(tested.a && tested.b)) { MK.say('Good. Now press the other test button.'); return; }
+    const c = counts();
+    const ok = 6 * c.s === c.p;      // false for these numbers
+    const right = (6 * c.p === c.s) ? 'S = 6P' : '6S = P';
+    const fb = guessed === right ? `You guessed ${guessed}, and the test agrees.` : `You guessed ${guessed}, but the test says ${right} is the one that works.`;
+    MK.say(`${fb}\nThe word order tricks people: "six times as many students" sounds like 6S, but the 6 multiplies the professors to get the students.\nMove the Professors slider and watch both equations.`);
+    slideNote.set('Why: there are more students than professors. So S = 6P gives the bigger number (students) from the smaller one (professors) by multiplying.');
+    MK.show(slider);
+    MK.log('tested-both', { p: c.p, s: c.s, bWorks: ok });
+  }
+
+  draw();
+}
+</script>
+</body>
+</html>

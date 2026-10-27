@@ -1,0 +1,120 @@
+{
+ "file": "b03/sonnet/page.html",
+ "lines": 116,
+ "usesKit": true,
+ "problems": [],
+ "warnings": [],
+ "desktop": {
+  "errors": [],
+  "kit": true,
+  "start": {
+   "card": "This shirt costs $100. On Monday the store raises the price by 25%. On Tuesday it lowers the price by 25%.\nIs the shirt back to $100? Make a guess first.",
+   "title": "Up 25%, down 25%: back to $100?",
+   "overflowX": false,
+   "height": 800,
+   "shownErr": [],
+   "svgTextOverlaps": [],
+   "offscreenSvgText": [],
+   "guessBelowFold": -71,
+   "longText": [],
+   "guessOpen": true,
+   "visibleButtons": [
+    "Lower than $100",
+    "Exactly $100",
+    "Higher than $100",
+    "Start over"
+   ]
+  },
+  "guessKind": "choice",
+  "guessLogged": true,
+  "afterGuess": {
+   "card": "Good. Now let the store change the price, one day at a time.\nPress \"Monday: raise 25%\".",
+   "title": "Up 25%, down 25%: back to $100?",
+   "overflowX": false,
+   "height": 800,
+   "shownErr": [],
+   "svgTextOverlaps": [],
+   "offscreenSvgText": [],
+   "guessBelowFold": null,
+   "longText": [],
+   "guessOpen": false,
+   "visibleButtons": [
+    "Monday: raise 25%",
+    "Start over"
+   ]
+  },
+  "after": {
+   "card": "You guessed lower than $100, and that is right. The shirt ends at $75, which is $25 less than $100.\nTry other percents with the slider. A bigger percent loses more.",
+   "title": "Up 25%, down 25%: back to $100?",
+   "overflowX": false,
+   "height": 1168,
+   "shownErr": [],
+   "svgTextOverlaps": [],
+   "offscreenSvgText": [],
+   "guessBelowFold": 298,
+   "longText": [],
+   "guessOpen": true,
+   "visibleButtons": [
+    "Start over"
+   ]
+  },
+  "eventsAfter": [
+   "ready",
+   "pick",
+   "guess",
+   "say",
+   "click",
+   "say",
+   "click",
+   "say",
+   "finished",
+   "say",
+   "slide",
+   "say",
+   "slide"
+  ],
+  "restart": {
+   "card": "This shirt costs $100. On Monday the store raises the price by 25%. On Tuesday it lowers the price by 25%.\nIs the shirt back to $100? Make a guess first.",
+   "title": "Up 25%, down 25%: back to $100?",
+   "overflowX": false,
+   "height": 800,
+   "shownErr": [],
+   "svgTextOverlaps": [],
+   "offscreenSvgText": [],
+   "guessBelowFold": -71,
+   "longText": [],
+   "guessOpen": true,
+   "visibleButtons": [
+    "Lower than $100",
+    "Exactly $100",
+    "Higher than $100",
+    "Start over"
+   ]
+  },
+  "firstGuessBeforeVisitor": false
+ },
+ "phone": {
+  "errors": [],
+  "kit": true,
+  "start": {
+   "card": "This shirt costs $100. On Monday the store raises the price by 25%. On Tuesday it lowers the price by 25%.\nIs the shirt back to $100? Make a guess first.",
+   "title": "Up 25%, down 25%: back to $100?",
+   "overflowX": false,
+   "height": 844,
+   "shownErr": [],
+   "svgTextOverlaps": [],
+   "offscreenSvgText": [],
+   "guessBelowFold": -188,
+   "longText": [],
+   "guessOpen": true,
+   "visibleButtons": [
+    "Lower than $100",
+    "Exactly $100",
+    "Higher than $100",
+    "Start over"
+   ]
+  },
+  "events": 1
+ },
+ "pass": true
+}

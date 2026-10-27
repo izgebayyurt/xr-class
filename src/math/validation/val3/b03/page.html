@@ -1,0 +1,115 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Up 25%, down 25%</title>
+<script src="mathkit.js"></script>
+</head>
+<body>
+<script>
+// Student design: a $100 shirt goes up 25% Monday, down 25% Tuesday. Bars show the price after each day. Price-tag look, red sale sign.
+MK.start({ title: 'Up 25%, down 25%: back to $100?', build });
+
+function build(){
+  const W = 560, H = 380, START = 100;
+  const RED = '#c8202f', INK = '#1d2330', TAG = '#fff8e6';
+  let pct = 25, step = 0, guessIdx = null;
+
+  const mon = () => START * (100 + pct) / 100;                 // price after going up
+  const tue = () => mon() * (100 - pct) / 100;                 // price after coming down
+  const $ = v => MK.fmt(v, { money: true });
+
+  MK.say('This shirt costs $100. On Monday the store raises the price by 25%. On Tuesday it lowers the price by 25%.\nIs the shirt back to $100? Make a guess first.');
+  MK.model('Percent changes on a $100 shirt. You can change the percent below.');
+  const S = MK.svg(W, H, { maxHeight: '58vh' });
+
+  MK.guess({ ask: 'After Tuesday, the price is...', options: ['Lower than $100', 'Exactly $100', 'Higher than $100'] }, (v, i) => {
+    guessIdx = i;
+    MK.say('Good. Now let the store change the price, one day at a time.\nPress "Monday: raise 25%".');
+    MK.show(monBtn, monthly, tuesdayR, diffR); draw();
+  });
+
+  const monBtn = MK.button('Monday: raise 25%', () => {
+    step = 1; monBtn.enable(false); tueBtn.show(); tueBtn.enable(true);
+    MK.say(`Monday's price is ${$(mon())}.\nNow press "Tuesday: lower 25%".`);
+    report(); draw();
+  }).hide();
+  const tueBtn = MK.button('Tuesday: lower 25%', () => {
+    step = 2; tueBtn.enable(false); report(); draw(); finish();
+  }).hide();
+  tueBtn.hide();
+
+  const slider = MK.slider({ label: 'Percent change', min: 5, max: 50, step: 5, value: 25, format: v => v + '%', onInput: v => {
+    pct = v; monBtn.label = `Monday: raise ${pct}%`; tueBtn.label = `Tuesday: lower ${pct}%`;
+    report(); draw(); if (step === 2) finish(true);
+  } }).hide();
+  const monthly = MK.readout('Monday price', '').hide();
+  const tuesdayR = MK.readout('Tuesday price', '').hide();
+  const diffR = MK.readout('Compared with $100', '').hide();
+  const why = MK.note('', { where: 'side' }).hide();
+  const table = MK.table(['Percent', 'Ends at', 'Lost'], [], { where: 'side' }).hide();
+  // the readouts for Monday/Tuesday start empty and fill in as the visitor acts
+  function monthlyShow(){ monthly.set(step >= 1 ? $(mon()) : '-'); tuesdayR.set(step >= 2 ? $(tue()) : '-'); }
+
+  function report(){
+    monthlyShow();
+    if (step < 2) diffR.set('-');
+    else { const d = tue() - START; diffR.set(d === 0 ? 'Same' : (d < 0 ? 'Down ' : 'Up ') + $(Math.abs(d))); }
+    if (step === 1){
+      const up = mon() - START;
+      why.set(`${pct}% of ${$(START)} is ${$(up)}.\nSo ${$(START)} + ${$(up)} = ${$(mon())}.`).show();
+    }
+    if (step === 2){
+      const up = mon() - START, down = mon() - tue();
+      why.set(`Tuesday's ${pct}% comes off ${$(mon())}, not ${$(START)}.\n${pct}% of ${$(mon())} is ${$(down)}, and ${$(mon())} - ${$(down)} = ${$(tue())}.\nMonday added ${$(up)} but Tuesday took off ${$(down)}.`).show();
+    }
+  }
+
+  function finish(again){
+    const d = START - tue();
+    const verdict = guessIdx === 0 ? 'You guessed lower than $100, and that is right.' : guessIdx === 1 ? 'You guessed exactly $100. It is actually lower.' : 'You guessed higher than $100. It is actually lower.';
+    MK.say(`${verdict} The shirt ends at ${$(tue())}, which is ${$(d)} less than $100.\nTry other percents with the slider. A bigger percent loses more.`);
+    slider.show();
+    const rows = [5, 10, 15, 20, 25, 30, 35, 40, 45, 50].map(p => { const m = START * (100 + p) / 100, t = m * (100 - p) / 100; return [p + '%', $(t), $(START - t)]; });
+    table.set(rows, [5, 10, 15, 20, 25, 30, 35, 40, 45, 50].indexOf(pct)).show();
+    if (!again) MK.log('finished', { pct, final: tue() });
+  }
+
+  function draw(){
+    S.clear();
+    // price-tag background with a hole and string
+    S.rect(8, 8, W - 16, H - 16, { fill: TAG, stroke: INK, 'stroke-width': 3, rx: 18 });
+    S.circle(40, 40, 9, { fill: '#fff', stroke: INK, 'stroke-width': 2 });
+    // red sale sign
+    S.rect(380, 20, 160, 46, { fill: RED, rx: 6 });
+    S.text(460, 43, 'SALE', { size: 26, weight: 800, fill: '#fff', anchor: 'middle' });
+    S.text(70, 46, 'Shirt', { size: 22, weight: 700, anchor: 'start' });
+    // bars
+    const x0 = 60, base = H - 50, top = 100;
+    const vmax = Math.max(START * 1.6, mon());
+    const y = MK.scale(0, vmax, base, top);
+    S.line(x0 - 10, base, W - 30, base, { stroke: INK, 'stroke-width': 2 });
+    const bars = [
+      { label: 'Start', val: START, show: true, color: '#7a8397' },
+      { label: 'After Monday', val: mon(), show: step >= 1, color: '#2f6fde' },
+      { label: 'After Tuesday', val: tue(), show: step >= 2, color: RED }
+    ];
+    const bw = 110, gap = 40;
+    // dashed $100 line
+    S.line(x0 - 10, y(START), W - 30, y(START), { stroke: INK, 'stroke-dasharray': '6 5', opacity: .6 });
+    S.text(W - 30, y(START) - 6, '$100', { size: 14, anchor: 'end', fill: INK });
+    bars.forEach((b, i) => {
+      const bx = x0 + 10 + i * (bw + gap);
+      S.text(bx + bw / 2, base + 24, b.label, { size: 15, anchor: 'middle', weight: 600 });
+      if (!b.show){ S.rect(bx, y(START), bw, base - y(START), { fill: 'none', stroke: '#b9bfcc', 'stroke-dasharray': '4 4', 'stroke-width': 1.5 }); S.text(bx + bw / 2, (y(START) + base) / 2, '?', { size: 30, anchor: 'middle', fill: '#b9bfcc' }); return; }
+      const top_ = y(b.val);
+      S.rect(bx, top_, bw, base - top_, { fill: b.color, stroke: INK, 'stroke-width': 2, rx: 3 });
+      S.text(bx + bw / 2, top_ - 8, $(b.val), { size: 18, weight: 700, anchor: 'middle' });
+    });
+  }
+  report(); draw();
+}
+</script>
+</body>
+</html>

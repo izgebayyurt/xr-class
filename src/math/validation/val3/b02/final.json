@@ -1,0 +1,127 @@
+{
+ "file": "b02/sonnet/page.html",
+ "lines": 167,
+ "usesKit": true,
+ "problems": [],
+ "warnings": [],
+ "desktop": {
+  "errors": [],
+  "kit": true,
+  "start": {
+   "card": "Two chocolate bars are exactly the same size. One is cut into 9 pieces, the other into 7.\nWhich is bigger: 5 pieces of the 9-piece bar (5/9) or 4 pieces of the 7-piece bar (4/7)? Make a guess first.",
+   "title": "Which is bigger, 5/9 or 4/7?",
+   "overflowX": false,
+   "height": 800,
+   "shownErr": [],
+   "svgTextOverlaps": [],
+   "offscreenSvgText": [],
+   "guessBelowFold": -87,
+   "longText": [],
+   "guessOpen": true,
+   "visibleButtons": [
+    "5/9 is bigger",
+    "4/7 is bigger",
+    "They are the same",
+    "Start over"
+   ]
+  },
+  "guessKind": "choice",
+  "guessLogged": true,
+  "afterGuess": {
+   "card": "You guessed \"5/9 is bigger\". Let's test it. Press \"Cut the bars\" to cut one bar into 9 pieces and the other into 7.",
+   "title": "Which is bigger, 5/9 or 4/7?",
+   "overflowX": false,
+   "height": 800,
+   "shownErr": [],
+   "svgTextOverlaps": [],
+   "offscreenSvgText": [],
+   "guessBelowFold": null,
+   "longText": [],
+   "guessOpen": false,
+   "visibleButtons": [
+    "Cut the bars",
+    "Start over"
+   ]
+  },
+  "after": {
+   "card": "Change the sliders to compare other fractions. Do the tiny-piece counts match what the red gap shows?\nTo compare fractions, make the pieces the same size. A bigger number on the bottom means smaller pieces.",
+   "title": "Which is bigger, 5/9 or 4/7?",
+   "overflowX": false,
+   "height": 888,
+   "shownErr": [],
+   "svgTextOverlaps": [],
+   "offscreenSvgText": [],
+   "guessBelowFold": -35,
+   "longText": [],
+   "guessOpen": true,
+   "visibleButtons": [
+    "Start over"
+   ]
+  },
+  "eventsAfter": [
+   "ready",
+   "pick",
+   "guess",
+   "say",
+   "click",
+   "say",
+   "say",
+   "say",
+   "click",
+   "say",
+   "click",
+   "say",
+   "say",
+   "say",
+   "say",
+   "say",
+   "slide",
+   "slide",
+   "slide",
+   "slide"
+  ],
+  "restart": {
+   "card": "Two chocolate bars are exactly the same size. One is cut into 9 pieces, the other into 7.\nWhich is bigger: 5 pieces of the 9-piece bar (5/9) or 4 pieces of the 7-piece bar (4/7)? Make a guess first.",
+   "title": "Which is bigger, 5/9 or 4/7?",
+   "overflowX": false,
+   "height": 800,
+   "shownErr": [],
+   "svgTextOverlaps": [],
+   "offscreenSvgText": [],
+   "guessBelowFold": -87,
+   "longText": [],
+   "guessOpen": true,
+   "visibleButtons": [
+    "5/9 is bigger",
+    "4/7 is bigger",
+    "They are the same",
+    "Start over"
+   ]
+  },
+  "firstGuessBeforeVisitor": false
+ },
+ "phone": {
+  "errors": [],
+  "kit": true,
+  "start": {
+   "card": "Two chocolate bars are exactly the same size. One is cut into 9 pieces, the other into 7.\nWhich is bigger: 5 pieces of the 9-piece bar (5/9) or 4 pieces of the 7-piece bar (4/7)? Make a guess first.",
+   "title": "Which is bigger, 5/9 or 4/7?",
+   "overflowX": false,
+   "height": 844,
+   "shownErr": [],
+   "svgTextOverlaps": [],
+   "offscreenSvgText": [],
+   "guessBelowFold": -213,
+   "longText": [],
+   "guessOpen": true,
+   "visibleButtons": [
+    "5/9 is bigger",
+    "4/7 is bigger",
+    "They are the same",
+    "Start over"
+   ]
+  },
+  "events": 1
+ },
+ "pass": true
+}

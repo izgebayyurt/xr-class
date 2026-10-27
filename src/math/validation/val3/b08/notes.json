@@ -1,0 +1,8 @@
+{
+ "title": "Two dice: 5 and 6, or two 6s?",
+ "concept": "Two different outcomes of two dice can have different chances: a 5 and a 6 (either order) can happen 2 ways, two 6s only 1 way, so 2/36 vs 1/36.",
+ "kept": ["The question: is a 5 and a 6 more likely than two 6s, or equally likely", "Showing why by rolling the dice many times"],
+ "filled_in": ["Guess step with three options, including the student's own 'equally likely'", "A 6x6 grid of all outcomes (red die by blue die) with per-square roll counts", "Roll once / roll 100 buttons using a seeded model of fair dice", "A 'Show the ways' step that highlights the squares and counts them from the code", "Two sliders to try other pairs as the exploration step"],
+ "changed": [{ "what": "The belief that the two are equally likely because each number is 1/6 is not carried over as the answer", "why": "Each single number is 1/6, but a 5 and a 6 can land two ways (red 5 blue 6, or red 6 blue 5) while two 6s land one way. So 2/36 vs 1/36; the 5-and-6 is twice as likely. The page lets the friend see this from the rolls and then from the grid." }],
+ "math_check": "All 36 (red, blue) squares are equally likely at 1/36. Ways are counted in code by looping over the grid squares that match each pick; tallies are summed from per-square roll counts. Pair: 2 squares (or 1 if both numbers are equal), double: 1 square. Expected ratio of tallies is about 2 to 1."
+}

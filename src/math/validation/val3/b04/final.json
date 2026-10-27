@@ -1,0 +1,110 @@
+{
+ "file": "b04/sonnet/page.html",
+ "lines": 158,
+ "usesKit": true,
+ "problems": [],
+ "warnings": [],
+ "desktop": {
+  "errors": [],
+  "kit": true,
+  "start": {
+   "card": "You put $1,000 in a savings account that pays 7% interest a year. You never add or take out money.\nHow much will you have after 30 years? Type a guess first.",
+   "title": "Money that earns money",
+   "overflowX": false,
+   "height": 800,
+   "shownErr": [],
+   "svgTextOverlaps": [],
+   "offscreenSvgText": [],
+   "guessBelowFold": -103,
+   "longText": [],
+   "guessOpen": true,
+   "visibleButtons": [
+    "Lock in my guess",
+    "Start over"
+   ]
+  },
+  "guessKind": "input",
+  "guessLogged": true,
+  "afterGuess": {
+   "card": "Two piles of coins start at $1,000. The green pile earns 7% on all its money. The simple pile earns only $70 a year.\nPress \"Next year\" to watch them grow.",
+   "title": "Money that earns money",
+   "overflowX": false,
+   "height": 800,
+   "shownErr": [],
+   "svgTextOverlaps": [],
+   "offscreenSvgText": [],
+   "guessBelowFold": null,
+   "longText": [],
+   "guessOpen": false,
+   "visibleButtons": [
+    "Next year",
+    "Play all 30 years",
+    "Start over"
+   ]
+  },
+  "after": {
+   "card": "After 30 years: $7,612 in the green pile, $3,100 in the other.\nPress \"Why is the gap so big?\" to see where the extra coins come from.",
+   "title": "Money that earns money",
+   "overflowX": false,
+   "height": 1130,
+   "shownErr": [],
+   "svgTextOverlaps": [],
+   "offscreenSvgText": [],
+   "guessBelowFold": null,
+   "longText": [],
+   "guessOpen": false,
+   "visibleButtons": [
+    "Why is the gap so big?",
+    "Start over"
+   ]
+  },
+  "eventsAfter": [
+   "ready",
+   "enter",
+   "guess",
+   "say",
+   "click",
+   "click",
+   "say"
+  ],
+  "restart": {
+   "card": "You put $1,000 in a savings account that pays 7% interest a year. You never add or take out money.\nHow much will you have after 30 years? Type a guess first.",
+   "title": "Money that earns money",
+   "overflowX": false,
+   "height": 800,
+   "shownErr": [],
+   "svgTextOverlaps": [],
+   "offscreenSvgText": [],
+   "guessBelowFold": -103,
+   "longText": [],
+   "guessOpen": true,
+   "visibleButtons": [
+    "Lock in my guess",
+    "Start over"
+   ]
+  },
+  "firstGuessBeforeVisitor": false
+ },
+ "phone": {
+  "errors": [],
+  "kit": true,
+  "start": {
+   "card": "You put $1,000 in a savings account that pays 7% interest a year. You never add or take out money.\nHow much will you have after 30 years? Type a guess first.",
+   "title": "Money that earns money",
+   "overflowX": false,
+   "height": 844,
+   "shownErr": [],
+   "svgTextOverlaps": [],
+   "offscreenSvgText": [],
+   "guessBelowFold": -228,
+   "longText": [],
+   "guessOpen": true,
+   "visibleButtons": [
+    "Lock in my guess",
+    "Start over"
+   ]
+  },
+  "events": 1
+ },
+ "pass": true
+}

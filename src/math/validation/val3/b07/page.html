@@ -1,0 +1,167 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Monty Hall: Stay or Switch?</title>
+<script src="mathkit.js"></script>
+</head>
+<body>
+<script>
+// Monty Hall game show. Flow: guess -> play one game by hand -> run 100 games -> see why -> explore.
+MK.start({ title: 'Monty Hall: Stay or Switch?', build, css: 'body{background:#14103a}' });
+
+function build(){
+  const rng = MK.rng();
+  const W = 560, H = 330, DX = [30, 210, 390], DW = 140, DY = 70, DH = 210;
+  let guessed = null, phase = 'locked';          // locked | pick | choose | done
+  let car, picked, opened, manual = 0;
+  const tot = { games: 0, stay: 0, switch: 0 };
+  let revealed = {};                              // door -> true when open
+
+  MK.say('Welcome to the game show! Behind one of three doors is a car. Behind the other two are goats.\nYou pick a door. The host, who knows where the car is, opens a different door with a goat. Then you may switch.\nFirst, make a guess.');
+  const S = MK.svg(W, H, { maxHeight: '52vh' });
+  let C = null, bars = null;
+
+  MK.guess({ ask: 'Your guess: what is the best plan?', options: ['Stay with my first door', 'Switch to the other closed door', 'It makes no difference'] }, (v, i) => {
+    guessed = v;
+    phase = 'pick';
+    MK.say(`You guessed: "${v}". Let's test it.\nClick a door to pick it.`);
+    draw();
+  });
+
+  const stayB = MK.button('Stay', () => finish(false)).hide();
+  const swB = MK.button('Switch', () => finish(true), { alt: true }).hide();
+  const again = MK.button('Play another game', () => newGame()).hide();
+  const sim100 = MK.button('Play 100 games for me', () => runSim(100)).hide();
+  const sim1000 = MK.button('Play 1000 games', () => runSim(1000), { alt: true }).hide();
+  const casesB = MK.button('Show all 3 cases', () => showCases(), { alt: true }).hide();
+  const mine = MK.readout('Your games: stay wins / switch wins', '0 / 0').hide();
+  const total = MK.readout('All games played', '0').hide();
+  const why1 = MK.note('').hide();
+  const why2 = MK.note('').hide();
+  const table = MK.table(['Car is behind', 'Host opens', 'Stay', 'Switch'], []).hide();
+
+  let myStay = 0, mySwitch = 0, myRes = null;
+
+  function newGame(){
+    car = rng.int(0, 2); picked = null; opened = null; revealed = {}; myRes = null;
+    phase = 'pick'; stayB.hide(); swB.hide(); again.hide();
+    MK.say('New game. Click a door to pick it.');
+    draw();
+  }
+  car = rng.int(0, 2);
+
+  function hostOpen(c, p){
+    const goats = [0, 1, 2].filter(d => d !== c && d !== p);
+    return goats.length === 1 ? goats[0] : rng.pick(goats);
+  }
+
+  function pick(d){
+    if (phase !== 'pick') return;
+    picked = d; opened = hostOpen(car, picked); revealed = { [opened]: true };
+    phase = 'choose';
+    MK.log('picked', { door: d + 1, opened: opened + 1 });
+    const other = [0, 1, 2].find(x => x !== picked && x !== opened);
+    MK.say(`You picked door ${picked + 1}. The host opened door ${opened + 1}: a goat.\nTwo doors are still closed: your door ${picked + 1} and door ${other + 1}. Stay or switch?`);
+    stayB.show(); swB.show(); draw();
+  }
+
+  function finish(doSwitch){
+    if (phase !== 'choose') return;
+    const other = [0, 1, 2].find(x => x !== picked && x !== opened);
+    const final = doSwitch ? other : picked;
+    revealed = { 0: true, 1: true, 2: true };
+    phase = 'done';
+    manual++;
+    const stayWin = picked === car, swWin = other === car;
+    if (doSwitch) { if (swWin) mySwitch++; } else if (stayWin) myStay++;
+    myRes = { final, win: final === car };
+    mine.set(`${myStay} / ${mySwitch}`);
+    stayB.hide(); swB.hide(); mine.show();
+    MK.log('chose', { doSwitch, win: myRes.win });
+    MK.say(`You ${doSwitch ? 'switched to' : 'stayed with'} door ${final + 1}. ${myRes.win ? 'It is the car. You win!' : 'It is a goat. You lose.'}\nOne game is too few to learn from. Play again, or let the computer play 100 games.`);
+    why1.set(`Your first pick had a 1 in 3 chance of hiding the car, and a 2 in 3 chance of hiding a goat. In this game, staying would have ${stayWin ? 'won' : 'lost'} and switching would have ${swWin ? 'won' : 'lost'}.`).show();
+    again.show(); sim100.show();
+    draw();
+  }
+
+  function runSim(n){
+    sim100.enable(false); sim1000.enable(false);
+    for (let k = 0; k < n; k++){
+      const c = rng.int(0, 2), p = rng.int(0, 2), o = hostOpen(c, p);
+      const sw = [0, 1, 2].find(x => x !== p && x !== o);
+      tot.games++;
+      if (p === c) tot.stay++;
+      if (sw === c) tot.switch++;
+    }
+    MK.log('sim', { n, ...tot });
+    if (!C){ C = MK.svg(300, 220, { where: 'side', maxHeight: '30vh' }); C.rect(0, 0, 300, 220, { fill: '#fff', rx: 10 }); bars = MK.bars(C, { values: [0, 0], labels: ['Stay', 'Switch'], max: 100, color: '#f5b82e', format: v => v, xLabel: 'Games won', box: { x: 40, y: 20, w: 240, h: 150 } }); }
+    bars.set([tot.stay, tot.switch], { highlight: [tot.switch >= tot.stay ? 1 : 0], max: tot.games });
+    total.set(String(tot.games)).show();
+    const sP = MK.fmt(tot.stay / tot.games, { pct: true }), wP = MK.fmt(tot.switch / tot.games, { pct: true });
+    const verdict = tot.switch > tot.stay ? 'Switching won more often.' : tot.switch < tot.stay ? 'Staying won more often.' : 'It was a tie.';
+    const g = guessed === 'Switch to the other closed door' ? 'Your guess was right.' : 'Your guess was off.';
+    MK.say(`Out of ${tot.games} games: staying won ${tot.stay} (${sP}), switching won ${tot.switch} (${wP}). ${verdict}\n${g} It is not 50/50. Read why on the right, then press "Show all 3 cases".`);
+    why2.set(`Your first pick is a goat in about 2 of every 3 games. Then the host removes the other goat, so the one closed door left must hold the car. Switching wins whenever your first pick was a goat.`).show();
+    casesB.show(); sim100.enable(true); sim1000.enable(true); sim1000.show();
+  }
+
+  function showCases(){
+    // Enumerate the three equally likely car spots, when you always pick door 1.
+    const rows = []; let st = 0, sw = 0;
+    for (let c = 0; c < 3; c++){
+      const goats = [1, 2].filter(d => d !== c);
+      const o = goats[0];                         // host opens a goat door (door 2 if free)
+      const other = [0, 1, 2].find(x => x !== 0 && x !== o);
+      const sWin = c === 0, wWin = other === c;
+      if (sWin) st++; if (wWin) sw++;
+      rows.push([`Door ${c + 1}`, `Door ${o + 1}`, sWin ? 'Win' : 'Lose', wWin ? 'Win' : 'Lose']);
+    }
+    table.set(rows).show();
+    casesB.enable(false);
+    MK.say(`Say you always pick door 1. The car could be behind door 1, 2 or 3, each equally likely. Staying wins in ${st} of these 3 cases. Switching wins in ${sw} of 3.\nTakeaway: switch. Your first pick is right only 1 time in 3, so the other door is right 2 times in 3.`);
+  }
+
+  function draw(){
+    S.clear();
+    S.rect(0, 0, W, H, { fill: '#241a5e', rx: 14 });
+    for (let i = 0; i < 14; i++){
+      const lit = i % 2 === 0;
+      S.circle(30 + i * 38.5, 26, 8, { fill: lit ? '#ffd23f' : '#ff4fa3', opacity: .95 });
+    }
+    for (let d = 0; d < 3; d++){
+      const x = DX[d], open = revealed[d];
+      const isPick = picked === d;
+      S.rect(x - 6, DY - 6, DW + 12, DH + 12, { fill: isPick ? '#ffd23f' : '#3a2f8a', rx: 8 });
+      if (open){
+        S.rect(x, DY, DW, DH, { fill: '#f4ecd8', rx: 4 });
+        if (d === car) {
+          S.rect(x + 22, DY + 110, 96, 36, { fill: '#e0245e', rx: 12 });
+          S.rect(x + 42, DY + 86, 56, 30, { fill: '#e0245e', rx: 10 });
+          S.circle(x + 42, DY + 150, 12, { fill: '#222' }); S.circle(x + 98, DY + 150, 12, { fill: '#222' });
+          S.text(x + 70, DY + 190, 'CAR', { size: 18, weight: 700, fill: '#e0245e', anchor: 'middle' });
+        } else {
+          S.circle(x + 70, DY + 120, 36, { fill: '#b5946a' });
+          S.circle(x + 54, DY + 112, 5, { fill: '#222' }); S.circle(x + 86, DY + 112, 5, { fill: '#222' });
+          S.path(`M${x + 54} ${DY + 134} Q${x + 70} ${DY + 146} ${x + 86} ${DY + 134}`, { stroke: '#222', 'stroke-width': 3, fill: 'none' });
+          S.polygon([[x + 44, DY + 92], [x + 40, DY + 70], [x + 58, DY + 86]], { fill: '#b5946a' });
+          S.polygon([[x + 96, DY + 92], [x + 100, DY + 70], [x + 82, DY + 86]], { fill: '#b5946a' });
+          S.text(x + 70, DY + 190, 'GOAT', { size: 18, weight: 700, fill: '#7a5a30', anchor: 'middle' });
+        }
+      } else {
+        const door = S.rect(x, DY, DW, DH, { fill: '#2f7bff', rx: 4, stroke: '#9cc3ff', 'stroke-width': 3 });
+        S.text(x + 70, DY + 100, d + 1, { size: 64, weight: 800, fill: '#fff', anchor: 'middle', 'pointer-events': 'none' });
+        S.circle(x + DW - 18, DY + 110, 7, { fill: '#ffd23f', 'pointer-events': 'none' });
+        if (phase === 'pick') door.attr({ style: 'cursor:pointer' }).on('click', () => pick(d));
+      }
+      if (isPick) S.text(x + 70, DY + DH + 28, 'Your pick', { size: 16, weight: 700, fill: '#ffd23f', anchor: 'middle' });
+      if (myRes && phase === 'done' && myRes.final === d) S.text(x + 70, DY + DH + 48, myRes.win ? 'You win!' : 'Final choice', { size: 14, weight: 600, fill: '#fff', anchor: 'middle' });
+    }
+  }
+  draw();
+  MK.model('The computer plays the extra games with random car spots and random first picks; the host always opens a goat door.');
+}
+</script>
+</body>
+</html>

@@ -1,0 +1,132 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Ferris wheel heights</title>
+<script src="mathkit.js"></script>
+</head>
+<body>
+<script>
+// Ferris wheel: height of a rider = spoke length x sine of the turn angle. Heights are measured from the drawn rider's position.
+MK.start({ title: 'Ferris wheel heights', build, css: ':root{--accent:#d9622b}' });
+
+function build(){
+  const W = 560, H = 420, cx = 200, cy = 215, PX = 150, RM = 20, K = PX / RM; // 150 px = 20 m
+  let angle = 0, stage = 0, guessIdx = null, showMirror = false, seen30 = false, seen60 = false, seen90 = false;
+  const opts = [10, 13, 17, 20];
+
+  MK.say('You are on a Ferris wheel. The spoke from the middle (the axle) to your seat is 20 m long.\nYou start level with the axle. The wheel turns 60° (a bit more than half way to the top). How high above the axle are you? Make a guess first.');
+  const S = MK.svg(W, H, { maxHeight: '58vh' });
+
+  MK.guess({ ask: 'Your guess: height above the axle at 60°', options: opts.map((m, i) => i === 0 ? '10 m (half way up)' : i === 3 ? '20 m (the very top)' : 'About ' + m + ' m') }, (v, i) => {
+    guessIdx = i; stage = 1;
+    MK.say('Good. Now turn the wheel and measure.\nPress "Turn to 30°" and read your height.');
+    MK.show(to30, to60, turn, hRead, sRead, rRead); draw();
+  });
+
+  const to30 = MK.button('Turn to 30°', () => go(30)).hide();
+  const to60 = MK.button('Turn to 60°', () => go(60), { alt: true }).hide();
+  const turn = MK.slider({ label: 'Turn', min: 0, max: 90, step: 1, value: 0, format: v => v + '°', onInput: v => go(v, true) }).hide();
+  const hRead = MK.readout('Height above axle', '0.0 m').hide();
+  const sRead = MK.readout('Spoke length', '20.0 m').hide();
+  const rRead = MK.readout('Height ÷ spoke', '0.00').hide();
+  const noteA = MK.note('').hide();
+  const noteB = MK.note('').hide();
+  const whyBtn = MK.button('Why exactly half at 30°?', () => {
+    showMirror = true; whyBtn.hide(); draw(); explainHalf();
+  }).hide();
+  const table = MK.table(['Turn', 'Real height', 'If it rose evenly'], []).hide();
+
+  // geometry from the drawn rider
+  function rider(a){ const t = a * Math.PI / 180; return [cx + PX * Math.cos(t), cy - PX * Math.sin(t)]; }
+  function measure(a){
+    const [x, y] = rider(a);
+    const up = (cy - y) / K, spoke = Math.hypot(x - cx, y - cy) / K;
+    return { x, y, up, spoke, ratio: up / spoke };
+  }
+  const m1 = v => MK.fmt(v, { dp: 1 }) + ' m';
+
+  function go(a, fromSlider){
+    angle = a; if (!fromSlider) turn.value = a;
+    draw(); report();
+  }
+  function report(){
+    const m = measure(angle);
+    hRead.set(m1(m.up)); sRead.set(m1(m.spoke)); rRead.set(MK.fmt(m.ratio, { dp: 2 }));
+    if (stage === 1 && angle === 30){
+      stage = 2; seen30 = true;
+      noteA.set(`At 30° you are ${m1(m.up)} above the axle. The spoke is ${m1(m.spoke)}.\nSo height ÷ spoke = ${MK.fmt(m.ratio, { dp: 2 })}: exactly half.`).show();
+      MK.say('At 30° you are half way up the spoke. Now press "Turn to 60°" and see if your guess holds.');
+    } else if (stage === 2 && angle === 60){
+      stage = 3; seen60 = true;
+      const g = opts[guessIdx], real = m.up;
+      const verdict = Math.abs(g - real) < 1 ? 'close to' : g > real ? 'higher than' : 'lower than';
+      noteA.set(`At 60° you are ${m1(real)} up, so height ÷ spoke = ${MK.fmt(m.ratio, { dp: 2 })}.\nThat is not 1. The wheel is still ${m1(m.spoke - real)} below its top.`);
+      MK.say(`You guessed ${g} m. The real height is ${m1(real)}, so your guess was ${verdict} it.\nPress "Why exactly half at 30°?" to see the reason.`);
+      whyBtn.show();
+    } else if (stage === 4){
+      if (angle === 90 && !seen90){ seen90 = true; finish(); }
+      markRow();
+    }
+  }
+  function explainHalf(){
+    const a = measure(30), b = measure(-30);
+    const chord = Math.hypot(a.x - b.x, a.y - b.y) / K;
+    noteB.set(`Mirror the seat below the axle (open circle). The two seats are ${m1(chord)} apart, the same as the spoke.\nThe two spokes and that gap make a triangle with equal sides, so the gap splits in half: ${m1(a.up)} up.`).show();
+    stage = 4;
+    MK.say('Now explore: slide the wheel to any angle. Watch height ÷ spoke, and the table. Can you reach the top?');
+    const rows = [0, 15, 30, 45, 60, 75, 90];
+    table.set(rows.map(r => [r + '°', m1(measure(r).up), m1(measure(30).up * r / 30)])).show();
+    markRow();
+  }
+  function markRow(){
+    const rows = [0, 15, 30, 45, 60, 75, 90]; const i = rows.indexOf(angle);
+    table.set(rows.map(r => [r + '°', m1(measure(r).up), m1(measure(30).up * r / 30)]), i);
+  }
+  function finish(){
+    MK.say(`At 90° you are at the top, ${m1(measure(90).up)} up, and height ÷ spoke is ${MK.fmt(measure(90).ratio, { dp: 2 })}.\nTakeaway: height ÷ spoke is the sine. It rises fast at first, then slows near the top, so sin 30° = 0.5 but sin 60° is only about 0.87.`);
+  }
+
+  function draw(){
+    S.clear();
+    ['#3b2a63', '#7a3f7e', '#c4506f', '#ee7a55', '#f7a65b', '#fbd08a'].forEach((c, i) => S.rect(0, i * 64, W, 66, { fill: c }));
+    S.circle(430, 330, 38, { fill: '#fff1b8', opacity: .95 });
+    S.rect(0, 380, W, 40, { fill: '#2a1d3a' });
+    const col = '#fff3df';
+    S.polygon([[cx - 40, 380], [cx, cy], [cx + 40, 380]], { fill: 'none', stroke: '#2a1d3a', 'stroke-width': 6 });
+    S.circle(cx, cy, PX, { fill: 'none', stroke: col, 'stroke-width': 3 });
+    for (let k = 0; k < 8; k++){ const t = k * Math.PI / 4; S.line(cx, cy, cx + PX * Math.cos(t), cy - PX * Math.sin(t), { stroke: col, 'stroke-width': 1.2, opacity: .6 }); }
+    for (let k = 0; k < 16; k++){ const t = k * Math.PI / 8; S.circle(cx + PX * Math.cos(t), cy - PX * Math.sin(t), 5, { fill: '#2a1d3a', stroke: col }); }
+    // level line and top line
+    S.line(cx, cy, cx + PX + 40, cy, { stroke: col, 'stroke-width': 1.5, 'stroke-dasharray': '5 4' });
+    S.line(cx - 20, cy - PX, cx + PX + 40, cy - PX, { stroke: '#ffd37a', 'stroke-width': 1.5, 'stroke-dasharray': '2 4' });
+    S.text(cx + PX + 44, cy - PX, 'top: 20 m', { size: 14, anchor: 'start', fill: '#ffe9b0' });
+    S.text(cx + PX + 44, cy, 'level with axle', { size: 14, anchor: 'start', fill: '#fff3df' });
+    if (stage < 1){ const r = measure(0); S.circle(r.x, r.y, 11, { fill: '#ffd37a', stroke: '#2a1d3a', 'stroke-width': 3 }); S.text(r.x + 18, r.y + 20, 'you', { size: 14, anchor: 'start', fill: '#fff3df' }); return; }
+    const m = measure(angle);
+    if (showMirror){
+      const b = measure(-30), a = measure(30);
+      S.line(a.x, a.y, b.x, b.y, { stroke: '#7fe0c8', 'stroke-width': 3 });
+      S.line(cx, cy, b.x, b.y, { stroke: '#7fe0c8', 'stroke-width': 2 });
+      S.circle(b.x, b.y, 10, { fill: 'none', stroke: '#7fe0c8', 'stroke-width': 3, 'stroke-dasharray': '3 3' });
+    }
+    // right triangle: spoke (hypotenuse), height (opposite), across (adjacent)
+    S.line(m.x, m.y, m.x, cy, { stroke: '#7fe0c8', 'stroke-width': 4 });
+    S.line(cx, cy, m.x, cy, { stroke: '#fff3df', 'stroke-width': 2.5 });
+    S.line(cx, cy, m.x, m.y, { stroke: '#ffd37a', 'stroke-width': 4 });
+    S.circle(cx, cy, 6, { fill: col });
+    S.circle(m.x, m.y, 11, { fill: '#ffd37a', stroke: '#2a1d3a', 'stroke-width': 3 });
+    if (angle > 6){
+      S.path(`M ${cx + 40} ${cy} A 40 40 0 0 0 ${cx + 40 * Math.cos(angle * Math.PI / 180)} ${cy - 40 * Math.sin(angle * Math.PI / 180)}`, { fill: 'none', stroke: col, 'stroke-width': 2 });
+      S.text(cx + 52, cy - 8 - angle * .2, angle + '°', { size: 14, anchor: 'start', fill: col });
+    }
+    S.text(m.x + 10, (m.y + cy) / 2, m1(m.up), { size: 15, weight: 700, anchor: 'start', fill: '#b6f5e6' });
+    const sx = (cx + m.x) / 2, sy = (cy + m.y) / 2;
+    if (angle > 10) S.text(sx - 6, sy - 10, 'spoke', { size: 13, anchor: 'end', fill: '#ffe9b0' });
+  }
+  draw();
+}
+</script>
+</body>
+</html>

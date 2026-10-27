@@ -1,0 +1,113 @@
+{
+ "file": "b09/sonnet/page.html",
+ "lines": 141,
+ "usesKit": true,
+ "problems": [],
+ "warnings": [],
+ "desktop": {
+  "errors": [],
+  "kit": true,
+  "start": {
+   "card": "Class A has 10 students who averaged 70 on a test. Class B has 30 students who averaged 90.\nIf we put all 40 students together, what is their average score? Make a guess first.",
+   "title": "Average of two classes",
+   "overflowX": false,
+   "height": 800,
+   "shownErr": [],
+   "svgTextOverlaps": [],
+   "offscreenSvgText": [],
+   "guessBelowFold": -87,
+   "longText": [],
+   "guessOpen": true,
+   "visibleButtons": [
+    "80 (halfway between 70 and 90)",
+    "Less than 80",
+    "More than 80",
+    "Start over"
+   ]
+  },
+  "guessKind": "choice",
+  "guessLogged": true,
+  "afterGuess": {
+   "card": "You picked: 80 (halfway between 70 and 90).\nLet's test it. Each dot is one student. Slide the balance point along the scores until the two sides pull equally.",
+   "title": "Average of two classes",
+   "overflowX": false,
+   "height": 835,
+   "shownErr": [],
+   "svgTextOverlaps": [],
+   "offscreenSvgText": [],
+   "guessBelowFold": -35,
+   "longText": [],
+   "guessOpen": true,
+   "visibleButtons": [
+    "Start over"
+   ]
+  },
+  "after": {
+   "card": "You picked: 80 (halfway between 70 and 90).\nLet's test it. Each dot is one student. Slide the balance point along the scores until the two sides pull equally.",
+   "title": "Average of two classes",
+   "overflowX": false,
+   "height": 835,
+   "shownErr": [],
+   "svgTextOverlaps": [],
+   "offscreenSvgText": [],
+   "guessBelowFold": -35,
+   "longText": [],
+   "guessOpen": true,
+   "visibleButtons": [
+    "Start over"
+   ]
+  },
+  "eventsAfter": [
+   "ready",
+   "pick",
+   "guess",
+   "say",
+   "slide",
+   "slide",
+   "slide"
+  ],
+  "restart": {
+   "card": "Class A has 10 students who averaged 70 on a test. Class B has 30 students who averaged 90.\nIf we put all 40 students together, what is their average score? Make a guess first.",
+   "title": "Average of two classes",
+   "overflowX": false,
+   "height": 800,
+   "shownErr": [],
+   "svgTextOverlaps": [],
+   "offscreenSvgText": [],
+   "guessBelowFold": -87,
+   "longText": [],
+   "guessOpen": true,
+   "visibleButtons": [
+    "80 (halfway between 70 and 90)",
+    "Less than 80",
+    "More than 80",
+    "Start over"
+   ]
+  },
+  "firstGuessBeforeVisitor": false
+ },
+ "phone": {
+  "errors": [],
+  "kit": true,
+  "start": {
+   "card": "Class A has 10 students who averaged 70 on a test. Class B has 30 students who averaged 90.\nIf we put all 40 students together, what is their average score? Make a guess first.",
+   "title": "Average of two classes",
+   "overflowX": false,
+   "height": 844,
+   "shownErr": [],
+   "svgTextOverlaps": [],
+   "offscreenSvgText": [],
+   "guessBelowFold": -232,
+   "longText": [],
+   "guessOpen": true,
+   "visibleButtons": [
+    "80 (halfway between 70 and 90)",
+    "Less than 80",
+    "More than 80",
+    "Start over"
+   ]
+  },
+  "events": 1
+ },
+ "pass": true
+}

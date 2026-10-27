@@ -1,0 +1,8 @@
+{
+ "title": "Is 0.999... equal to 1?",
+ "concept": "0.999... (9s forever) is exactly 1, shown through 1/3 = 0.333... and multiplying by 3.",
+ "kept": ["The question: equal to 1 or just very close", "The friend's likely wrong answer (always a tiny gap) is offered as a guess option", "The 1/3 = 0.333 times 3 argument as the main evidence"],
+ "filled_in": ["Order of the experience (guess, slider of 3s, gap, why, shrink the gap, takeaway) since it was blank", "A long-division table showing why 1/3 has endless 3s, to support the 1/3 = 0.333... step", "A 'pick a gap size' step to show that any gap is beaten by enough 9s", "Look and feel: plain digit tiles, blue for 3s and orange for 9s", "Flat 2D SVG, no 3D", "The guess options are shown in a fixed order for every visitor; the page has no hidden versions"],
+ "changed": [{"what": "The design's 0.333 times 3 on its own gives 0.999, which is not 1.", "why": "A finite 0.333 is only close to 1/3. The page uses a slider for the number of 3s, shows the gap to 1 shrinking, and explains that the endless 3s make 1/3 exact."}],
+ "math_check": "All digits and gaps are computed with BigInt from k: nines = 10^k - 1, threes = nines/3 (exact, checked that 3 x threes = nines), gap = 1/10^k. The long-division table is computed by the loop r -> 10r mod 3. The gap-size step searches for the smallest n with 10^-n below the chosen gap. Checked by hand for k = 3 (0.333 x 3 = 0.999, gap 0.001) and the check script passed with no problems or warnings."
+}

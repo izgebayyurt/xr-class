@@ -1,0 +1,22 @@
+{
+ "title": "Double the box",
+ "concept": "Doubling length, width and height of a box multiplies its surface (paint) by 2x2 = 4 and its volume (water) by 2x2x2 = 8.",
+ "kept": [
+  "The student's question: paint and water for a box made twice as long, wide and tall",
+  "Guess first, then build the small box, then the big box",
+  "Build from little cubes and count the squares on the outside",
+  "Lego-like look: bright bricks with studs on a green baseplate",
+  "3D scene (three.js), drag to rotate",
+  "Their answer (area x4, volume x8) is correct and is what the counts show"
+ ],
+ "filled_in": [
+  "Concrete size: small box 3 long, 2 wide, 2 tall (a cube would hide which doubling matters); big box 6 x 4 x 4",
+  "One guess with four combined options (both x2, paint x8/water x4, paint x4/water x8, both x4), including the 'double is double' idea",
+  "Build by adding one layer at a time; paint button covers every outside face including the bottom",
+  "Units: 1 cube = 1 cup of water, 1 outside square = 1 patch of paint (labelled as a model)",
+  "Two short 'why' steps (paint x4, water x8) with a per-side square count table",
+  "A slider to multiply every side by 1 to 4, with a computed table, as the exploring step"
+ ],
+ "changed": [],
+ "math_check": "All numbers are counted in code from the cube list: cubes = cells in the layers built, squares = cube faces with no neighbouring cube. Small 3x2x2: 12 cubes, 32 squares (top+bottom 12, front+back 12, left+right 8). Big 6x4x4: 96 cubes, 128 squares. Ratios 96/12 = 8 and 128/32 = 4. For factor k the code gives k^2 paint and k^3 water (k=3: 324 cubes and 288 squares, which is 27x and 9x). The 'why' text numbers use the box dimensions and the counted per-side totals. check-page passed with no problems or warnings at desktop and phone width."
+}

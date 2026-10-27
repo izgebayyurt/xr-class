@@ -1,0 +1,138 @@
+{
+ "file": "b01/sonnet/page.html",
+ "lines": 91,
+ "usesKit": true,
+ "problems": [],
+ "warnings": [
+  "long text blocks (86 words); keep the card and notes under about 60 words and reveal the explanation in steps"
+ ],
+ "desktop": {
+  "errors": [],
+  "kit": true,
+  "start": {
+   "card": "Write 0.999... with the 9s going on forever.\nIs it equal to 1, or just a tiny bit smaller? Make a guess first.",
+   "title": "Is 0.999... equal to 1?",
+   "overflowX": false,
+   "height": 800,
+   "shownErr": [],
+   "svgTextOverlaps": [],
+   "offscreenSvgText": [],
+   "guessBelowFold": -151,
+   "longText": [],
+   "guessOpen": true,
+   "visibleButtons": [
+    "smaller than 1 (a tiny gap)",
+    "equal to 1",
+    "Start over"
+   ]
+  },
+  "guessKind": "choice",
+  "guessLogged": true,
+  "afterGuess": {
+   "card": "Let's test it with 1/3 (one third). As a decimal, 1/3 is 0.333... with 3s going on.\nUse the slider to write more 3s, then multiply by 3 and watch the nines.",
+   "title": "Is 0.999... equal to 1?",
+   "overflowX": false,
+   "height": 842,
+   "shownErr": [],
+   "svgTextOverlaps": [],
+   "offscreenSvgText": [],
+   "guessBelowFold": -103,
+   "longText": [],
+   "guessOpen": true,
+   "visibleButtons": [
+    "Why do the 3s never stop?",
+    "Start over"
+   ]
+  },
+  "after": {
+   "card": "You guessed smaller. The gap you pictured is real for any finite number of 9s, but not for 0.999... with 9s that never end.\nYour own argument closes it: 1/3 = 0.333..., and 3 × 1/3 = 1, so 3 × 0.333... = 0.999... = 1. The finite pictures always showed a gap, but 0.999... never stops, so the gap shrinks below any size you name and the only size left is 0. So 0.999... and 1 are the same number.\nStart over to try again.",
+   "title": "Is 0.999... equal to 1?",
+   "overflowX": false,
+   "height": 1598,
+   "shownErr": [],
+   "svgTextOverlaps": [],
+   "offscreenSvgText": [],
+   "guessBelowFold": -173,
+   "longText": [
+    86
+   ],
+   "guessOpen": true,
+   "visibleButtons": [
+    "0.1",
+    "0.001",
+    "0.000001",
+    "0.000000001",
+    "Start over"
+   ]
+  },
+  "eventsAfter": [
+   "ready",
+   "pick",
+   "guess",
+   "say",
+   "click",
+   "say",
+   "slide",
+   "pick",
+   "gap-picked",
+   "say",
+   "pick",
+   "gap-picked",
+   "pick",
+   "gap-picked",
+   "pick",
+   "gap-picked",
+   "slide",
+   "pick",
+   "gap-picked",
+   "pick",
+   "gap-picked",
+   "pick",
+   "gap-picked",
+   "pick",
+   "gap-picked",
+   "slide"
+  ],
+  "restart": {
+   "card": "Write 0.999... with the 9s going on forever.\nIs it equal to 1, or just a tiny bit smaller? Make a guess first.",
+   "title": "Is 0.999... equal to 1?",
+   "overflowX": false,
+   "height": 800,
+   "shownErr": [],
+   "svgTextOverlaps": [],
+   "offscreenSvgText": [],
+   "guessBelowFold": -151,
+   "longText": [],
+   "guessOpen": true,
+   "visibleButtons": [
+    "smaller than 1 (a tiny gap)",
+    "equal to 1",
+    "Start over"
+   ]
+  },
+  "firstGuessBeforeVisitor": false
+ },
+ "phone": {
+  "errors": [],
+  "kit": true,
+  "start": {
+   "card": "Write 0.999... with the 9s going on forever.\nIs it equal to 1, or just a tiny bit smaller? Make a guess first.",
+   "title": "Is 0.999... equal to 1?",
+   "overflowX": false,
+   "height": 844,
+   "shownErr": [],
+   "svgTextOverlaps": [],
+   "offscreenSvgText": [],
+   "guessBelowFold": -290,
+   "longText": [],
+   "guessOpen": true,
+   "visibleButtons": [
+    "smaller than 1 (a tiny gap)",
+    "equal to 1",
+    "Start over"
+   ]
+  },
+  "events": 1
+ },
+ "pass": true
+}

@@ -1,0 +1,140 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Average of two classes</title>
+<script src="mathkit.js"></script>
+</head>
+<body>
+<script>
+// Design: Class A (10 students, avg 70) + Class B (30 students, avg 90): what is the average of all 40?
+// Student believed 80 = (70+90)/2. Correct: 85 (weighted by class size).
+MK.start({ title: 'Average of two classes', build });
+
+function build(){
+  const W = 620, H = 344, AX = 270, X0 = 60, X1 = 100, M = 36;
+  const AVG_A = 70, AVG_B = 90, N_A = 10;
+  const COLA = '#2f6fde', COLB = '#e8912d';
+  let nB = 30, guessed = null, found = false, step = 0, exploring = false;
+  const x = MK.scale(X0, X1, M, W - M);
+
+  MK.say('Class A has 10 students who averaged 70 on a test. Class B has 30 students who averaged 90.\nIf we put all 40 students together, what is their average score? Make a guess first.');
+  MK.model('Every student in a class is drawn with that class\'s average score, so we can add up their points.');
+  const S = MK.svg(W, H, { maxHeight: '56vh' });
+
+  const students = () => [...Array(N_A).fill(AVG_A), ...Array(nB).fill(AVG_B)];
+  const mean = () => MK.mean(students());
+
+  MK.guess({ ask: 'Your guess: the average of all 40 students', options: ['80 (halfway between 70 and 90)', 'Less than 80', 'More than 80'] }, (v, i) => {
+    guessed = v;
+    MK.say(`You picked: ${v}.\nLet's test it. Each dot is one student. Slide the balance point along the scores until the two sides pull equally.`);
+    MK.show(bal, left, right, status, tip); draw();
+  });
+
+  const bal = MK.slider({ label: 'Balance point (score)', min: 60, max: 100, step: 0.5, value: 75, format: v => v + ' points', onInput: v => { draw(); check(v); } }).hide();
+  const left = MK.readout('Pull from the left', '', { where: 'side' }).hide();
+  const right = MK.readout('Pull from the right', '', { where: 'side' }).hide();
+  const status = MK.note('', { where: 'side' }).hide();
+  const tip = MK.note('The "pull" of a student is how many points their score is away from the balance point. We add these up on each side.', { where: 'side' }).hide();
+  const why = MK.note('', { where: 'side' }).hide();
+  const next = MK.button('Show me why', () => {
+    step++; showSteps();
+  }).hide();
+  const bsize = MK.slider({ label: 'Students in class B', min: 1, max: 60, step: 1, value: 30, format: v => v + ' students', onInput: v => {
+    nB = v; draw(); explore(); } }).hide();
+  const avgOut = MK.readout('Average of all students', '', { where: 'side' }).hide();
+  const table = MK.table(['Students in B', 'Average of everyone'], []).hide();
+
+  function pulls(p){
+    let l = 0, r = 0;
+    for (const s of students()){ if (s < p) l += p - s; else r += s - p; }
+    return [l, r];
+  }
+  function check(p){
+    const [l, r] = pulls(p);
+    left.set(l + ' points'); right.set(r + ' points');
+    // l = total distance of students below p, r = above
+    if (l === r) status.set(`Balanced at ${p}. Both sides pull ${l} points.`);
+    else if (l > r) status.set(`Too far right: the left side pulls harder (${l} vs ${r}). Slide left.`);
+    else status.set(`Too far left: the right side pulls harder (${r} vs ${l}). Slide right.`);
+    if (l === r && !found && guessed !== null){
+      found = true;
+      const m = mean();
+      MK.log('balanced', { at: p });
+      const g = guessed.startsWith('80') ? 'Halfway (80) was a natural guess, but it is not where it balances.' :
+                guessed.startsWith('Less') ? 'You guessed below 80, but it balances higher.' : 'You guessed above 80, and the balance point is 85.';
+      MK.say(`It balances at ${p}, not 80. ${g}\nPress "Show me why" to see where ${p} comes from.`);
+      next.show();
+    }
+  }
+
+  function showSteps(){
+    const A = students().slice(0, N_A), B = students().slice(N_A);
+    const sumA = MK.sum(A), sumB = MK.sum(B), tot = sumA + sumB, N = A.length + B.length, m = tot / N;
+    const share = MK.frac(B.length, N);
+    const lines = [
+      `Class A: ${A.length} students × ${AVG_A} points each = ${sumA} points in total.`,
+      `Class B: ${B.length} students × ${AVG_B} points each = ${sumB} points in total.`,
+      `Together: ${sumA} + ${sumB} = ${tot} points. Share them equally among ${N} students: ${tot} ÷ ${N} = ${MK.fmt(m, { dp: 2 })}.`,
+      `Why not 80? Taking (${AVG_A} + ${AVG_B}) ÷ 2 treats the classes as the same size. Class B is ${share} of the students, so it pulls the average ${share} of the way from ${AVG_A} to ${AVG_B}: ${AVG_A} + ${share} × ${AVG_B - AVG_A} = ${MK.fmt(AVG_A + share.valueOf() * (AVG_B - AVG_A), { dp: 2 })}.`
+    ];
+    why.show(); why.set(lines.slice(0, step).join('\n'));
+    if (step === 1) MK.say('First, add up all the points in class A.');
+    if (step === 2) MK.say('Now add up all the points in class B.');
+    if (step === 3) MK.say('Now put the points together and share them out equally.');
+    if (step >= 4){
+      next.hide();
+      exploring = true;
+      MK.show(bsize, avgOut, table); explore();
+      MK.say(`The average of a group depends on how many students are in each class, not just the class averages.\nTry the slider: change how many students are in class B and watch the average move.`);
+    }
+  }
+
+  function explore(){
+    if (!exploring) return;
+    const m = mean();
+    avgOut.set(MK.fmt(m, { dp: 2 }) + ' points');
+    table.set([1, 5, 10, 20, 30, 60].map(k => [k, MK.fmt(MK.mean([...Array(N_A).fill(AVG_A), ...Array(k).fill(AVG_B)]), { dp: 2 })]), [1, 5, 10, 20, 30, 60].indexOf(nB));
+    if (nB === N_A) MK.say('Both classes now have 10 students. Only now is the average halfway: 80.\nIt is the number of students that decides where the average lands. Try other sizes.');
+    else MK.say(`With ${nB} students in class B, the average of all ${N_A + nB} is ${MK.fmt(m, { dp: 2 })}.\nThe average is pulled toward the bigger class. Try other sizes.`);
+  }
+
+  function draw(){
+    S.clear();
+    // axis
+    S.line(M - 10, AX, W - M + 10, AX, { stroke: '#1d2330', 'stroke-width': 2 });
+    for (const t of MK.ticks(X0, X1, 5)){
+      S.line(x(t), AX, x(t), AX + 6, { stroke: '#1d2330', 'stroke-width': 1.5 });
+      S.text(x(t), AX + 22, t, { size: 14, fill: '#444' });
+    }
+    S.text(W / 2, H - 8, 'Test score (points)', { size: 13, fill: '#666' });
+    // dots: columns of 10 stacked
+    const dots = (n, score, col) => {
+      const cols = Math.ceil(n / 10), gap = 17;
+      for (let i = 0; i < n; i++){
+        const c = Math.floor(i / 10), r = i % 10;
+        S.circle(x(score) + (c - (cols - 1) / 2) * gap, AX - 10 - r * 17, 7, { fill: col, stroke: '#fff', 'stroke-width': 1 });
+      }
+    };
+    dots(N_A, AVG_A, COLA); dots(nB, AVG_B, COLB);
+    S.text(x(AVG_A), 62, `Class A`, { size: 14, weight: 600, fill: COLA });
+    S.text(x(AVG_A), 80, `${N_A} students, average ${AVG_A}`, { size: 12, fill: COLA });
+    S.text(x(AVG_B), exploring ? 20 : 62, `Class B`, { size: 14, weight: 600, fill: COLB });
+    S.text(x(AVG_B), exploring ? 38 : 80, `${nB} students, average ${AVG_B}`, { size: 12, fill: COLB });
+    if (guessed !== null){
+      const p = bal.value;
+      S.polygon([[x(p), AX + 2], [x(p) - 11, AX + 30], [x(p) + 11, AX + 30]], { fill: '#1d2330' });
+      S.line(x(p), AX - 190, x(p), AX, { stroke: '#1d2330', 'stroke-width': 1.5, 'stroke-dasharray': '4 4' });
+    }
+    if (exploring){
+      const m = mean();
+      S.line(x(m), 50, x(m), AX, { stroke: '#2a9d5c', 'stroke-width': 3 });
+      S.text(x(m), 46, `average ${MK.fmt(m, { dp: 1 })}`, { size: 13, weight: 600, fill: '#2a9d5c' });
+    }
+  }
+  draw();
+}
+</script>
+</body>
+</html>

@@ -1,0 +1,8 @@
+{
+  "title": "Students and professors",
+  "concept": "Translating 'six times as many students as professors' into S = 6P, and testing equations with real numbers.",
+  "kept": ["The sentence and the S/P equation question", "The two candidate equations S = 6P and 6S = P", "The common mistake of following word order (6S = P)", "Showing why by putting in numbers (2 professors, 12 students) and checking both equations"],
+  "filled_in": ["Order of activity: guess, add students (6 per professor), test each equation, explanation notes, slider, takeaway", "Simple picture: orange circles for professors, blue circles for students", "Slider for 1 to 6 professors as the explore step", "Guess feedback compares the guess to the equation that passes the test"],
+  "changed": [],
+  "math_check": "Students are drawn as 6 circles per professor and S and P are counted from the drawn circles. Each table row computes both sides from those counts: S vs 6*P (12 vs 12, equal) and 6*S vs P (72 vs 2, not equal). Checked by hand for P=1..6: S=6P holds, 6S=P never does (6S is at least 36 times P). The automated check passed with no problems or warnings."
+}

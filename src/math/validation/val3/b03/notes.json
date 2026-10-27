@@ -1,0 +1,8 @@
+{
+ "title": "Up 25%, down 25%: back to $100?",
+ "concept": "A percent rise followed by the same percent drop does not return to the start, because the drop is taken from the bigger Monday price.",
+ "kept": ["$100 shirt", "Monday +25%, Tuesday -25%", "Bars for the price after Monday and after Tuesday", "Store price-tag look with a red SALE sign", "Flat 2D", "The not-back-to-start answer and the 'taken from a bigger number' reason"],
+ "filled_in": ["Order of events (design left it blank): guess lower/exactly/higher, press Monday, press Tuesday, stepwise explanation, then explore", "A percent slider (5% to 50%) and a table of results as the one explore step", "A dashed $100 line and a Start bar for comparison", "Readouts for Monday price, Tuesday price and difference from $100", "Guess feedback compares the guess with the computed Tuesday price"],
+ "changed": [],
+ "math_check": "100 x 1.25 = 125; 125 x 0.75 = 93.75; loss 6.25. Code computes every price from START and pct; for percent p the end price is 100 - p^2/100 (5% gives 99.75, 50% gives 75), matching the table rows. check-page passed with no problems or warnings."
+}

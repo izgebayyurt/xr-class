@@ -1,0 +1,8 @@
+{
+ "title": "Monty Hall: Stay or Switch?",
+ "concept": "Switching doors wins the car 2 times in 3, because your first pick is right only 1 time in 3 and the host's goat reveal leaves the car behind the other closed door whenever your first pick was wrong.",
+ "kept": ["Monty Hall setup with three doors and a goat reveal", "Friend's likely 50/50 belief is tested by the opening guess (stay / switch / no difference)", "Order: pick a door, host opens one, you choose, then many automatic games and a chart", "Game-show look with bright lights", "Flat 2D"],
+ "filled_in": ["Opening three-way guess before any evidence", "Hand-played game with stay and switch buttons", "Play 100 games button, plus an optional 1000 for the same chart (a variation, not a new activity)", "A 3-case table (you always pick door 1) computed by code to show why switching wins", "Stepwise explanation notes and takeaway", "Host picks randomly when two goat doors are available"],
+ "changed": [],
+ "math_check": "Every count comes from code: each simulated game draws a random car spot and first pick, the host opens a goat door that is neither, stay wins if pick equals car, switch wins if the remaining closed door equals car. Totals and percentages are tallied from those trials (expected about 33% stay, 67% switch; checker run showed 1100 games with roughly 1/3 vs 2/3). The 3-case table is enumerated in code and gives stay 1 of 3, switch 2 of 3. No typed-in results."
+}
