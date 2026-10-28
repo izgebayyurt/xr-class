@@ -1,0 +1,188 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Twice as high</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"><link href="https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible:wght@400;700&display=swap" rel="stylesheet">
+<style>
+  :root { --paper:#ECE6DC; --ground:#CFC4B2; --clay:#B3A38C; --ink:#1F2328; --learner:#E4572E; --learnerText:#B83A10; --goal:#2A9D8F; --idle:#5B6470; --math:#3D5A80; }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; height: 100%; background: var(--paper); color: var(--ink); font-family: "Atkinson Hyperlegible", system-ui, sans-serif; }
+  #stage { position: fixed; inset: 0; display: block; touch-action: none; }
+  #prompt { position: fixed; left: 50%; bottom: 28px; transform: translateX(-50%); width: min(720px, 92vw); text-align: center; font-size: 21px; line-height: 1.35; font-weight: 700; }
+  #nav { position: fixed; left: 16px; bottom: 16px; display: flex; gap: 14px; font-size: 14px; color: var(--idle); }
+  #nav button { background: none; border: 0; font: inherit; color: inherit; text-decoration: underline; text-underline-offset: 4px; cursor: pointer; }
+  #dots { position: fixed; right: 18px; bottom: 22px; display: flex; gap: 6px; }
+  #dots i { width: 8px; height: 8px; border-radius: 99px; background: var(--clay); opacity: .5; }
+  #dots i.on { background: var(--ink); opacity: 1; }
+  #cam { position: fixed; right: 16px; top: 16px; width: 168px; border-radius: 10px; overflow: hidden; box-shadow: 0 3px 12px rgba(31,35,40,.18); background: var(--ground); display: none; }
+  #cam video, #cam canvas { width: 100%; display: block; transform: scaleX(-1); }
+  #cam canvas { position: absolute; inset: 0; height: 100%; }
+  #intro { position: fixed; inset: 0; display: grid; place-items: center; background: var(--paper); z-index: 5; }
+  #intro .box { width: min(560px, 92vw); text-align: center; }
+  #intro h1 { font-size: 30px; margin: 0 0 12px; }
+  #intro p { font-size: 18px; line-height: 1.45; margin: 0 0 22px; color: #3a3f45; }
+  #intro button { font: inherit; font-weight: 700; font-size: 18px; border: 0; border-radius: 99px; padding: 12px 22px; margin: 6px; cursor: pointer; }
+  #go { background: var(--ink); color: var(--paper); }
+  #mouse { background: transparent; color: var(--idle); text-decoration: underline; text-underline-offset: 4px; }
+  #status { font-size: 15px; color: var(--idle); min-height: 1.4em; }
+</style></head>
+<body>
+<canvas id="stage"></canvas>
+<div id="cam"><video id="video" playsinline muted></video><canvas id="marks"></canvas></div>
+<div id="prompt" aria-live="polite"></div>
+<div id="dots"><i></i><i></i><i></i><i></i></div>
+<div id="nav"><button id="back">Back</button><button id="restart">Start over</button></div>
+<div id="intro"><div class="box">
+  <h1>Twice as high</h1>
+  <p>Your two hands will be two numbers. This page uses your webcam to follow them; the video stays on your computer and is never saved. Sit back a little, with light in front of you.</p>
+  <button id="go">Start with the camera</button><br><button id="mouse">Use the mouse instead</button>
+  <div id="status"></div>
+</div></div>
+<script type="module">
+const $ = s => document.querySelector(s);
+const cv = $('#stage'), ctx = cv.getContext('2d');
+const C = { paper:'#ECE6DC', ground:'#CFC4B2', clay:'#B3A38C', ink:'#1F2328', learner:'#E4572E', learnerText:'#B83A10', goal:'#2A9D8F', idle:'#5B6470', math:'#3D5A80' };
+let W = 0, H = 0;
+function size(){ const dpr = Math.min(2, devicePixelRatio || 1); W = innerWidth; H = innerHeight; cv.width = W * dpr; cv.height = H * dpr; cv.style.width = W + 'px'; cv.style.height = H + 'px'; ctx.setTransform(dpr, 0, 0, dpr, 0, 0); }
+addEventListener('resize', size); size();
+
+// ---- the body: two heights in 0..10 (left hand, right hand), from the camera or the mouse
+const hand = { L: { v: 2, seen: false }, R: { v: 3, seen: false } };
+let mode = null;                       // 'camera' | 'mouse'
+const MAX = 10;
+
+// ---- steps: cue → do → link → vary → explain
+const STEPS = [
+  { id: 'cue', text: 'Your hands are two numbers. Raise your right hand until it is twice as high as your left, and the bars turn teal.' },
+  { id: 'link', text: 'Keep it teal while you move both hands up together. The right number stays double the left: right = 2 × left.' },
+  { id: 'vary', text: 'Now try it with your hands low, and then high. The heights change, but the rule stays the same.' },
+  { id: 'explain', text: 'Look at the gap between your hands: it grows as you go up. Show someone next to you, with your hands, why.' },
+];
+let step = 0, holdT = 0, linkMin = 99, linkMax = -1, sawLow = false, sawHigh = false, trail = [];
+function setStep(i){ step = Math.max(0, Math.min(STEPS.length - 1, i)); holdT = 0; linkMin = 99; linkMax = -1; sawLow = sawHigh = false;
+  $('#prompt').textContent = STEPS[step].text; document.querySelectorAll('#dots i').forEach((d, k) => d.classList.toggle('on', k <= step)); }
+$('#back').onclick = () => setStep(step - 1);
+$('#restart').onclick = () => setStep(0);
+
+const ratioOK = () => hand.L.v > 0.6 && Math.abs(hand.R.v - 2 * hand.L.v) <= 0.08 * 2 * hand.L.v + 0.15;
+
+// ---- geometry of the workbench
+const lay = () => { const top = 70, bot = H - 160, h = bot - top, xL = W / 2 - Math.min(170, W * .2), xR = W / 2 + Math.min(170, W * .2); return { top, bot, h, xL, xR, y: v => bot - v / MAX * h }; };
+
+let goalMix = 0, last = performance.now();
+function frame(now){
+  const dt = Math.min(0.05, (now - last) / 1000); last = now;
+  const ok = ratioOK() && (mode === 'mouse' || (hand.L.seen && hand.R.seen));
+  goalMix += ((ok ? 1 : 0) - goalMix) * Math.min(1, dt / 0.12);
+  // step logic: advance from what the body does
+  if (ok) holdT += dt; else holdT = 0;
+  const s = STEPS[step].id;
+  if (s === 'cue' && holdT > 1.2) setStep(1);
+  else if (s === 'link'){ if (ok){ linkMin = Math.min(linkMin, hand.L.v); linkMax = Math.max(linkMax, hand.L.v); } if (linkMax - linkMin > 2) setStep(2); }
+  else if (s === 'vary'){ if (ok && hand.L.v < 2) sawLow = true; if (ok && hand.L.v > 3.6) sawHigh = true; if (sawLow && sawHigh && holdT > 0.6) setStep(3); }
+  draw(now);
+  requestAnimationFrame(frame);
+}
+const mix = (a, b, t) => { const p = x => [1, 3, 5].map(i => parseInt(x.slice(i, i + 2), 16)); const A = p(a), B = p(b); return `rgb(${A.map((v, i) => Math.round(v + (B[i] - v) * t)).join(',')})`; };
+
+function draw(now){
+  const g = lay(); ctx.clearRect(0, 0, W, H);
+  const s = STEPS[step].id, showNums = s !== 'cue', showGrid = s !== 'cue';
+  // grid: appears at link
+  if (showGrid){ ctx.lineWidth = 1; ctx.strokeStyle = 'rgba(31,35,40,.18)';
+    for (let v = 0; v <= MAX; v++){ const y = g.y(v); ctx.beginPath(); ctx.moveTo(g.xL - 90, y); ctx.lineTo(g.xR + 90, y); ctx.stroke(); }
+    ctx.fillStyle = 'rgba(31,35,40,.45)'; ctx.font = '14px "Atkinson Hyperlegible", sans-serif'; ctx.textAlign = 'right';
+    for (let v = 0; v <= MAX; v += 2) ctx.fillText(v, g.xL - 98, g.y(v) + 5); }
+  // floor line
+  ctx.strokeStyle = C.ink; ctx.lineWidth = 3; ctx.lineCap = 'round'; ctx.beginPath(); ctx.moveTo(g.xL - 90, g.bot); ctx.lineTo(g.xR + 90, g.bot); ctx.stroke();
+  // trail of the learner's left-hand height (fades), to show what stayed the same
+  trail = trail.filter(p => now - p.t < 2500);
+  // the two bars, idle slate → goal teal
+  const col = mix('#5B6470', '#2A9D8F', goalMix);
+  for (const [k, x] of [['L', g.xL], ['R', g.xR]]){
+    const h = hand[k], y = g.y(h.v), seen = mode === 'mouse' || h.seen;
+    ctx.globalAlpha = seen ? 1 : 0.35;
+    // halo when satisfied
+    if (goalMix > 0.05){ ctx.strokeStyle = col; ctx.globalAlpha = (seen ? 1 : .35) * 0.2 * goalMix; ctx.lineWidth = 46; ctx.beginPath(); ctx.moveTo(x, g.bot); ctx.lineTo(x, y); ctx.stroke(); ctx.globalAlpha = seen ? 1 : .35; }
+    ctx.strokeStyle = col; ctx.lineWidth = 26; ctx.beginPath(); ctx.moveTo(x, g.bot); ctx.lineTo(x, y); ctx.stroke();
+    // the learner's hand: an orange disc with a soft shadow
+    ctx.save(); ctx.shadowColor = 'rgba(31,35,40,.18)'; ctx.shadowBlur = 12; ctx.shadowOffsetY = 3;
+    ctx.fillStyle = C.learner; ctx.beginPath(); ctx.arc(x, y, 20, 0, Math.PI * 2); ctx.fill(); ctx.restore();
+    ctx.fillStyle = C.ink; ctx.font = '700 15px "Atkinson Hyperlegible", sans-serif'; ctx.textAlign = 'center';
+    ctx.fillText(k === 'L' ? 'left hand' : 'right hand', x, g.bot + 26);
+    if (showNums){ ctx.fillStyle = C.learnerText; ctx.font = '700 26px "Atkinson Hyperlegible", sans-serif'; ctx.textAlign = k === 'L' ? 'right' : 'left';
+      ctx.fillText(h.v.toFixed(1), x + (k === 'L' ? -34 : 34), y + 9); }
+    ctx.globalAlpha = 1;
+  }
+  // link: the rule, each term colored like the thing it names, with a line to the right bar
+  if (showNums){ const yL = g.y(hand.L.v), yR = g.y(hand.R.v);
+    ctx.font = '700 24px "Atkinson Hyperlegible", sans-serif'; ctx.textAlign = 'center';
+    const mid = (g.xL + g.xR) / 2, ty = g.top + 4;
+    const parts = [[hand.R.v.toFixed(1), C.learnerText], [' = 2 × ', C.ink], [hand.L.v.toFixed(1), C.learnerText]];
+    const wid = parts.reduce((a, [t]) => a + ctx.measureText(t).width, 0); let x0 = mid - wid / 2; ctx.textAlign = 'left';
+    for (const [t, c] of parts){ ctx.fillStyle = c; ctx.fillText(t, x0, ty); x0 += ctx.measureText(t).width; }
+    ctx.textAlign = 'center'; ctx.fillStyle = mix('#5B6470', '#2A9D8F', goalMix); ctx.font = '15px "Atkinson Hyperlegible", sans-serif';
+    ctx.fillText(ratioOK() ? 'twice as high' : `right ÷ left = ${(hand.R.v / Math.max(0.1, hand.L.v)).toFixed(2)}`, mid, ty + 24);
+    // explain: the gap between the hands, as a bracket that equals the left height
+    if (s === 'explain'){ const xb = g.xR + 100; ctx.strokeStyle = C.math; ctx.lineWidth = 3; ctx.beginPath(); ctx.moveTo(xb - 8, yL); ctx.lineTo(xb, yL); ctx.lineTo(xb, yR); ctx.lineTo(xb - 8, yR); ctx.stroke();
+      ctx.setLineDash([4, 6]); ctx.strokeStyle = 'rgba(61,90,128,.6)'; ctx.lineWidth = 2; ctx.beginPath(); ctx.moveTo(g.xL + 20, yL); ctx.lineTo(xb - 8, yL); ctx.stroke(); ctx.setLineDash([]);
+      ctx.fillStyle = C.math; ctx.font = '700 18px "Atkinson Hyperlegible", sans-serif'; ctx.textAlign = 'left';
+      ctx.fillText(`gap ${(hand.R.v - hand.L.v).toFixed(1)}`, xb + 10, (yL + yR) / 2 + 6); }
+  }
+  // ghost cue: where a pair of hands could go (1 and 2), only before the first success
+  if (s === 'cue' && goalMix < 0.5){ ctx.globalAlpha = 0.28; ctx.setLineDash([6, 8]); ctx.strokeStyle = C.learner; ctx.lineWidth = 3;
+    for (const [x, v] of [[g.xL, 3], [g.xR, 6]]){ ctx.beginPath(); ctx.arc(x, g.y(v), 20, 0, Math.PI * 2); ctx.stroke(); }
+    ctx.setLineDash([]); ctx.globalAlpha = 1; }
+}
+
+// ---- mouse fallback: drag either disc up and down
+function useMouse(){
+  mode = 'mouse'; $('#intro').style.display = 'none'; let drag = null;
+  cv.addEventListener('pointerdown', e => { const g = lay(); const k = Math.abs(e.clientX - g.xL) < Math.abs(e.clientX - g.xR) ? 'L' : 'R'; drag = k; cv.setPointerCapture(e.pointerId); move(e); });
+  cv.addEventListener('pointermove', e => drag && move(e));
+  cv.addEventListener('pointerup', () => drag = null);
+  function move(e){ const g = lay(); hand[drag].v = Math.max(0, Math.min(MAX, (g.bot - e.clientY) / g.h * MAX)); }
+  setStep(0);
+}
+
+// ---- camera: MediaPipe hands. Heights come from the palm centre; left and right by screen side (mirrored).
+async function useCamera(){
+  $('#status').textContent = 'Asking for the camera…';
+  let stream;
+  try { stream = await navigator.mediaDevices.getUserMedia({ video: { width: 640, height: 480, facingMode: 'user' }, audio: false }); }
+  catch (e){ $('#status').textContent = 'The camera is not available, so the mouse will be used instead.'; setTimeout(useMouse, 1400); return; }
+  const video = $('#video'); video.srcObject = stream; await video.play();
+  $('#status').textContent = 'Loading hand tracking…';
+  const MP = 'https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10.21';
+  let lm;
+  try {
+    const { FilesetResolver, HandLandmarker } = await import(`${MP}/vision_bundle.mjs`);
+    const fileset = await FilesetResolver.forVisionTasks(`${MP}/wasm`);
+    const opts = delegate => ({ baseOptions: { modelAssetPath: 'https://storage.googleapis.com/mediapipe-models/hand_landmarker/hand_landmarker/float16/1/hand_landmarker.task', delegate }, runningMode: 'VIDEO', numHands: 2 });
+    lm = await HandLandmarker.createFromOptions(fileset, opts('GPU')).catch(() => HandLandmarker.createFromOptions(fileset, opts('CPU')));
+  } catch (e){ $('#status').textContent = 'Hand tracking could not load, so the mouse will be used instead.'; stream.getTracks().forEach(t => t.stop()); setTimeout(useMouse, 1400); return; }
+  mode = 'camera'; $('#intro').style.display = 'none'; $('#cam').style.display = 'block';
+  const mk = $('#marks'), mctx = mk.getContext('2d'); mk.width = 168; mk.height = 126;
+  let lastT = -1;
+  const smooth = (h, v) => { h.v += (v - h.v) * 0.35; };
+  (function loop(){
+    if (video.currentTime !== lastT){ lastT = video.currentTime;
+      const res = lm.detectForVideo(video, performance.now());
+      const palms = (res.landmarks || []).map(p => { const ids = [0, 5, 9, 13, 17]; const x = ids.reduce((a, i) => a + p[i].x, 0) / 5, y = ids.reduce((a, i) => a + p[i].y, 0) / 5; return { x: 1 - x, y, p }; });
+      // height: palm y from the bottom of the frame, mapped so the useful range (shoulder to above the head) fills 0..10
+      const toV = y => Math.max(0, Math.min(MAX, (0.92 - y) / 0.8 * MAX));
+      hand.L.seen = hand.R.seen = false;
+      if (palms.length === 2){ palms.sort((a, b) => a.x - b.x); smooth(hand.L, toV(palms[0].y)); smooth(hand.R, toV(palms[1].y)); hand.L.seen = hand.R.seen = true; }
+      else if (palms.length === 1){ const k = palms[0].x < 0.5 ? 'L' : 'R'; smooth(hand[k], toV(palms[0].y)); hand[k].seen = true; }
+      mctx.clearRect(0, 0, 168, 126); mctx.fillStyle = C.learner;
+      for (const { p } of palms) for (const q of p){ mctx.beginPath(); mctx.arc(q.x * 168, q.y * 126, 2, 0, Math.PI * 2); mctx.fill(); }
+    }
+    requestAnimationFrame(loop);
+  })();
+  setStep(0);
+}
+$('#go').onclick = useCamera;
+$('#mouse').onclick = useMouse;
+setStep(0);
+requestAnimationFrame(frame);
+</script>
+</body></html>
